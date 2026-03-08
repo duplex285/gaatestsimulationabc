@@ -1,0 +1,46 @@
+#!/bin/bash
+# Pre-commit hook for ABC Assessment project
+# Installed by: make setup (copies to .git/hooks/pre-commit)
+
+echo "Running pre-commit checks..."
+
+VENV="abc-venv/bin"
+
+# 1. Python formatting check
+if [ -d "src/python_scoring" ] && ls src/python_scoring/*.py 1>/dev/null 2>&1; then
+    echo "-> Checking Python formatting..."
+    $VENV/ruff format --check src/ tests/ 2>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "FAIL: Python formatting. Run: make lint-fix"
+        exit 1
+    fi
+
+    echo "-> Checking Python linting..."
+    $VENV/ruff check src/ tests/ 2>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "FAIL: Linting errors. Run: make lint-fix"
+        exit 1
+    fi
+fi
+
+# 2. Run Python tests (only if test files exist with actual tests)
+if ls tests/python_tests/test_*.py 1>/dev/null 2>&1; then
+    echo "-> Running Python tests..."
+    $VENV/pytest tests/python_tests/ --tb=short -q 2>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "FAIL: Tests failed. Fix tests before committing."
+        exit 1
+    fi
+fi
+
+# 3. Check spec references (only if implementation files exist)
+if [ -d "src/python_scoring" ] && ls src/python_scoring/*.py 1>/dev/null 2>&1; then
+    echo "-> Checking spec references..."
+    $VENV/python scripts/check_spec_references.py 2>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "FAIL: Missing spec references. See CLAUDE_RULES.md Rule 2."
+        exit 1
+    fi
+fi
+
+echo "All pre-commit checks passed."

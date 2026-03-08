@@ -1,0 +1,42 @@
+name: ABC Validation Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Lint
+        run: |
+          ruff check src/ tests/
+          ruff format --check src/ tests/
+      - name: Check spec references
+        run: python scripts/check_spec_references.py
+      - name: Run tests
+        run: pytest tests/python_tests/ -v --tb=short
+      - name: Check coverage
+        run: pytest tests/python_tests/ --cov=src --cov-report=term-missing --cov-fail-under=85
+
+  r-validation:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, '[run-r]') || github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+      - name: Install R packages
+        run: |
+          install.packages(c("lavaan", "semTools", "psych", "MASS"), repos = "https://cloud.r-project.org")
+        shell: Rscript {0}
+      - name: Run R validation
+        run: |
+          if [ -f src/r_validation/02_abc_6factor_cfa.R ]; then
+            Rscript src/r_validation/02_abc_6factor_cfa.R
+          else
+            echo "R validation script not yet created."
+          fi
