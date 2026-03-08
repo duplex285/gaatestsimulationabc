@@ -97,6 +97,63 @@ class TestMonitorEvaluatorRole:
         assert "Monitor-Evaluator" in role_names
 
 
+class TestPlantRole:
+    """Plant fires when C-sat > 6.5 AND C-frust < 4.0 AND A-sat < 5.0."""
+
+    def test_plant_creative(self):
+        roles = infer_belbin_roles(_make_subscales(c_sat=7.0, c_frust=3.0, a_sat=4.0))
+        role_names = [r["role"] for r in roles]
+        assert "Plant" in role_names
+        plant = next(r for r in roles if r["role"] == "Plant")
+        assert plant["qualifier"] == "Creative"
+
+    def test_plant_not_triggered_when_a_sat_high(self):
+        """High A-sat disqualifies Plant — they become Shaper or Coordinator instead."""
+        roles = infer_belbin_roles(_make_subscales(c_sat=7.0, c_frust=3.0, a_sat=7.0))
+        role_names = [r["role"] for r in roles]
+        assert "Plant" not in role_names
+
+    def test_plant_boundary_c_sat_exactly_6_5(self):
+        """c_sat=6.5 exactly should NOT trigger Plant (needs > 6.5)."""
+        roles = infer_belbin_roles(_make_subscales(c_sat=6.5, c_frust=3.0, a_sat=4.0))
+        role_names = [r["role"] for r in roles]
+        assert "Plant" not in role_names
+
+
+class TestImplementerRole:
+    """Implementer fires when C-sat > 5.5 AND A-sat > 5.5 AND C-frust < 4.0."""
+
+    def test_implementer_systematic(self):
+        roles = infer_belbin_roles(_make_subscales(c_sat=6.0, a_sat=6.0, c_frust=3.0))
+        role_names = [r["role"] for r in roles]
+        assert "Implementer" in role_names
+        impl = next(r for r in roles if r["role"] == "Implementer")
+        assert impl["qualifier"] == "Systematic"
+
+    def test_implementer_not_triggered_high_c_frust(self):
+        """High craft frustration blocks Implementer."""
+        roles = infer_belbin_roles(_make_subscales(c_sat=6.0, a_sat=6.0, c_frust=5.0))
+        role_names = [r["role"] for r in roles]
+        assert "Implementer" not in role_names
+
+
+class TestCompleterFinisherRole:
+    """Completer-Finisher fires when C-sat > 6.0 AND C-frust > 5.0."""
+
+    def test_completer_finisher_quality_driven(self):
+        roles = infer_belbin_roles(_make_subscales(c_sat=7.0, c_frust=6.0))
+        role_names = [r["role"] for r in roles]
+        assert "Completer-Finisher" in role_names
+        cf = next(r for r in roles if r["role"] == "Completer-Finisher")
+        assert cf["qualifier"] == "Quality Driven"
+
+    def test_completer_finisher_boundary_c_frust_exactly_5(self):
+        """c_frust=5.0 exactly should NOT trigger (needs > 5.0)."""
+        roles = infer_belbin_roles(_make_subscales(c_sat=7.0, c_frust=5.0))
+        role_names = [r["role"] for r in roles]
+        assert "Completer-Finisher" not in role_names
+
+
 class TestFallbackRole:
     """When no rule matches, return Resource Investigator (Seeking)."""
 

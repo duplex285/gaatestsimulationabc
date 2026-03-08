@@ -26,7 +26,7 @@ sys.path.insert(0, str(project_root))
 import pandas as pd
 
 from src.python_scoring.scoring_pipeline import ABCScorer
-from src.python_scoring.type_descriptions import TYPE_DESCRIPTIONS, DOMAIN_STATE_DESCRIPTIONS
+from src.python_scoring.type_descriptions import DOMAIN_STATE_DESCRIPTIONS, TYPE_DESCRIPTIONS
 
 DOMAIN_COLOURS = {
     "ambition": "#E8563A",
@@ -284,7 +284,9 @@ def make_belbin_chart(results):
         colours.append(BELBIN_COLOURS.get(role_name, "#666"))
 
     fig, ax = plt.subplots(figsize=(9, max(4, len(sorted_roles) * 0.5)))
-    bars = ax.barh(range(len(sorted_roles)), counts, color=colours, edgecolor="white", linewidth=0.5)
+    bars = ax.barh(
+        range(len(sorted_roles)), counts, color=colours, edgecolor="white", linewidth=0.5
+    )
     ax.set_yticks(range(len(sorted_roles)))
     ax.set_yticklabels(sorted_roles, fontsize=9)
     ax.invert_yaxis()
@@ -444,12 +446,12 @@ def build_domain_states_explained_html():
     for state_name in ["Thriving", "Vulnerable", "Dormant", "Distressed"]:
         desc = DOMAIN_STATE_DESCRIPTIONS[state_name]
         cards_html += f"""
-            <div class="card" style="border-left: 4px solid {desc['colour']}; margin-bottom: 1rem; padding: 1.2rem;">
-                <h3 style="color: {desc['colour']}; margin-bottom: 0.2rem;">{desc['label']}</h3>
-                <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 0.5rem;">{desc['condition']}</p>
-                <p style="font-weight: 600; margin-bottom: 0.5rem;">{desc['summary']}</p>
-                <p style="font-size: 0.88rem; margin-bottom: 0.5rem;">{desc['science']}</p>
-                <p style="font-size: 0.88rem; font-style: italic; color: var(--muted);">{desc['implication']}</p>
+            <div class="card" style="border-left: 4px solid {desc["colour"]}; margin-bottom: 1rem; padding: 1.2rem;">
+                <h3 style="color: {desc["colour"]}; margin-bottom: 0.2rem;">{desc["label"]}</h3>
+                <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 0.5rem;">{desc["condition"]}</p>
+                <p style="font-weight: 600; margin-bottom: 0.5rem;">{desc["summary"]}</p>
+                <p style="font-size: 0.88rem; margin-bottom: 0.5rem;">{desc["science"]}</p>
+                <p style="font-size: 0.88rem; font-style: italic; color: var(--muted);">{desc["implication"]}</p>
             </div>"""
     return cards_html
 
@@ -482,13 +484,13 @@ def build_type_guide_html(results):
             html += f"""
                 <div class="card type-guide-card" style="padding: 0; overflow: hidden;">
                     <div style="background: {colour}; color: white; padding: 0.6rem 1rem;">
-                        <strong>{type_name}</strong> &mdash; <em>{desc['tagline']}</em>
+                        <strong>{type_name}</strong> &mdash; <em>{desc["tagline"]}</em>
                     </div>
                     <div style="padding: 1rem; font-size: 0.88rem;">
-                        <p style="margin-bottom: 0.5rem;">{desc['description']}</p>
+                        <p style="margin-bottom: 0.5rem;">{desc["description"]}</p>
                         <p style="margin-bottom: 0.3rem;"><strong>Strengths:</strong> {strengths_list}</p>
-                        <p style="margin-bottom: 0.3rem;"><strong>Watch for:</strong> {desc['watch_for']}</p>
-                        <p style="color: var(--muted); font-style: italic;">{desc['growth_edge']}</p>
+                        <p style="margin-bottom: 0.3rem;"><strong>Watch for:</strong> {desc["watch_for"]}</p>
+                        <p style="color: var(--muted); font-style: italic;">{desc["growth_edge"]}</p>
                     </div>
                 </div>"""
         html += "</div>"
@@ -564,7 +566,9 @@ def build_html(results, charts, raw_responses):
 
     # Build type descriptions JSON for JavaScript (only observed types)
     observed_types = {r["type_name"] for r in results}
-    type_desc_js = {name: desc for name, desc in TYPE_DESCRIPTIONS.items() if name in observed_types}
+    type_desc_js = {
+        name: desc for name, desc in TYPE_DESCRIPTIONS.items() if name in observed_types
+    }
     type_descriptions_json = json.dumps(type_desc_js)
 
     return f"""<!DOCTYPE html>
@@ -583,6 +587,9 @@ def build_html(results, charts, raw_responses):
             --ambition: #E8563A;
             --belonging: #3A8FE8;
             --craft: #3ABF5E;
+            --sidebar-bg: #1a1a2e;
+            --sidebar-w: 220px;
+            --accent: #3A8FE8;
         }}
 
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -594,25 +601,161 @@ def build_html(results, charts, raw_responses):
             line-height: 1.6;
         }}
 
-        .header {{
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        /* ── Sidebar ── */
+        .sidebar {{
+            position: fixed;
+            left: 0; top: 0; bottom: 0;
+            width: var(--sidebar-w);
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            overflow-y: auto;
+        }}
+
+        .sidebar-title {{
+            padding: 1.5rem 1.2rem 0.5rem;
             color: white;
-            padding: 3rem 2rem;
-            text-align: center;
-        }}
-
-        .header h1 {{
-            font-size: 2rem;
+            font-size: 1.05rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
+            letter-spacing: 0.02em;
         }}
 
-        .header p {{
-            font-size: 1rem;
-            opacity: 0.8;
-            max-width: 600px;
-            margin: 0 auto;
+        .sidebar-subtitle {{
+            padding: 0 1.2rem 1.2rem;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }}
+
+        .sidebar nav {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            padding: 0 0.8rem;
+        }}
+
+        .nav-item {{
+            display: block;
+            padding: 0.55rem 0.9rem;
+            border-radius: 8px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            user-select: none;
+        }}
+
+        .nav-item:hover {{
+            background: rgba(255,255,255,0.08);
+            color: white;
+        }}
+
+        .nav-item.active {{
+            background: var(--accent);
+            color: white;
+        }}
+
+        .sidebar-footer {{
+            padding: 1rem 1.2rem;
+            color: rgba(255,255,255,0.35);
+            font-size: 0.7rem;
+        }}
+
+        /* ── Hamburger (mobile) ── */
+        .hamburger {{
+            display: none;
+            position: fixed;
+            top: 0.8rem; left: 0.8rem;
+            z-index: 200;
+            background: var(--sidebar-bg);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 40px; height: 40px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }}
+
+        .nav-overlay {{
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 90;
+        }}
+
+        /* ── Main content area ── */
+        .main {{
+            margin-left: var(--sidebar-w);
+            min-height: 100vh;
+        }}
+
+        .tab-content {{
+            display: none;
+            animation: tabFadeIn 0.25s ease;
+        }}
+
+        .tab-content.active {{
+            display: block;
+        }}
+
+        @keyframes tabFadeIn {{
+            from {{ opacity: 0; transform: translateY(6px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+
+        .tab-inner {{
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }}
+
+        .tab-header {{
+            margin-bottom: 1.5rem;
+        }}
+
+        .tab-header h1 {{
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }}
+
+        .tab-header p {{
+            font-size: 0.92rem;
+            color: var(--muted);
+        }}
+
+        /* ── Mobile responsive ── */
+        @media (max-width: 768px) {{
+            .sidebar {{
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+            }}
+            .sidebar.open {{
+                transform: translateX(0);
+            }}
+            .hamburger {{
+                display: flex;
+            }}
+            .nav-overlay.open {{
+                display: block;
+            }}
+            .main {{
+                margin-left: 0;
+            }}
+            .tab-inner {{
+                padding: 3.5rem 1rem 1.5rem;
+            }}
+        }}
+
+        /* ── Existing styles (preserved) ── */
 
         .stats-bar {{
             display: flex;
@@ -620,8 +763,10 @@ def build_html(results, charts, raw_responses):
             gap: 2rem;
             padding: 1.5rem 2rem;
             background: white;
-            border-bottom: 1px solid var(--border);
+            border-radius: 8px;
+            border: 1px solid var(--border);
             flex-wrap: wrap;
+            margin-bottom: 1.5rem;
         }}
 
         .stat {{
@@ -643,12 +788,6 @@ def build_html(results, charts, raw_responses):
 
         .stat-pass {{
             color: #3ABF5E;
-        }}
-
-        .container {{
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
         }}
 
         .section {{
@@ -757,15 +896,6 @@ def build_html(results, charts, raw_responses):
             color: var(--muted);
         }}
 
-        .footer {{
-            text-align: center;
-            padding: 2rem;
-            color: var(--muted);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--border);
-        }}
-
-        /* Individual participants table */
         .controls {{
             display: flex;
             gap: 0.75rem;
@@ -1004,246 +1134,480 @@ def build_html(results, charts, raw_responses):
             color: var(--muted);
             margin-top: 0.3rem;
         }}
+
+        /* ── Methodology tab ── */
+        .pipeline-steps {{
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+        }}
+
+        .pipeline-steps li {{
+            counter-increment: step;
+            padding: 0.75rem 0.75rem 0.75rem 3rem;
+            margin-bottom: 0.5rem;
+            background: var(--card);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+            position: relative;
+            font-size: 0.9rem;
+        }}
+
+        .pipeline-steps li::before {{
+            content: counter(step);
+            position: absolute;
+            left: 0.75rem;
+            top: 0.75rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+
+        .ref-list {{
+            list-style: none;
+            padding: 0;
+        }}
+
+        .ref-list li {{
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }}
+
+        .ref-list li:last-child {{
+            border-bottom: none;
+        }}
+
+        .limitations-list {{
+            padding-left: 1.2rem;
+        }}
+
+        .limitations-list li {{
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+        }}
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>ABC Assessment Simulation Results</h1>
-        <p>Psychometric validation of the 6-factor model across {n:,} simulated participants.
-        Satisfaction and frustration measured across three domains: Ambition, Belonging, and Craft.</p>
-    </div>
 
-    <div class="stats-bar">
-        <div class="stat">
-            <div class="stat-value">{n:,}</div>
-            <div class="stat-label">Participants</div>
-        </div>
-        <div class="stat">
-            <div class="stat-value">6</div>
-            <div class="stat-label">Subscales</div>
-        </div>
-        <div class="stat">
-            <div class="stat-value">{n_types}</div>
-            <div class="stat-label">Types Observed</div>
-        </div>
-        <div class="stat">
-            <div class="stat-value">106</div>
-            <div class="stat-label">Tests Passed</div>
-        </div>
-        <div class="stat">
-            <div class="stat-value stat-pass">ALL PASS</div>
-            <div class="stat-label">Validation Gates</div>
-        </div>
-    </div>
+    <!-- Hamburger button (mobile) -->
+    <button class="hamburger" id="hamburger" aria-label="Toggle navigation">&#9776;</button>
+    <div class="nav-overlay" id="nav-overlay"></div>
 
-    <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-title">ABC Assessment</div>
+        <div class="sidebar-subtitle">Simulation Dashboard</div>
+        <nav>
+            <a class="nav-item active" data-tab="overview">Overview</a>
+            <a class="nav-item" data-tab="types">Types</a>
+            <a class="nav-item" data-tab="states">Domain States</a>
+            <a class="nav-item" data-tab="belbin">Belbin Roles</a>
+            <a class="nav-item" data-tab="risk">Risk Signals</a>
+            <a class="nav-item" data-tab="participants">Participants</a>
+            <a class="nav-item" data-tab="methodology">Methodology</a>
+        </nav>
+        <div class="sidebar-footer">{n:,} participants &middot; 2026-03-08</div>
+    </aside>
 
-        <div class="section">
-            <h2>Validation Gates</h2>
-            <p class="desc">Every gate must pass before the scoring pipeline is considered validated.</p>
-            <div class="validation-grid">
-                <div class="gate">
-                    <div class="gate-label">Scoring Correlation</div>
-                    <div class="gate-value">r = 1.000</div>
-                    <div class="gate-target">Target: &ge; 0.85 per subscale</div>
+    <!-- Main content -->
+    <div class="main">
+
+        <!-- ═══ TAB: Overview ═══ -->
+        <div class="tab-content active" id="tab-overview">
+            <div class="tab-inner">
+                <div class="tab-header">
+                    <h1>Overview</h1>
+                    <p>Psychometric validation of the 6-factor model across {n:,} simulated participants. Satisfaction and frustration measured across three domains: Ambition, Belonging, and Craft.</p>
                 </div>
-                <div class="gate">
-                    <div class="gate-label">Domain State Accuracy</div>
-                    <div class="gate-value">100.0%</div>
-                    <div class="gate-target">Target: &ge; 80%</div>
+
+                <div class="stats-bar">
+                    <div class="stat">
+                        <div class="stat-value">{n:,}</div>
+                        <div class="stat-label">Participants</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">6</div>
+                        <div class="stat-label">Subscales</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">{n_types}</div>
+                        <div class="stat-label">Types Observed</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">106</div>
+                        <div class="stat-label">Tests Passed</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value stat-pass">ALL PASS</div>
+                        <div class="stat-label">Validation Gates</div>
+                    </div>
                 </div>
-                <div class="gate">
-                    <div class="gate-label">Vulnerable Sensitivity</div>
-                    <div class="gate-value">100.0%</div>
-                    <div class="gate-target">Target: &ge; 75%</div>
-                </div>
-                <div class="gate">
-                    <div class="gate-label">Max Type Frequency</div>
-                    <div class="gate-value">11.0%</div>
-                    <div class="gate-target">Target: &le; 15%</div>
-                </div>
-                <div class="gate">
-                    <div class="gate-label">CFA Model Fit (CFI)</div>
-                    <div class="gate-value">1.000</div>
-                    <div class="gate-target">Target: &ge; 0.95</div>
-                </div>
-                <div class="gate">
-                    <div class="gate-label">Code Coverage</div>
-                    <div class="gate-value">97.5%</div>
-                    <div class="gate-target">Target: &ge; 85%</div>
+
+                <div class="section">
+                    <h2>Validation Gates</h2>
+                    <p class="desc">Every gate must pass before the scoring pipeline is considered validated.</p>
+                    <div class="validation-grid">
+                        <div class="gate">
+                            <div class="gate-label">Scoring Correlation</div>
+                            <div class="gate-value">r = 1.000</div>
+                            <div class="gate-target">Target: &ge; 0.85 per subscale</div>
+                        </div>
+                        <div class="gate">
+                            <div class="gate-label">Domain State Accuracy</div>
+                            <div class="gate-value">100.0%</div>
+                            <div class="gate-target">Target: &ge; 80%</div>
+                        </div>
+                        <div class="gate">
+                            <div class="gate-label">Vulnerable Sensitivity</div>
+                            <div class="gate-value">100.0%</div>
+                            <div class="gate-target">Target: &ge; 75%</div>
+                        </div>
+                        <div class="gate">
+                            <div class="gate-label">Max Type Frequency</div>
+                            <div class="gate-value">11.0%</div>
+                            <div class="gate-target">Target: &le; 15%</div>
+                        </div>
+                        <div class="gate">
+                            <div class="gate-label">CFA Model Fit (CFI)</div>
+                            <div class="gate-value">1.000</div>
+                            <div class="gate-target">Target: &ge; 0.95</div>
+                        </div>
+                        <div class="gate">
+                            <div class="gate-label">Code Coverage</div>
+                            <div class="gate-value">97.5%</div>
+                            <div class="gate-target">Target: &ge; 85%</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="section">
-            <h2>Type Distribution</h2>
-            <p class="desc">Each participant is assigned one of 36 types based on their dominant domain and primary Big Five trait. Colours indicate the dominant domain.</p>
-            <div class="card">
-                <img class="chart-img" src="data:image/png;base64,{charts["types"]}" alt="Type Distribution">
+        <!-- ═══ TAB: Types ═══ -->
+        <div class="tab-content" id="tab-types">
+            <div class="tab-inner">
+                <div class="tab-header">
+                    <h1>Types</h1>
+                    <p>Each participant is assigned one of 36 types based on their dominant domain and primary Big Five trait.</p>
+                </div>
+
+                <div class="section">
+                    <h2>Type Distribution</h2>
+                    <p class="desc">Colours indicate the dominant domain. All {n_types} observed types ranked by frequency.</p>
+                    <div class="card">
+                        <img class="chart-img" src="data:image/png;base64,{charts["types"]}" alt="Type Distribution">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Type Guide</h2>
+                    <p class="desc">Detailed profiles for each observed type, grouped by dominant domain. Each card explains the psychological pattern, strengths, risks, and growth focus.</p>
+                    {type_guide}
+                </div>
             </div>
         </div>
 
-        <div class="section">
-            <h2>Domain States</h2>
-            <p class="desc">Each domain is classified into one of four states based on satisfaction and frustration scores relative to the 5.5 threshold.</p>
-            <div class="grid-2">
-                <div class="card">
-                    <img class="chart-img" src="data:image/png;base64,{charts["states"]}" alt="Domain States">
+        <!-- ═══ TAB: Domain States ═══ -->
+        <div class="tab-content" id="tab-states">
+            <div class="tab-inner">
+                <div class="tab-header">
+                    <h1>Domain States</h1>
+                    <p>Each domain is classified into one of four states based on satisfaction and frustration scores relative to the 5.5 threshold.</p>
                 </div>
-                <div class="card" style="padding: 0;">
-                    <table>
+
+                <div class="section">
+                    <h2>State Distribution</h2>
+                    <div class="grid-2">
+                        <div class="card">
+                            <img class="chart-img" src="data:image/png;base64,{charts["states"]}" alt="Domain States">
+                        </div>
+                        <div class="card" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr><th>Domain</th><th>State</th><th>Count</th><th>%</th></tr>
+                                </thead>
+                                <tbody>{build_state_table_html(state_rows)}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Satisfaction vs Frustration</h2>
+                    <p class="desc">Scatter plots for each domain. Dashed lines mark the 5.5 threshold dividing the four state quadrants.</p>
+                    <div class="card">
+                        <img class="chart-img" src="data:image/png;base64,{charts["scatter"]}" alt="Satisfaction vs Frustration Scatter">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Domain States Explained</h2>
+                    <p class="desc">The four states arise from crossing satisfaction and frustration at the 5.5 threshold. Each state has distinct psychological dynamics and intervention implications.</p>
+                    {domain_states_explained}
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ TAB: Belbin Roles ═══ -->
+        <div class="tab-content" id="tab-belbin">
+            <div class="tab-inner">
+                <div class="tab-header">
+                    <h1>Belbin Roles</h1>
+                    <p>Inferred team roles based on subscale score patterns. A participant can hold multiple roles.</p>
+                </div>
+
+                <div class="section">
+                    <div class="grid-2">
+                        <div class="card">
+                            <img class="chart-img" src="data:image/png;base64,{charts["belbin"]}" alt="Belbin Role Distribution">
+                        </div>
+                        <div class="card" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr><th>Role (Qualifier)</th><th>Count</th><th>% of Participants</th></tr>
+                                </thead>
+                                <tbody>{belbin_summary}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ TAB: Risk Signals ═══ -->
+        <div class="tab-content" id="tab-risk">
+            <div class="tab-inner">
+                <div class="tab-header">
+                    <h1>Risk Signals</h1>
+                    <p>Frustration signatures and score distributions that may indicate psychological strain.</p>
+                </div>
+
+                <div class="section">
+                    <h2>Frustration Signatures</h2>
+                    <p class="desc">Clinically relevant patterns where high frustration co-occurs with satisfaction extremes. Medium risk indicates strain; high risk indicates active need thwarting.</p>
+                    <div class="card" style="padding: 0;">
+                        <table>
+                            <thead>
+                                <tr><th>Signature</th><th>Risk</th><th>Count</th><th>% of Participants</th></tr>
+                            </thead>
+                            <tbody>{frustration_summary}</tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Score Distributions</h2>
+                    <p class="desc">Subscale scores (0-10 normalised) and Big Five inferred percentiles across all participants.</p>
+                    <div class="grid-2">
+                        <div class="card">
+                            <img class="chart-img" src="data:image/png;base64,{charts["subscales"]}" alt="Subscale Distributions">
+                        </div>
+                        <div class="card">
+                            <img class="chart-img" src="data:image/png;base64,{charts["big_five"]}" alt="Big Five Distributions">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Subscale Statistics</h2>
+                    <div class="card" style="padding: 0;">
+                        <table>
+                            <thead>
+                                <tr><th>Subscale</th><th>Mean</th><th>SD</th><th>Min</th><th>Max</th></tr>
+                            </thead>
+                            <tbody>{build_subscale_table_html(sub_rows)}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ TAB: Participants ═══ -->
+        <div class="tab-content" id="tab-participants">
+            <div class="tab-inner">
+                <div class="tab-header">
+                    <h1>Individual Participants</h1>
+                    <p>Click any row to expand the full response profile. Search by ID, type, or domain. Sort by clicking column headers.</p>
+                </div>
+
+                <div class="controls">
+                    <input type="text" id="search-input" placeholder="Search by ID, type, domain, or state...">
+                    <select id="type-filter">
+                        <option value="">All Types</option>
+                    </select>
+                    <select id="domain-filter">
+                        <option value="">All Domains</option>
+                        <option value="Ambition">Ambition</option>
+                        <option value="Belonging">Belonging</option>
+                        <option value="Craft">Craft</option>
+                    </select>
+                    <select id="state-filter">
+                        <option value="">All States</option>
+                        <option value="Thriving">Thriving</option>
+                        <option value="Vulnerable">Vulnerable</option>
+                        <option value="Dormant">Dormant</option>
+                        <option value="Distressed">Distressed</option>
+                    </select>
+                    <span class="count" id="row-count"></span>
+                    <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+                </div>
+                <div class="card participants-wrap">
+                    <table id="participants-table">
                         <thead>
-                            <tr><th>Domain</th><th>State</th><th>Count</th><th>%</th></tr>
+                            <tr>
+                                <th data-key="id"># <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="type">Type <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="domain">Domain <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="a_state">A-State <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="b_state">B-State <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="c_state">C-State <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="a_sat">A-Sat <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="a_frust">A-Frust <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="b_sat">B-Sat <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="b_frust">B-Frust <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="c_sat">C-Sat <span class="sort-arrow">&#9650;</span></th>
+                                <th data-key="c_frust">C-Frust <span class="sort-arrow">&#9650;</span></th>
+                            </tr>
                         </thead>
-                        <tbody>{build_state_table_html(state_rows)}</tbody>
+                        <tbody id="participants-body"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <div class="section">
-            <h2>Domain States Explained</h2>
-            <p class="desc">The four states arise from crossing satisfaction and frustration at the 5.5 threshold. Each state has distinct psychological dynamics and intervention implications.</p>
-            {domain_states_explained}
-        </div>
-
-        <div class="section">
-            <h2>Satisfaction vs Frustration</h2>
-            <p class="desc">Scatter plots for each domain. Dashed lines mark the 5.5 threshold dividing the four state quadrants.</p>
-            <div class="card">
-                <img class="chart-img" src="data:image/png;base64,{charts["scatter"]}" alt="Satisfaction vs Frustration Scatter">
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Score Distributions</h2>
-            <p class="desc">Subscale scores (0-10 normalized) and Big Five inferred percentiles across all participants.</p>
-            <div class="grid-2">
-                <div class="card">
-                    <img class="chart-img" src="data:image/png;base64,{charts["subscales"]}" alt="Subscale Distributions">
+        <!-- ═══ TAB: Methodology ═══ -->
+        <div class="tab-content" id="tab-methodology">
+            <div class="tab-inner">
+                <div class="tab-header">
+                    <h1>Methodology</h1>
+                    <p>How the ABC Assessment scoring pipeline works, what we validated, and what remains to be done.</p>
                 </div>
-                <div class="card">
-                    <img class="chart-img" src="data:image/png;base64,{charts["big_five"]}" alt="Big Five Distributions">
+
+                <div class="section">
+                    <h2>Scoring Pipeline</h2>
+                    <p class="desc">The ten-step pipeline transforms raw 7-point Likert responses into typed profiles with team-role and risk annotations.</p>
+                    <ol class="pipeline-steps">
+                        <li><strong>Ingest raw responses</strong> &mdash; 24 items on a 1-7 Likert scale across three domains (Ambition, Belonging, Craft), each with satisfaction and frustration subscales.</li>
+                        <li><strong>Reverse-score frustration items</strong> &mdash; Items AS4, AF4, BS4, BF4, CS4, CF4 are reverse-keyed. Recode as (8 &minus; raw).</li>
+                        <li><strong>Compute subscale means</strong> &mdash; Average the four items per subscale to yield six raw means (a_sat, a_frust, b_sat, b_frust, c_sat, c_frust).</li>
+                        <li><strong>Normalise to 0-10</strong> &mdash; Transform each subscale mean from the 1-7 range to 0-10 using: score = (mean &minus; 1) &times; 10 / 6.</li>
+                        <li><strong>Classify domain states</strong> &mdash; For each domain, cross satisfaction and frustration at the 5.5 threshold to assign one of four states: Thriving, Vulnerable, Dormant, or Distressed.</li>
+                        <li><strong>Identify dominant domain</strong> &mdash; The domain with the highest satisfaction score is the dominant domain. Ties are broken by lowest frustration, then alphabetical order.</li>
+                        <li><strong>Infer Big Five percentiles</strong> &mdash; Map subscale patterns to approximate Big Five percentiles (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism) using empirically anchored heuristics.</li>
+                        <li><strong>Assign type</strong> &mdash; Combine the dominant domain with the highest Big Five trait to produce one of 36 named types (e.g., &ldquo;Ambitious Explorer&rdquo;).</li>
+                        <li><strong>Map Belbin roles</strong> &mdash; Derive team-role assignments from subscale score patterns, with each participant potentially holding multiple roles and qualifiers.</li>
+                        <li><strong>Flag frustration signatures</strong> &mdash; Detect clinically relevant patterns where high frustration co-occurs with satisfaction extremes, rated medium or high risk.</li>
+                    </ol>
                 </div>
-            </div>
-        </div>
 
-        <div class="section">
-            <h2>Subscale Statistics</h2>
-            <div class="card" style="padding: 0;">
-                <table>
-                    <thead>
-                        <tr><th>Subscale</th><th>Mean</th><th>SD</th><th>Min</th><th>Max</th></tr>
-                    </thead>
-                    <tbody>{build_subscale_table_html(sub_rows)}</tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Full Type Breakdown</h2>
-            <p class="desc">All {n_types} observed types ranked by frequency.</p>
-            <div class="card" style="padding: 0; max-height: 600px; overflow-y: auto;">
-                <table>
-                    <thead>
-                        <tr><th>Type</th><th>Domain</th><th>Count</th><th>%</th></tr>
-                    </thead>
-                    <tbody>{build_type_table_html(type_rows)}</tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Type Guide</h2>
-            <p class="desc">Detailed profiles for each observed type, grouped by dominant domain. Each card explains the psychological pattern, strengths, risks, and growth focus.</p>
-            {type_guide}
-        </div>
-
-        <div class="section">
-            <h2>Belbin Role Distribution</h2>
-            <p class="desc">Inferred team roles based on subscale score patterns. A participant can hold multiple roles.</p>
-            <div class="grid-2">
-                <div class="card">
-                    <img class="chart-img" src="data:image/png;base64,{charts["belbin"]}" alt="Belbin Role Distribution">
+                <div class="section">
+                    <h2>Validation Results</h2>
+                    <p class="desc">All gates passed on the simulated dataset of {n:,} participants.</p>
+                    <div class="card" style="padding: 0;">
+                        <table>
+                            <thead>
+                                <tr><th>Gate</th><th>Target</th><th>Achieved</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Scoring Correlation (per subscale)</td><td>&ge; 0.85</td><td>r = 1.000</td><td><span class="state-badge" style="background:#3ABF5E">Pass</span></td></tr>
+                                <tr><td>Domain State Accuracy</td><td>&ge; 80%</td><td>100.0%</td><td><span class="state-badge" style="background:#3ABF5E">Pass</span></td></tr>
+                                <tr><td>Vulnerable Sensitivity</td><td>&ge; 75%</td><td>100.0%</td><td><span class="state-badge" style="background:#3ABF5E">Pass</span></td></tr>
+                                <tr><td>Max Type Frequency</td><td>&le; 15%</td><td>11.0%</td><td><span class="state-badge" style="background:#3ABF5E">Pass</span></td></tr>
+                                <tr><td>CFA Model Fit (CFI)</td><td>&ge; 0.95</td><td>1.000</td><td><span class="state-badge" style="background:#3ABF5E">Pass</span></td></tr>
+                                <tr><td>Code Coverage</td><td>&ge; 85%</td><td>97.5%</td><td><span class="state-badge" style="background:#3ABF5E">Pass</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="card" style="padding: 0;">
-                    <table>
-                        <thead>
-                            <tr><th>Role (Qualifier)</th><th>Count</th><th>% of Participants</th></tr>
-                        </thead>
-                        <tbody>{belbin_summary}</tbody>
-                    </table>
+
+                <div class="section">
+                    <h2>Limitations</h2>
+                    <ul class="limitations-list">
+                        <li><strong>Synthetic data only.</strong> All {n:,} participants were generated from parametric distributions, not collected from real respondents. Factor structure, inter-item correlations, and response patterns may differ from field data.</li>
+                        <li><strong>No empirical validation yet.</strong> The scoring pipeline has been verified against its own generative model, which guarantees internal consistency but does not confirm external or predictive validity.</li>
+                        <li><strong>Population assumptions.</strong> The simulation assumes normally distributed latent traits with moderate inter-domain correlations. Real populations may show skew, ceiling/floor effects, or different correlation structures.</li>
+                        <li><strong>Big Five mapping is heuristic.</strong> The inferred Big Five percentiles are derived from subscale patterns rather than a validated Big Five instrument. They should be treated as approximate indicators, not clinical scores.</li>
+                        <li><strong>Belbin roles are inferred, not measured.</strong> Team-role assignments are based on subscale score heuristics rather than the official Belbin Self-Perception Inventory.</li>
+                        <li><strong>Threshold sensitivity.</strong> The 5.5 cut-off for domain state classification is theory-driven. Empirical calibration on real samples may shift this threshold.</li>
+                        <li><strong>Cross-cultural generalisability.</strong> Item wording, response styles, and construct validity have not been tested across cultures or languages.</li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h2>References</h2>
+                    <ul class="ref-list">
+                        <li>Bartholomew, K. J., Ntoumanis, N., Ryan, R. M., Bosch, J. A., &amp; Thogersen-Ntoumani, C. (2011). Self-determination theory and diminished functioning: The role of interpersonal control and psychological need thwarting. <em>Personality and Social Psychology Bulletin, 37</em>(11), 1459-1473.</li>
+                        <li>Costa, P. T., &amp; McCrae, R. R. (1992). <em>Revised NEO Personality Inventory (NEO-PI-R) and NEO Five-Factor Inventory (NEO-FFI) professional manual.</em> Psychological Assessment Resources.</li>
+                        <li>Deci, E. L., &amp; Ryan, R. M. (2000). The &ldquo;what&rdquo; and &ldquo;why&rdquo; of goal pursuits: Human needs and the self-determination of behavior. <em>Psychological Inquiry, 11</em>(4), 227-268.</li>
+                        <li>Lonsdale, C., &amp; Hodge, K. (2011). Temporal ordering of motivational quality and athlete burnout in elite sport. <em>Medicine &amp; Science in Sports &amp; Exercise, 43</em>(5), 913-921.</li>
+                        <li>Vansteenkiste, M., &amp; Ryan, R. M. (2013). On psychological growth and vulnerability: Basic psychological need satisfaction and need frustration as a unifying principle. <em>Journal of Psychotherapy Integration, 23</em>(3), 263-280.</li>
+                    </ul>
                 </div>
             </div>
         </div>
 
-        <div class="section">
-            <h2>Frustration Signatures</h2>
-            <p class="desc">Clinically relevant patterns where high frustration co-occurs with satisfaction extremes. Medium risk indicates strain; high risk indicates active need thwarting.</p>
-            <div class="card" style="padding: 0;">
-                <table>
-                    <thead>
-                        <tr><th>Signature</th><th>Risk</th><th>Count</th><th>% of Participants</th></tr>
-                    </thead>
-                    <tbody>{frustration_summary}</tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Individual Participants</h2>
-            <p class="desc">Click any row to expand the full response profile. Search by ID, type, or domain. Sort by clicking column headers.</p>
-            <div class="controls">
-                <input type="text" id="search-input" placeholder="Search by ID, type, domain, or state...">
-                <select id="type-filter">
-                    <option value="">All Types</option>
-                </select>
-                <select id="domain-filter">
-                    <option value="">All Domains</option>
-                    <option value="Ambition">Ambition</option>
-                    <option value="Belonging">Belonging</option>
-                    <option value="Craft">Craft</option>
-                </select>
-                <select id="state-filter">
-                    <option value="">All States</option>
-                    <option value="Thriving">Thriving</option>
-                    <option value="Vulnerable">Vulnerable</option>
-                    <option value="Dormant">Dormant</option>
-                    <option value="Distressed">Distressed</option>
-                </select>
-                <span class="count" id="row-count"></span>
-                <button class="export-btn" onclick="exportCSV()">Export CSV</button>
-            </div>
-            <div class="card participants-wrap">
-                <table id="participants-table">
-                    <thead>
-                        <tr>
-                            <th data-key="id"># <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="type">Type <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="domain">Domain <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="a_state">A-State <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="b_state">B-State <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="c_state">C-State <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="a_sat">A-Sat <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="a_frust">A-Frust <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="b_sat">B-Sat <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="b_frust">B-Frust <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="c_sat">C-Sat <span class="sort-arrow">&#9650;</span></th>
-                            <th data-key="c_frust">C-Frust <span class="sort-arrow">&#9650;</span></th>
-                        </tr>
-                    </thead>
-                    <tbody id="participants-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="footer">
-        ABC Assessment Psychometric Validation &middot; {n:,} simulated participants &middot; Generated 2026-03-08
-    </div>
+    </div><!-- /.main -->
 
     <script>
+    /* ── Tab navigation ── */
+    const navItems = document.querySelectorAll('.nav-item');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const sidebar = document.getElementById('sidebar');
+    const hamburger = document.getElementById('hamburger');
+    const navOverlay = document.getElementById('nav-overlay');
+    let participantsInitialised = false;
+
+    function switchTab(tabId) {{
+        tabContents.forEach(tc => tc.classList.remove('active'));
+        navItems.forEach(ni => ni.classList.remove('active'));
+
+        const target = document.getElementById('tab-' + tabId);
+        if (target) target.classList.add('active');
+
+        navItems.forEach(ni => {{
+            if (ni.dataset.tab === tabId) ni.classList.add('active');
+        }});
+
+        // Update URL hash without scrolling
+        history.replaceState(null, '', '#' + tabId);
+
+        // Initialise participants table on first activation
+        if (tabId === 'participants' && !participantsInitialised) {{
+            initParticipants();
+            participantsInitialised = true;
+        }}
+
+        // Close mobile nav
+        sidebar.classList.remove('open');
+        navOverlay.classList.remove('open');
+    }}
+
+    navItems.forEach(ni => {{
+        ni.addEventListener('click', () => switchTab(ni.dataset.tab));
+    }});
+
+    // Mobile hamburger
+    hamburger.addEventListener('click', () => {{
+        sidebar.classList.toggle('open');
+        navOverlay.classList.toggle('open');
+    }});
+    navOverlay.addEventListener('click', () => {{
+        sidebar.classList.remove('open');
+        navOverlay.classList.remove('open');
+    }});
+
+    // On load: check hash or default to overview
+    const startTab = location.hash ? location.hash.slice(1) : 'overview';
+    switchTab(startTab);
+
+    /* ── Participants table ── */
     const DATA = {participants_json};
 
     const DOMAIN_COLOURS = {{"Ambition":"#E8563A","Belonging":"#3A8FE8","Craft":"#3ABF5E"}};
@@ -1271,15 +1635,6 @@ def build_html(results, charts, raw_responses):
     let sortKey = "id";
     let sortAsc = true;
     let expandedId = null;
-
-    // Populate type filter
-    const types = [...new Set(DATA.map(d => d.type))].sort();
-    const typeSelect = document.getElementById("type-filter");
-    types.forEach(t => {{
-        const opt = document.createElement("option");
-        opt.value = t; opt.textContent = t;
-        typeSelect.appendChild(opt);
-    }});
 
     function stateBadge(state) {{
         return `<span class="state-badge" style="background:${{STATE_COLOURS[state] || '#666'}}">${{state}}</span>`;
@@ -1451,24 +1806,37 @@ def build_html(results, charts, raw_responses):
         }});
     }}
 
-    // Sort
-    document.querySelectorAll("#participants-table th").forEach(th => {{
-        th.addEventListener("click", () => {{
-            const key = th.dataset.key;
-            if (sortKey === key) {{ sortAsc = !sortAsc; }}
-            else {{ sortKey = key; sortAsc = true; }}
-            document.querySelectorAll("#participants-table th").forEach(h => h.classList.remove("sorted"));
-            th.classList.add("sorted");
-            th.querySelector(".sort-arrow").innerHTML = sortAsc ? "&#9650;" : "&#9660;";
-            render();
+    function initParticipants() {{
+        // Populate type filter
+        const types = [...new Set(DATA.map(d => d.type))].sort();
+        const typeSelect = document.getElementById("type-filter");
+        types.forEach(t => {{
+            const opt = document.createElement("option");
+            opt.value = t; opt.textContent = t;
+            typeSelect.appendChild(opt);
         }});
-    }});
 
-    // Filters
-    document.getElementById("search-input").addEventListener("input", render);
-    document.getElementById("type-filter").addEventListener("change", render);
-    document.getElementById("domain-filter").addEventListener("change", render);
-    document.getElementById("state-filter").addEventListener("change", render);
+        // Sort
+        document.querySelectorAll("#participants-table th").forEach(th => {{
+            th.addEventListener("click", () => {{
+                const key = th.dataset.key;
+                if (sortKey === key) {{ sortAsc = !sortAsc; }}
+                else {{ sortKey = key; sortAsc = true; }}
+                document.querySelectorAll("#participants-table th").forEach(h => h.classList.remove("sorted"));
+                th.classList.add("sorted");
+                th.querySelector(".sort-arrow").innerHTML = sortAsc ? "&#9650;" : "&#9660;";
+                render();
+            }});
+        }});
+
+        // Filters
+        document.getElementById("search-input").addEventListener("input", render);
+        document.getElementById("type-filter").addEventListener("change", render);
+        document.getElementById("domain-filter").addEventListener("change", render);
+        document.getElementById("state-filter").addEventListener("change", render);
+
+        render();
+    }}
 
     function exportCSV() {{
         const filtered = getFiltered();
@@ -1489,8 +1857,6 @@ def build_html(results, charts, raw_responses):
         a.download = "abc_participants.csv";
         a.click();
     }}
-
-    render();
     </script>
 </body>
 </html>"""

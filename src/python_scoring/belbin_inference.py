@@ -5,20 +5,37 @@ Reference: abc-assessment-spec Section 2.6
 Rule-based inference evaluated in order; multiple roles can apply.
 All rules use strict inequality (>) per spec.
 
-| Condition                              | Role               | Qualifier    |
-|----------------------------------------|--------------------|--------------|
-| A-sat > 6.5 AND B-sat > 6.0           | Shaper             | Inspiring    |
-| A-sat > 6.5 AND B-sat <= 6.0          | Shaper             | Driving      |
-| C-sat > 7.0 AND C-frust < 3.0         | Specialist         | Deep Mastery |
-| B-sat > 7.0 AND B-frust < 3.0         | Teamworker         | Anchor       |
-| A-sat > 5.0 AND B-sat > 5.0 AND C > 5 | Coordinator        | Balanced     |
-| A-frust > 6.0 OR B-frust > 6.0        | Monitor-Evaluator  | Vigilant     |
-| No match                              | Resource Investigator | Seeking   |
+Belbin's 9 team roles mapped to ABC subscale conditions:
+
+| Condition                                    | Role                  | Qualifier      |
+|----------------------------------------------|-----------------------|----------------|
+| C-sat > 6.5 AND C-frust < 4.0 AND A-sat < 5 | Plant                 | Creative       |
+| A-sat > 6.5 AND B-sat > 6.0                 | Shaper                | Inspiring      |
+| A-sat > 6.5 AND B-sat <= 6.0                | Shaper                | Driving        |
+| C-sat > 7.0 AND C-frust < 3.0               | Specialist            | Deep Mastery   |
+| B-sat > 7.0 AND B-frust < 3.0               | Teamworker            | Anchor         |
+| A-sat > 5.0 AND B-sat > 5.0 AND C-sat > 5.0 | Coordinator           | Balanced       |
+| A-frust > 6.0 OR B-frust > 6.0              | Monitor-Evaluator     | Vigilant       |
+| C-sat > 5.5 AND A-sat > 5.5 AND C-frust < 4 | Implementer           | Systematic     |
+| C-sat > 6.0 AND C-frust > 5.0               | Completer-Finisher    | Quality Driven |
+| No match                                     | Resource Investigator | Seeking        |
+
+Plant: High craft creativity (high C-sat, low C-frust) without strong ambition drive —
+  the idea generator who works from mastery rather than goal pursuit.
+Implementer: Turns plans into action — needs both craft satisfaction and ambition
+  satisfaction with low craft frustration, the disciplined executor.
+Completer-Finisher: High craft standards coupled with frustration about quality —
+  the person who notices every gap and won't ship until it's right.
 
 Subscale keys: a_sat, a_frust, b_sat, b_frust, c_sat, c_frust (0-10 scale).
 """
 
 BELBIN_RULES = [
+    {
+        "condition": lambda s: s["c_sat"] > 6.5 and s["c_frust"] < 4.0 and s["a_sat"] < 5.0,
+        "role": "Plant",
+        "qualifier": "Creative",
+    },
     {
         "condition": lambda s: s["a_sat"] > 6.5 and s["b_sat"] > 6.0,
         "role": "Shaper",
@@ -48,6 +65,16 @@ BELBIN_RULES = [
         "condition": lambda s: s["a_frust"] > 6.0 or s["b_frust"] > 6.0,
         "role": "Monitor-Evaluator",
         "qualifier": "Vigilant",
+    },
+    {
+        "condition": lambda s: s["c_sat"] > 5.5 and s["a_sat"] > 5.5 and s["c_frust"] < 4.0,
+        "role": "Implementer",
+        "qualifier": "Systematic",
+    },
+    {
+        "condition": lambda s: s["c_sat"] > 6.0 and s["c_frust"] > 5.0,
+        "role": "Completer-Finisher",
+        "qualifier": "Quality Driven",
     },
 ]
 
