@@ -1,0 +1,40 @@
+# Virtual environment
+abc-venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# R
+.Rhistory
+.Rdata
+.RData
+.Ruserdata
+*.Rproj.user
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Outputs (track reports but not large datasets)
+outputs/datasets/*.csv
+outputs/datasets/*.rds
+outputs/plots/*.png
+outputs/plots/*.pdf
+
+# Environment
+.env

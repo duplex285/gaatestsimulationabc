@@ -1,0 +1,24 @@
+# Validation thresholds for ABC Assessment
+# Reference: Hu & Bentler (1999), spec Section 11.3
+
+phase_0_r_validation:
+  cfa_fit:
+    cfi_min: 0.95
+    tli_min: 0.95
+    rmsea_max: 0.06
+    srmr_max: 0.08
+  internal_consistency:
+    cronbach_alpha_min: 0.70
+  correlation_recovery:
+    max_average_error: 0.05
+
+phase_a_python:
+  scoring_accuracy:
+    pearson_r_min: 0.85
+    spearman_rho_min: 0.90
+  domain_classification:
+    overall_accuracy_min: 0.80
+    vulnerable_sensitivity_min: 0.75
+  type_distribution:
+    max_single_type_pct: 0.15
+    min_types_observed: 30

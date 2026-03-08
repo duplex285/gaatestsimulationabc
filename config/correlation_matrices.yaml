@@ -1,0 +1,35 @@
+# Population correlation matrices for simulation
+# Source: Chen et al. (2015), Bartholomew et al. (2011), spec Section 11.1
+
+# Primary matrix used for validation
+primary:
+  labels: [A_sat, A_frust, B_sat, B_frust, C_sat, C_frust]
+  matrix:
+    - [1.00, -0.50,  0.30, -0.15,  0.35, -0.10]
+    - [-0.50,  1.00, -0.15,  0.35, -0.10,  0.40]
+    - [0.30, -0.15,  1.00, -0.55,  0.25, -0.20]
+    - [-0.15,  0.35, -0.55,  1.00, -0.10,  0.35]
+    - [0.35, -0.10,  0.25, -0.10,  1.00, -0.45]
+    - [-0.10,  0.40, -0.20,  0.35, -0.45,  1.00]
+
+# Conservative scenario (weaker correlations - harder test)
+conservative:
+  labels: [A_sat, A_frust, B_sat, B_frust, C_sat, C_frust]
+  matrix:
+    - [1.00, -0.40,  0.20, -0.10,  0.25, -0.05]
+    - [-0.40,  1.00, -0.10,  0.25, -0.05,  0.30]
+    - [0.20, -0.10,  1.00, -0.45,  0.15, -0.15]
+    - [-0.10,  0.25, -0.45,  1.00, -0.05,  0.25]
+    - [0.25, -0.05,  0.15, -0.05,  1.00, -0.35]
+    - [-0.05,  0.30, -0.15,  0.25, -0.35,  1.00]
+
+# Strong scenario (stronger correlations)
+strong:
+  labels: [A_sat, A_frust, B_sat, B_frust, C_sat, C_frust]
+  matrix:
+    - [1.00, -0.60,  0.40, -0.20,  0.45, -0.15]
+    - [-0.60,  1.00, -0.20,  0.45, -0.15,  0.50]
+    - [0.40, -0.20,  1.00, -0.65,  0.35, -0.25]
+    - [-0.20,  0.45, -0.65,  1.00, -0.15,  0.45]
+    - [0.45, -0.15,  0.35, -0.15,  1.00, -0.55]
+    - [-0.15,  0.50, -0.25,  0.45, -0.55,  1.00]
