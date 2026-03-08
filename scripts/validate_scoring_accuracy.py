@@ -83,8 +83,7 @@ def compute_scoring_accuracy(results, subscales_df):
 
     avg_r = np.mean(list(correlations.values()))
     print()
-    print(f"  Average r: {avg_r:.3f}  (target: >= 0.85)  "
-          f"{'PASS' if avg_r >= 0.85 else 'FAIL'}")
+    print(f"  Average r: {avg_r:.3f}  (target: >= 0.85)  {'PASS' if avg_r >= 0.85 else 'FAIL'}")
     print()
     return all_pass, correlations
 
@@ -109,7 +108,7 @@ def compute_classification_accuracy(results, states_df):
         python_states = [r["domain_states"][domain] for r in results]
         true_states = states_df[domain].values
 
-        correct = sum(p == t for p, t in zip(python_states, true_states))
+        correct = sum(p == t for p, t in zip(python_states, true_states, strict=False))
         total = len(python_states)
         accuracy = correct / total * 100
 
@@ -126,18 +125,20 @@ def compute_classification_accuracy(results, states_df):
         else:
             v_sens = 0.0
 
-        print(f"  {domain:12s}: accuracy = {accuracy:.1f}%  "
-              f"vulnerable sensitivity = {v_sens:.1f}%")
+        print(f"  {domain:12s}: accuracy = {accuracy:.1f}%  vulnerable sensitivity = {v_sens:.1f}%")
 
     overall_accuracy = total_correct / total_count * 100
-    overall_v_sens = (vulnerable_correct / vulnerable_total * 100
-                      if vulnerable_total > 0 else 0.0)
+    overall_v_sens = vulnerable_correct / vulnerable_total * 100 if vulnerable_total > 0 else 0.0
 
     print()
-    print(f"  Overall accuracy:          {overall_accuracy:.1f}%  "
-          f"(target: >= 80%)  {'PASS' if overall_accuracy >= 80 else 'FAIL'}")
-    print(f"  Vulnerable sensitivity:    {overall_v_sens:.1f}%  "
-          f"(target: >= 75%)  {'PASS' if overall_v_sens >= 75 else 'FAIL'}")
+    print(
+        f"  Overall accuracy:          {overall_accuracy:.1f}%  "
+        f"(target: >= 80%)  {'PASS' if overall_accuracy >= 80 else 'FAIL'}"
+    )
+    print(
+        f"  Vulnerable sensitivity:    {overall_v_sens:.1f}%  "
+        f"(target: >= 75%)  {'PASS' if overall_v_sens >= 75 else 'FAIL'}"
+    )
     print()
 
     acc_pass = overall_accuracy >= 80
@@ -172,8 +173,9 @@ def compute_type_distribution(results):
 
     print()
     balance_pass = max_pct <= 15
-    print(f"  Max single type: {max_pct:.1f}%  "
-          f"(target: <= 15%)  {'PASS' if balance_pass else 'FAIL'}")
+    print(
+        f"  Max single type: {max_pct:.1f}%  (target: <= 15%)  {'PASS' if balance_pass else 'FAIL'}"
+    )
     print()
     return balance_pass
 
@@ -238,10 +240,12 @@ def main():
     results_dir.mkdir(parents=True, exist_ok=True)
 
     # Save correlation results
-    cor_df = pd.DataFrame({
-        "subscale": list(correlations.keys()),
-        "pearson_r": list(correlations.values()),
-    })
+    cor_df = pd.DataFrame(
+        {
+            "subscale": list(correlations.keys()),
+            "pearson_r": list(correlations.values()),
+        }
+    )
     cor_df.to_csv(results_dir / "scoring_correlations.csv", index=False)
 
     # Save scored data

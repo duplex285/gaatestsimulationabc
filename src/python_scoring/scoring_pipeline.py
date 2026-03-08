@@ -10,10 +10,16 @@ Pipeline:
     -> Domain state classification
     -> Big Five inference
     -> 36-type derivation
+    -> Frustration signature detection
+    -> Belbin role inference
+    -> Context gap analysis (when team scores provided)
 """
 
+from src.python_scoring.belbin_inference import infer_belbin_roles
 from src.python_scoring.big_five_inference import compute_big_five
+from src.python_scoring.context_gap import compute_context_gaps
 from src.python_scoring.domain_classification import classify_all_domains
+from src.python_scoring.frustration_signatures import detect_signatures
 from src.python_scoring.reverse_scoring import apply_reverse_scoring
 from src.python_scoring.subscale_computation import compute_all_subscales
 from src.python_scoring.type_derivation import derive_type
@@ -54,7 +60,11 @@ class ABCScorer:
     Reference: abc-assessment-spec Section 2.1
     """
 
-    def score(self, responses: dict[str, int]) -> dict:
+    def score(
+        self,
+        responses: dict[str, int],
+        team_scores: dict[str, float] | None = None,
+    ) -> dict:
         """Score a complete set of 24 item responses.
 
         Reference: abc-assessment-spec Section 2.1
@@ -62,9 +72,12 @@ class ABCScorer:
         Args:
             responses: Dict mapping item codes (AS1, AF1, etc.) to
                 responses on 1-7 Likert scale.
+            team_scores: Optional dict of team-level subscale scores (0-10)
+                for context gap analysis. Keys: a_sat, a_frust, etc.
 
         Returns:
-            Dict with subscales, domain_states, big_five, type_name, type_domain.
+            Dict with subscales, domain_states, big_five, type_name,
+            type_domain, frustration_signatures, belbin_roles, context_gaps.
         """
         self._validate_responses(responses)
 
@@ -88,12 +101,27 @@ class ABCScorer:
         # Reference: abc-assessment-spec Section 2.4
         type_result = derive_type(subscales, big_five)
 
+        # Step 7: Frustration signature detection
+        # Reference: abc-assessment-spec Section 2.5
+        frustration_signatures = detect_signatures(subscales)
+
+        # Step 8: Belbin role inference
+        # Reference: abc-assessment-spec Section 2.6
+        belbin_roles = infer_belbin_roles(subscales)
+
+        # Step 9: Context gap analysis
+        # Reference: abc-assessment-spec Section 2.7
+        context_gaps = compute_context_gaps(subscales, team_scores)
+
         return {
             "subscales": subscales,
             "domain_states": domain_states,
             "big_five": big_five,
             "type_name": type_result["type_name"],
             "type_domain": type_result["type_domain"],
+            "frustration_signatures": frustration_signatures,
+            "belbin_roles": belbin_roles,
+            "context_gaps": context_gaps,
         }
 
     def _validate_responses(self, responses: dict[str, int]) -> None:
