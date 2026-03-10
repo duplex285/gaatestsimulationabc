@@ -76,10 +76,10 @@ def perfect_vulnerable_responses():
 
 
 @pytest.fixture
-def perfect_dormant_responses():
+def perfect_mild_responses():
     """All items at minimum (1 for forward, 7 for reverse -> all become 1).
 
-    Expected: sat=0.0, frust=0.0, all Dormant.
+    Expected: sat=0.0, frust=0.0, all Mild.
     """
     responses = {}
     for items in SUBSCALE_ITEMS.values():

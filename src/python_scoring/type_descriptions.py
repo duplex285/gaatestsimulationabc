@@ -1,584 +1,517 @@
 """Type and state descriptions for the ABC Assessment.
 
 Reference: abc-assessment-spec Section 2.2 (domain states)
-Reference: abc-assessment-spec Section 2.4 (36-type derivation)
+Reference: abc-assessment-spec Section 2.4 (motivational type derivation)
 
-The 36-type system classifies each person by:
-  1. Dominant domain (Ambition, Belonging, Craft)
-  2. Primary Big Five trait direction (High/Low x 5 traits)
-  3 x 10 = 30 trait-based types + Integrator = 31 unique types
+24 types = 8 base patterns × 3 frustration modifiers.
 
-Type names are defined here as the single source of truth. To rename
-a type, change it in TYPE_DESCRIPTIONS and in type_derivation.TYPE_MAP.
+Base patterns from binary satisfaction threshold (6.46) per domain:
+  Integrator (A↑B↑C↑), Captain (A↑B↑C↓), Architect (A↑B↓C↑),
+  Mentor (A↓B↑C↑), Pioneer (A↑B↓C↓), Anchor (A↓B↑C↓),
+  Artisan (A↓B↓C↑), Seeker (A↓B↓C↓).
 
-Theoretical foundations:
-  - Self-Determination Theory (Deci & Ryan, 2000): autonomy, relatedness,
-    competence as basic psychological needs
-  - ABC mapping: Ambition ≈ autonomy, Belonging ≈ relatedness, Craft ≈ competence
-  - Big Five personality traits (Costa & McCrae, 1992)
-  - Frustration as distinct from low satisfaction (Vansteenkiste & Ryan, 2013)
+Modifiers from frustrated-domain count (frust ≥ 4.38):
+  Steady (0), Striving (1), Resolute (2-3).
+
+All names are strengths-based.
 """
 
 # ---------------------------------------------------------------------------
 # Domain State Descriptions
 # ---------------------------------------------------------------------------
-# Reference: abc-assessment-spec Section 2.2
-#
-# The four states arise from crossing satisfaction (high/low) with frustration
-# (high/low) at the 5.5 threshold on the 0-10 scale. This dual-continuum
-# model follows Vansteenkiste & Ryan (2013), who demonstrated that need
-# frustration is not simply the absence of need satisfaction — it is a
-# distinct psychological experience with independent effects on wellbeing.
 
 DOMAIN_STATE_DESCRIPTIONS = {
     "Thriving": {
         "label": "Thriving",
-        "condition": "Satisfaction >= 5.5, Frustration < 5.5",
-        "summary": "This need is being actively met with minimal obstruction.",
+        "condition": "Satisfaction >= 6.46, Frustration < 4.38",
+        "summary": "This need is met with minimal obstruction.",
         "science": (
-            "Self-Determination Theory predicts that when a basic psychological "
-            "need is satisfied without significant frustration, people experience "
-            "vitality, intrinsic motivation, and psychological growth (Deci & Ryan, "
-            "2000). The absence of frustration distinguishes genuine thriving from "
-            "the brittle high performance seen in the Vulnerable state. Longitudinal "
-            "research shows that sustained need satisfaction predicts lower burnout, "
-            "higher engagement, and greater persistence (Lonsdale & Hodge, 2011)."
+            "When a basic psychological need is satisfied without significant "
+            "frustration, people experience vitality, intrinsic motivation, and "
+            "psychological growth (Deci & Ryan, 2000). Low frustration distinguishes "
+            "genuine thriving from the brittle high performance of the Vulnerable "
+            "state. Sustained need satisfaction predicts lower burnout, higher "
+            "engagement, and greater persistence (Lonsdale & Hodge, 2011)."
+        ),
+        "fatigue": (
+            "Low fatigue risk. Satisfaction replenishes cognitive resources while "
+            "low frustration avoids the rumination that drains them."
         ),
         "implication": (
             "No intervention needed. Protect the conditions enabling this state. "
-            "Monitor for early signs of rising frustration that could shift the "
-            "person toward Vulnerable."
+            "Monitor for early signs of rising frustration."
         ),
         "colour": "#3ABF5E",
     },
     "Vulnerable": {
         "label": "Vulnerable",
-        "condition": "Satisfaction >= 5.5, Frustration >= 5.5",
-        "summary": "This need is being met, but at a cost. High frustration signals strain.",
+        "condition": "Satisfaction >= 6.46, Frustration >= 4.38",
+        "summary": "This need is met, but at a cost. High frustration signals strain.",
         "science": (
-            "Vansteenkiste & Ryan (2013) showed that need frustration has "
-            "independent negative effects on wellbeing even when need satisfaction "
-            "is high. This is the 'successful but suffering' pattern: a person "
-            "achieves outcomes but experiences controlling pressures, conditional "
-            "approval, or excessive self-criticism along the way. The coexistence "
-            "of high satisfaction and high frustration creates psychological "
-            "tension that is unsustainable. Without intervention, the typical "
-            "trajectory is toward Distressed as frustration erodes satisfaction."
+            "Need frustration harms wellbeing even when need satisfaction is high "
+            "(Vansteenkiste & Ryan, 2013). This is the 'successful but suffering' "
+            "pattern. High satisfaction and high frustration together create "
+            "unsustainable tension. Without intervention, frustration erodes "
+            "satisfaction and the trajectory shifts toward Distressed."
+        ),
+        "fatigue": (
+            "High fatigue risk. The person spends cognitive resources on two fronts: "
+            "performing the task and suppressing the frustration that accompanies it."
         ),
         "implication": (
             "Highest priority for intervention. The person is still engaged — "
-            "the window to act is now. Identify the source of frustration: "
-            "external pressure, interpersonal conflict, or self-imposed standards."
+            "the window to act is now."
         ),
         "colour": "#F5A623",
     },
-    "Dormant": {
-        "label": "Dormant",
-        "condition": "Satisfaction < 5.5, Frustration < 5.5",
+    "Mild": {
+        "label": "Mild",
+        "condition": "Satisfaction < 6.46, Frustration < 4.38",
         "summary": "This need is neither fulfilled nor actively blocked. It sits idle.",
         "science": (
-            "Low satisfaction without frustration suggests the need is not being "
-            "engaged rather than being thwarted. In SDT terms, this resembles "
-            "amotivation — the person neither pursues nor is blocked from pursuing "
-            "this need (Deci & Ryan, 2000). Dormancy is not inherently harmful in "
-            "the short term; people naturally prioritise different needs at different "
-            "times. However, prolonged dormancy in a core need predicts gradual "
+            "Low satisfaction without frustration suggests the need goes unengaged "
+            "rather than thwarted. In SDT terms this resembles amotivation (Deci & "
+            "Ryan, 2000). Prolonged dormancy in a core need predicts gradual "
             "disengagement and reduced wellbeing (Bartholomew et al., 2011)."
         ),
+        "fatigue": (
+            "Moderate fatigue risk from understimulation. Without engagement, "
+            "the mind lacks the intrinsic reward that sustains attention."
+        ),
         "implication": (
-            "Lower urgency than Vulnerable or Distressed. Explore whether the "
-            "person's environment offers opportunities to engage this need. "
-            "Dormancy in Belonging, for example, may reflect isolation rather "
-            "than contentment."
+            "Lower urgency. Explore whether the environment offers opportunities "
+            "to engage this need."
         ),
         "colour": "#A0A0A0",
     },
     "Distressed": {
         "label": "Distressed",
-        "condition": "Satisfaction < 5.5, Frustration >= 5.5",
-        "summary": "This need is unmet and actively blocked. The person is struggling.",
+        "condition": "Satisfaction < 6.46, Frustration >= 4.38",
+        "summary": "This need is unmet and actively blocked.",
         "science": (
-            "The combination of low satisfaction and high frustration represents "
-            "need thwarting — the most psychologically damaging state in SDT "
-            "(Bartholomew et al., 2011). The person is not merely missing "
-            "fulfilment; they experience active obstruction of a basic need. "
-            "Research links sustained need thwarting to burnout, depressive "
-            "symptoms, ill-being, and dropout (Lonsdale & Hodge, 2011). Unlike "
-            "Dormancy, Distress involves active suffering and tends to be "
-            "self-reinforcing: frustration undermines the motivation needed "
-            "to seek satisfaction."
+            "Low satisfaction and high frustration together constitute need "
+            "thwarting — the most damaging state in SDT (Bartholomew et al., "
+            "2011). Sustained thwarting predicts burnout, depressive symptoms, "
+            "and dropout (Lonsdale & Hodge, 2011)."
+        ),
+        "fatigue": (
+            "Severe fatigue risk. Chronic frustration without satisfaction "
+            "triggers stress circuits that degrade executive function."
         ),
         "implication": (
-            "Urgent intervention. The self-reinforcing nature of this state "
-            "means delay makes recovery harder. Address the frustration source "
-            "first — removing blockers is more effective than adding positive "
-            "experiences when a person is actively thwarted."
+            "Urgent intervention. Address the frustration source first — "
+            "removing blockers beats adding positive experiences."
         ),
         "colour": "#E8563A",
     },
 }
 
 # ---------------------------------------------------------------------------
-# 36-Type Descriptions
+# 24 Motivational Type Descriptions
 # ---------------------------------------------------------------------------
-# Each type is the intersection of a dominant domain and a primary Big Five
-# trait direction. The description explains WHY this combination produces
-# distinctive behaviour, grounded in what the domain and trait each contribute.
+# 8 base patterns × 3 modifiers (Steady / Striving / Resolute)
 #
-# Structure per type:
-#   tagline     - one phrase that captures the essence
-#   description - 2-3 sentences explaining the pattern
-#   strengths   - what this person brings at their best
-#   watch_for   - where this pattern can become a liability
-#   growth_edge - development focus
-#   domain      - primary domain (ambition / belonging / craft)
-#   trait       - primary Big Five trait and direction
+# Base patterns use all three domains:
+#   Integrator  (A↑B↑C↑) — all three needs activated
+#   Captain     (A↑B↑C↓) — ambition + belonging strong, craft developing
+#   Architect   (A↑B↓C↑) — ambition + craft strong, belonging developing
+#   Mentor      (A↓B↑C↑) — belonging + craft strong, ambition developing
+#   Pioneer     (A↑B↓C↓) — ambition leads, others developing
+#   Anchor      (A↓B↑C↓) — belonging leads, others developing
+#   Artisan     (A↓B↓C↑) — craft leads, others developing
+#   Seeker      (A↓B↓C↓) — all three developing
+#
+# Modifiers from frustrated-domain count:
+#   Steady   (0 frustrated) — sustainable flow
+#   Striving (1 frustrated) — productive friction in one area
+#   Resolute (2-3 frustrated) — persevering through multiple challenges
 
 TYPE_DESCRIPTIONS = {
-    # === AMBITION DOMAIN ===
-    "Visionary": {
-        "tagline": "Sees the path others haven't imagined yet",
+    # === INTEGRATOR (A↑ B↑ C↑) ===
+    "Steady Integrator": {
+        "tagline": "All systems flowing",
         "description": (
-            "Driven by ambition and high openness, the Visionary pursues goals that "
-            "challenge convention. They are energised by possibility and draw motivation "
-            "from reimagining what success looks like rather than following established routes."
-        ),
-        "strengths": ["Strategic imagination", "Comfort with ambiguity", "Inspires new directions"],
-        "watch_for": "May chase novelty at the expense of execution. Ideas outpace follow-through.",
-        "growth_edge": "Pair vision with structure — partner with implementers or build personal systems for finishing.",
-        "domain": "ambition",
-        "trait": "High Openness",
-    },
-    "Traditionalist": {
-        "tagline": "Builds ambition on proven ground",
-        "description": (
-            "Ambition-dominant with low openness, the Traditionalist pursues goals through "
-            "established methods. They find motivation in mastering known frameworks rather "
-            "than inventing new ones, and bring reliability to ambitious endeavours."
-        ),
-        "strengths": ["Consistent execution", "Institutional knowledge", "Risk-aware planning"],
-        "watch_for": "May resist necessary change or dismiss unconventional approaches too quickly.",
-        "growth_edge": "Experiment with one unfamiliar method per quarter. Discomfort is data, not danger.",
-        "domain": "ambition",
-        "trait": "Low Openness",
-    },
-    "Achiever": {
-        "tagline": "Turns ambition into disciplined results",
-        "description": (
-            "High ambition combined with high conscientiousness produces someone who sets "
-            "clear goals and methodically works toward them. The Achiever thrives on measurable "
-            "progress and takes deep satisfaction in completing what they start."
-        ),
-        "strengths": ["Goal execution", "Self-discipline", "Dependable output under pressure"],
-        "watch_for": "May over-index on productivity and neglect relationships or creative exploration.",
-        "growth_edge": "Define success beyond output. Practice unstructured time without guilt.",
-        "domain": "ambition",
-        "trait": "High Conscientiousness",
-    },
-    "Improviser": {
-        "tagline": "Pursues ambition through agility, not plans",
-        "description": (
-            "Ambition-driven but low in conscientiousness, the Improviser adapts quickly and "
-            "thrives in dynamic environments. They advance toward goals by seizing opportunities "
-            "rather than following predetermined plans."
-        ),
-        "strengths": ["Rapid adaptation", "Opportunistic problem-solving", "Thrives in chaos"],
-        "watch_for": "May struggle with long-term projects that require sustained, systematic effort.",
-        "growth_edge": "Build one reliable routine. Consistency in small things frees energy for big ones.",
-        "domain": "ambition",
-        "trait": "Low Conscientiousness",
-    },
-    "Catalyst": {
-        "tagline": "Rallies others around ambitious goals",
-        "description": (
-            "High ambition meets high extraversion. The Catalyst advances their goals by "
-            "energising the people around them. They are natural mobilisers who create momentum "
-            "through enthusiasm and social influence."
-        ),
-        "strengths": ["Team energiser", "Persuasive communication", "Creates urgency and buy-in"],
-        "watch_for": "May dominate airtime or push pace beyond what others can sustain.",
-        "growth_edge": "Listen longer before rallying. The best catalyst knows when not to react.",
-        "domain": "ambition",
-        "trait": "High Extraversion",
-    },
-    "Strategist": {
-        "tagline": "Advances ambition through quiet calculation",
-        "description": (
-            "Ambition-dominant with low extraversion, the Strategist works behind the scenes. "
-            "They think several moves ahead and prefer influence through positioning rather "
-            "than persuasion."
+            "All three needs are activated with no frustrated domain. Ambition, "
+            "belonging, and craft each contribute to a balanced, sustainable "
+            "motivational profile. This is the rarest and most resilient pattern."
         ),
         "strengths": [
-            "Long-range planning",
-            "Independent judgement",
-            "Calm under political pressure",
+            "Versatility",
+            "Balanced judgement",
+            "Sustainable energy",
+            "Cross-domain insight",
         ],
-        "watch_for": "May withhold ideas that need to be heard, or be overlooked despite strong contributions.",
-        "growth_edge": "Share thinking earlier and more often. Visibility is not vanity — it's leverage.",
-        "domain": "ambition",
-        "trait": "Low Extraversion",
+        "watch_for": "May spread attention too thin rather than deepening in one area.",
+        "growth_edge": "Choose one domain to push from strong to exceptional.",
+        "pattern": {"ambition": "strong", "belonging": "strong", "craft": "strong"},
     },
-    "Champion": {
-        "tagline": "Pursues goals that serve others",
+    "Striving Integrator": {
+        "tagline": "Thriving on most fronts, one edge to smooth",
         "description": (
-            "High ambition paired with high agreeableness. The Champion channels drive toward "
-            "collective benefit. They advocate fiercely for shared causes and find personal "
-            "meaning in advancing others alongside themselves."
+            "All three needs are activated but one domain carries frustration. "
+            "The broad foundation is strong — the friction in one area is the "
+            "development priority, not a crisis."
         ),
-        "strengths": ["Advocate for others", "Builds coalitions", "Trusted with authority"],
-        "watch_for": "May sacrifice personal needs to maintain harmony or avoid appearing selfish.",
-        "growth_edge": "Pursue something purely for yourself. Self-interest is not selfishness.",
-        "domain": "ambition",
-        "trait": "High Agreeableness",
+        "strengths": ["Broad competence", "Self-awareness", "Adaptive", "Resilient baseline"],
+        "watch_for": "The frustrated domain may erode the others if left unaddressed.",
+        "growth_edge": "Name the friction source. With this strong a base, targeted action works fast.",
+        "pattern": {"ambition": "strong", "belonging": "strong", "craft": "strong"},
     },
-    "Challenger": {
-        "tagline": "Competes to win, not to please",
+    "Resolute Integrator": {
+        "tagline": "Meeting every need despite the headwinds",
         "description": (
-            "Ambition-driven with low agreeableness, the Challenger is direct, competitive, "
-            "and unafraid of friction. They push hard for results and hold others to high "
-            "standards without worrying about being liked."
-        ),
-        "strengths": ["Direct feedback", "Competitive drive", "Holds high standards"],
-        "watch_for": "May create unnecessary conflict or alienate potential allies.",
-        "growth_edge": "Distinguish between challenging ideas and challenging people. The best opponents build respect.",
-        "domain": "ambition",
-        "trait": "Low Agreeableness",
-    },
-    "Striver": {
-        "tagline": "Driven by ambition, fuelled by pressure",
-        "description": (
-            "High ambition combined with high neuroticism. The Striver is intensely motivated "
-            "but carries anxiety about falling short. Their emotional sensitivity to failure "
-            "creates urgency that often produces remarkable output — at a personal cost."
-        ),
-        "strengths": ["High effort under pressure", "Anticipates problems", "Never complacent"],
-        "watch_for": "Burnout risk is high. The internal pressure that drives performance also erodes recovery.",
-        "growth_edge": "Separate effort from worth. Rest is not failure — it is maintenance.",
-        "domain": "ambition",
-        "trait": "High Neuroticism",
-    },
-    "Steady Hand": {
-        "tagline": "Ambitious without the anxiety",
-        "description": (
-            "Ambition-dominant with low neuroticism, the Steady Hand pursues goals with "
-            "emotional stability. They maintain composure during setbacks and rarely let "
-            "pressure distort their judgement."
+            "All three needs are activated but two or more domains carry "
+            "frustration. Satisfaction is high across the board, yet the cost "
+            "of maintaining it is also high. This is high performance under pressure."
         ),
         "strengths": [
-            "Calm under pressure",
-            "Consistent performance",
-            "Reassures others in uncertainty",
+            "Extraordinary resilience",
+            "Refusal to drop standards",
+            "Multi-front competence",
+            "Determination",
         ],
-        "watch_for": "May appear disengaged or indifferent when calm is mistaken for apathy.",
-        "growth_edge": "Show investment visibly. Others need to see that you care, not just that you cope.",
-        "domain": "ambition",
-        "trait": "Low Neuroticism",
+        "watch_for": "Burnout risk is real. This pace is not sustainable without reducing friction.",
+        "growth_edge": "Pick the highest-friction domain and address one specific blocker.",
+        "pattern": {"ambition": "strong", "belonging": "strong", "craft": "strong"},
     },
-    # === BELONGING DOMAIN ===
-    "Bridge Builder": {
-        "tagline": "Connects different worlds through relationships",
+    # === CAPTAIN (A↑ B↑ C↓) ===
+    "Steady Captain": {
+        "tagline": "Leading through people, sustainably",
         "description": (
-            "Belonging-dominant with high openness, the Bridge Builder forms connections across "
-            "diverse groups. They are drawn to people unlike themselves and create understanding "
-            "between communities that would otherwise stay separate."
+            "Ambition and belonging are both activated with no frustrated domain. "
+            "This person leads through connection — influencing others while "
+            "maintaining relationships. Craft is the developing frontier."
         ),
         "strengths": [
-            "Cross-boundary relationships",
-            "Cultural fluency",
-            "Creates unexpected alliances",
+            "People leadership",
+            "Coalition-building",
+            "Sustainable drive",
+            "Relational intelligence",
         ],
-        "watch_for": "May spread too thin across groups without deepening any single relationship.",
-        "growth_edge": "Invest deeply in a few relationships, not broadly in many. Depth builds trust.",
-        "domain": "belonging",
-        "trait": "High Openness",
+        "watch_for": "Craft skills may plateau without deliberate investment.",
+        "growth_edge": "Invest in one technical skill that deepens your leadership credibility.",
+        "pattern": {"ambition": "strong", "belonging": "strong", "craft": "developing"},
     },
-    "Guardian": {
-        "tagline": "Protects the bonds that matter most",
+    "Striving Captain": {
+        "tagline": "Leading through people, one edge under pressure",
         "description": (
-            "Belonging-focused with low openness, the Guardian values loyalty, tradition, and "
-            "the preservation of established relationships. They create safety by maintaining "
-            "norms and defending group cohesion."
-        ),
-        "strengths": ["Loyalty", "Group stability", "Protects team culture"],
-        "watch_for": "May resist newcomers or new ideas that threaten familiar dynamics.",
-        "growth_edge": "Welcome one outsider perspective per cycle. New voices strengthen what you protect.",
-        "domain": "belonging",
-        "trait": "Low Openness",
-    },
-    "Anchor": {
-        "tagline": "The reliable centre that holds relationships together",
-        "description": (
-            "High belonging with high conscientiousness. The Anchor shows care through "
-            "consistent follow-through — remembering commitments, showing up reliably, and "
-            "holding the group to its shared agreements."
+            "Ambition and belonging are activated but one domain carries "
+            "frustration. The leadership instinct and relational energy are "
+            "strong — the friction is a signal, not a failure."
         ),
         "strengths": [
-            "Reliable presence",
-            "Follow-through on commitments",
-            "Maintains group structure",
+            "Resilient leadership",
+            "Empathy under pressure",
+            "Protective of team",
+            "Results focus",
         ],
-        "watch_for": "May become rigid about norms or resentful when others don't match their reliability.",
-        "growth_edge": "Flexibility is not unreliability. Sometimes the most caring thing is to bend.",
-        "domain": "belonging",
-        "trait": "High Conscientiousness",
+        "watch_for": "Friction in one area can spill into leadership decisions.",
+        "growth_edge": "Separate the frustrated need from your leadership role. Address it on its own terms.",
+        "pattern": {"ambition": "strong", "belonging": "strong", "craft": "developing"},
     },
-    "Free Spirit": {
-        "tagline": "Belongs on their own terms",
+    "Resolute Captain": {
+        "tagline": "Leading through people despite multiple pressures",
         "description": (
-            "Belonging-dominant but low in conscientiousness, the Free Spirit values connection "
-            "without constraint. They resist rigid social structures and thrive in relationships "
-            "that allow spontaneity and individual expression."
-        ),
-        "strengths": ["Authentic presence", "Social spontaneity", "Makes groups feel alive"],
-        "watch_for": "May frustrate others by being unreliable or dismissing group commitments.",
-        "growth_edge": "Honour one small promise consistently. Freedom and reliability are not enemies.",
-        "domain": "belonging",
-        "trait": "Low Conscientiousness",
-    },
-    "Connector": {
-        "tagline": "Builds and energises social networks",
-        "description": (
-            "High belonging meets high extraversion. The Connector actively builds and maintains "
-            "wide social networks. They draw energy from bringing people together and are often "
-            "the first person others turn to for introductions."
+            "Ambition and belonging are activated with multiple frustrated "
+            "domains. This person maintains leadership and connection under "
+            "significant strain. The commitment is real; so is the cost."
         ),
         "strengths": [
-            "Network building",
-            "Social energy",
-            "Creates introductions and opportunities",
+            "Fierce commitment",
+            "Team loyalty under fire",
+            "Inspirational persistence",
+            "Emotional courage",
         ],
-        "watch_for": "May prioritise breadth over depth, or exhaust themselves maintaining too many ties.",
-        "growth_edge": "Nurture silence in relationships. Not every connection needs active maintenance.",
-        "domain": "belonging",
-        "trait": "High Extraversion",
+        "watch_for": "Multiple friction sources create compounding fatigue. Pace matters.",
+        "growth_edge": "Accept help from the team you lead. Reciprocity sustains what willpower cannot.",
+        "pattern": {"ambition": "strong", "belonging": "strong", "craft": "developing"},
     },
-    "Observer": {
-        "tagline": "Understands the group by watching, not performing",
+    # === ARCHITECT (A↑ B↓ C↑) ===
+    "Steady Architect": {
+        "tagline": "Building with ambition and skill",
         "description": (
-            "Belonging-focused with low extraversion, the Observer contributes to relationships "
-            "through attentive listening and careful reading of social dynamics. They notice what "
-            "others miss and offer insight at critical moments."
+            "Ambition and craft are both activated with no frustrated domain. "
+            "This person builds strategically — combining drive with technical "
+            "depth. Belonging is the developing frontier."
         ),
-        "strengths": ["Social perception", "Thoughtful responses", "Detects unspoken tension"],
-        "watch_for": "May withdraw too far and become invisible to the group they care about.",
-        "growth_edge": "Voice one observation per meeting. The group needs what you see.",
-        "domain": "belonging",
-        "trait": "Low Extraversion",
+        "strengths": [
+            "Strategic execution",
+            "Technical vision",
+            "Quality output",
+            "Focused delivery",
+        ],
+        "watch_for": "May undervalue relationships or move too fast for consensus.",
+        "growth_edge": "Bring one collaborator into your next project early.",
+        "pattern": {"ambition": "strong", "belonging": "developing", "craft": "strong"},
     },
-    "Mentor": {
-        "tagline": "Invests in others' growth through relationship",
+    "Striving Architect": {
+        "tagline": "Building under one source of friction",
         "description": (
-            "High belonging paired with high agreeableness. The Mentor finds deep fulfilment in "
-            "supporting others' development. They create psychologically safe spaces where people "
-            "feel comfortable being vulnerable and asking for help."
+            "Ambition and craft are activated but one domain carries "
+            "frustration. The strategic-technical combination is strong — "
+            "the friction is targeted, not pervasive."
         ),
-        "strengths": ["Psychological safety", "Develops others", "Patient guidance"],
-        "watch_for": "May neglect their own needs or avoid giving hard feedback to preserve the relationship.",
-        "growth_edge": "Caring sometimes means being uncomfortable. The kindest feedback is honest feedback.",
-        "domain": "belonging",
-        "trait": "High Agreeableness",
+        "strengths": [
+            "High standards under pressure",
+            "Relentless delivery",
+            "Technical rigour",
+            "Self-driven",
+        ],
+        "watch_for": "Perfectionism under strain becomes paralysis.",
+        "growth_edge": "Set a definition of done before starting. Standards should guide, not trap.",
+        "pattern": {"ambition": "strong", "belonging": "developing", "craft": "strong"},
     },
-    "Truth Teller": {
-        "tagline": "Values honesty over harmony",
+    "Resolute Architect": {
+        "tagline": "Building through multiple headwinds",
         "description": (
-            "Belonging-dominant with low agreeableness, the Truth Teller is loyal but blunt. "
-            "They show care by speaking directly rather than softening messages, believing that "
-            "real relationships survive hard truths."
+            "Ambition and craft are activated with multiple frustrated domains. "
+            "Quality and drive persist despite significant opposition. This is "
+            "tenacity applied to meaningful work."
         ),
-        "strengths": ["Radical honesty", "Cuts through groupthink", "Trusted for candour"],
-        "watch_for": "May damage relationships by mistiming or over-delivering difficult feedback.",
-        "growth_edge": "Soften the delivery, not the message. Truth lands better when the listener feels safe.",
-        "domain": "belonging",
-        "trait": "Low Agreeableness",
+        "strengths": [
+            "Tenacity",
+            "Resourcefulness",
+            "Problem-solving under constraint",
+            "Refusal to settle",
+        ],
+        "watch_for": "Persistent frustration without wins erodes even the strongest resolve.",
+        "growth_edge": "Find one small win this week. Momentum is medicine for blocked ambition.",
+        "pattern": {"ambition": "strong", "belonging": "developing", "craft": "strong"},
     },
-    "Empath": {
-        "tagline": "Feels the room before anyone speaks",
+    # === MENTOR (A↓ B↑ C↑) ===
+    "Steady Mentor": {
+        "tagline": "Growing others through expertise",
         "description": (
-            "High belonging combined with high neuroticism. The Empath has heightened emotional "
-            "sensitivity that makes them acutely attuned to others' feelings. They detect "
-            "distress early and respond with genuine compassion."
+            "Belonging and craft are both activated with no frustrated domain. "
+            "This person shares knowledge generously and builds others up through "
+            "competence. Ambition is the developing frontier."
         ),
-        "strengths": ["Emotional attunement", "Early conflict detection", "Compassionate response"],
-        "watch_for": "May absorb others' emotions to the point of personal depletion. Boundaries blur.",
-        "growth_edge": "Distinguish between feeling for someone and feeling as someone. Empathy needs a boundary.",
-        "domain": "belonging",
-        "trait": "High Neuroticism",
+        "strengths": ["Teaching", "Knowledge sharing", "Patient guidance", "Trust-building"],
+        "watch_for": "May avoid competitive settings that feel personally exposing.",
+        "growth_edge": "Share your work with a wider audience. Expertise scales when visible.",
+        "pattern": {"ambition": "developing", "belonging": "strong", "craft": "strong"},
     },
-    "Rock": {
-        "tagline": "Steady, present, unshakeable in relationships",
+    "Striving Mentor": {
+        "tagline": "Teaching through one source of tension",
         "description": (
-            "Belonging-focused with low neuroticism. The Rock provides emotional stability "
-            "to the people around them. They remain calm during interpersonal crises and offer "
-            "a grounding presence that others rely on."
+            "Belonging and craft are activated but one domain carries "
+            "frustration. The instinct to develop others through expertise "
+            "remains strong despite the friction."
         ),
-        "strengths": ["Emotional stability", "Calming presence", "Reliable in crisis"],
-        "watch_for": "May be so steady that others never learn to regulate their own emotions.",
-        "growth_edge": "Show vulnerability occasionally. Strength includes letting others support you.",
-        "domain": "belonging",
-        "trait": "Low Neuroticism",
+        "strengths": [
+            "Resilient empathy",
+            "Honest feedback",
+            "Commitment to development",
+            "Emotional stamina",
+        ],
+        "watch_for": "Giving too much to others while running on empty yourself.",
+        "growth_edge": "Accept help from someone you've helped. Reciprocity is not weakness.",
+        "pattern": {"ambition": "developing", "belonging": "strong", "craft": "strong"},
     },
-    # === CRAFT DOMAIN ===
-    "Explorer": {
-        "tagline": "Learns by wandering into the unknown",
+    "Resolute Mentor": {
+        "tagline": "Guiding others through shared struggle",
         "description": (
-            "Craft-dominant with high openness, the Explorer develops skill by pursuing "
-            "curiosity rather than curriculum. They are drawn to novel problems and unfamiliar "
-            "tools, and they grow fastest when the territory is uncharted."
+            "Belonging and craft are activated with multiple frustrated domains. "
+            "This person persists in supporting others despite significant "
+            "personal strain. The mentoring draws from hard-won experience."
+        ),
+        "strengths": [
+            "Hard-won wisdom",
+            "Authentic vulnerability",
+            "Solidarity",
+            "Teaching through experience",
+        ],
+        "watch_for": "Mentoring from a place of pain can blur boundaries.",
+        "growth_edge": "Find a mentor for yourself. Even guides need guides.",
+        "pattern": {"ambition": "developing", "belonging": "strong", "craft": "strong"},
+    },
+    # === PIONEER (A↑ B↓ C↓) ===
+    "Steady Pioneer": {
+        "tagline": "Ambition leading the way",
+        "description": (
+            "Ambition is the activated need with no frustrated domain. Drive "
+            "and goal pursuit are strong; belonging and craft are developing. "
+            "This person knows where they want to go."
+        ),
+        "strengths": ["Goal clarity", "Initiative", "Competitive edge", "Decisive action"],
+        "watch_for": "Two developing domains leave a narrow motivational base.",
+        "growth_edge": "Invest in one relationship or skill that supports your ambition.",
+        "pattern": {"ambition": "strong", "belonging": "developing", "craft": "developing"},
+    },
+    "Striving Pioneer": {
+        "tagline": "Ambition driving through friction",
+        "description": (
+            "Ambition is activated but one domain carries frustration. The "
+            "drive is clear; the friction adds urgency. Two developing domains "
+            "mean the growth opportunity is wide."
+        ),
+        "strengths": ["Urgency", "Risk tolerance", "Forward momentum", "Adaptability"],
+        "watch_for": "Narrow activation plus friction creates intensity that others may find hard to match.",
+        "growth_edge": "Slow down enough to bring someone along. Shared ambition travels further.",
+        "pattern": {"ambition": "strong", "belonging": "developing", "craft": "developing"},
+    },
+    "Resolute Pioneer": {
+        "tagline": "Ambition persisting through adversity",
+        "description": (
+            "Ambition is activated with multiple frustrated domains. This person "
+            "pursues goals despite headwinds on multiple fronts. The persistence "
+            "is remarkable; the strain is real."
+        ),
+        "strengths": [
+            "Extraordinary persistence",
+            "Anti-fragility",
+            "Refusal to quit",
+            "Self-reliance",
+        ],
+        "watch_for": "Grit without support is a finite resource.",
+        "growth_edge": "Address the closest frustrated domain first. One less headwind changes everything.",
+        "pattern": {"ambition": "strong", "belonging": "developing", "craft": "developing"},
+    },
+    # === ANCHOR (A↓ B↑ C↓) ===
+    "Steady Anchor": {
+        "tagline": "Belonging grounding everything",
+        "description": (
+            "Belonging is the activated need with no frustrated domain. "
+            "Connection and relationships are strong; ambition and craft are "
+            "developing. This person provides stability for others."
+        ),
+        "strengths": ["Relational stability", "Trust", "Empathy", "Team cohesion"],
+        "watch_for": "Two developing domains mean personal growth may stall without intentional effort.",
+        "growth_edge": "Use your relational strength to learn from someone you admire.",
+        "pattern": {"ambition": "developing", "belonging": "strong", "craft": "developing"},
+    },
+    "Striving Anchor": {
+        "tagline": "Belonging holding through friction",
+        "description": (
+            "Belonging is activated but one domain carries frustration. "
+            "Connection remains strong despite the tension. The relational "
+            "base provides resilience."
+        ),
+        "strengths": [
+            "Emotional courage",
+            "Loyalty under pressure",
+            "Relational repair",
+            "Supportiveness",
+        ],
+        "watch_for": "Absorbing others' stress while carrying your own friction.",
+        "growth_edge": "Set one boundary this week. Belonging is stronger with limits.",
+        "pattern": {"ambition": "developing", "belonging": "strong", "craft": "developing"},
+    },
+    "Resolute Anchor": {
+        "tagline": "Belonging persisting through adversity",
+        "description": (
+            "Belonging is activated with multiple frustrated domains. This "
+            "person maintains connection despite significant personal strain. "
+            "The commitment to others is deep; the cost is high."
+        ),
+        "strengths": [
+            "Moral courage",
+            "Unbreakable commitment",
+            "Principled loyalty",
+            "Emotional endurance",
+        ],
+        "watch_for": "Fighting for belonging while multiple needs go unmet drains faster than any other pattern.",
+        "growth_edge": "Seek one new connection outside the current context. Fresh soil grows new roots.",
+        "pattern": {"ambition": "developing", "belonging": "strong", "craft": "developing"},
+    },
+    # === ARTISAN (A↓ B↓ C↑) ===
+    "Steady Artisan": {
+        "tagline": "Craft leading quietly",
+        "description": (
+            "Craft is the activated need with no frustrated domain. Technical "
+            "depth and quality drive this person; ambition and belonging are "
+            "developing. Mastery is the foundation."
+        ),
+        "strengths": [
+            "Deep expertise",
+            "Quality focus",
+            "Independent mastery",
+            "Patience with complexity",
+        ],
+        "watch_for": "Two developing domains may lead to isolation or missed opportunities.",
+        "growth_edge": "Share one thing you've mastered. Teaching builds belonging from craft.",
+        "pattern": {"ambition": "developing", "belonging": "developing", "craft": "strong"},
+    },
+    "Striving Artisan": {
+        "tagline": "Craft deepening through friction",
+        "description": (
+            "Craft is activated but one domain carries frustration. The "
+            "commitment to quality and mastery persists alongside the friction. "
+            "The developing domains offer growth space."
         ),
         "strengths": [
             "Creative problem-solving",
-            "Rapid skill acquisition",
-            "Comfortable with the unknown",
+            "Learning under pressure",
+            "Unconventional methods",
+            "Focus",
         ],
-        "watch_for": "May abandon skill development before reaching mastery, always chasing the next thing.",
-        "growth_edge": "Go deep on one skill before moving on. Mastery requires the discipline to stay.",
-        "domain": "craft",
-        "trait": "High Openness",
+        "watch_for": "Friction plus narrow activation can feel isolating.",
+        "growth_edge": "Find one collaborator who values what you build.",
+        "pattern": {"ambition": "developing", "belonging": "developing", "craft": "strong"},
     },
-    "Specialist": {
-        "tagline": "Goes deeper than anyone else in a single domain",
+    "Resolute Artisan": {
+        "tagline": "Craft persisting despite the odds",
         "description": (
-            "Craft-focused with low openness, the Specialist builds expertise through narrow, "
-            "sustained focus. They prefer depth over breadth and take pride in knowing their "
-            "subject more thoroughly than anyone around them."
-        ),
-        "strengths": ["Deep expertise", "Technical authority", "Trusted for precision"],
-        "watch_for": "May resist learning adjacent skills or dismiss approaches outside their specialty.",
-        "growth_edge": "Explore one adjacent field. Depth gains power when it connects to breadth.",
-        "domain": "craft",
-        "trait": "Low Openness",
-    },
-    "Forge": {
-        "tagline": "Shapes raw skill into refined output through discipline",
-        "description": (
-            "High craft satisfaction paired with high conscientiousness. The Forge treats skill "
-            "development as a systematic practice. They set standards, track progress, and "
-            "produce consistently high-quality work through rigorous self-management."
-        ),
-        "strengths": ["Quality standards", "Systematic improvement", "Reliable craftsmanship"],
-        "watch_for": "May become inflexible about process or resistant to feedback that disrupts their system.",
-        "growth_edge": "Let the work be messy in early stages. Premature polish kills experimentation.",
-        "domain": "craft",
-        "trait": "High Conscientiousness",
-    },
-    "Tinkerer": {
-        "tagline": "Learns by taking things apart",
-        "description": (
-            "Craft-dominant but low in conscientiousness, the Tinkerer develops skills through "
-            "unstructured experimentation. They learn by doing, breaking, and rebuilding — "
-            "often producing novel solutions that structured approaches would miss."
+            "Craft is activated with multiple frustrated domains. This person "
+            "creates and masters despite headwinds on multiple fronts. The "
+            "work itself is the anchor."
         ),
         "strengths": [
-            "Experimental learning",
-            "Unconventional solutions",
-            "Comfortable with failure",
+            "Stubborn creativity",
+            "Anti-fragility",
+            "Resourcefulness",
+            "Craft as refuge",
         ],
-        "watch_for": "May produce inconsistent output or struggle to document and reproduce their best work.",
-        "growth_edge": "Write down what works. Your experiments have more value when others can learn from them.",
-        "domain": "craft",
-        "trait": "Low Conscientiousness",
+        "watch_for": "Using craft to avoid addressing frustrated needs.",
+        "growth_edge": "Let the work bring you to people. Craft opens doors that ambition cannot.",
+        "pattern": {"ambition": "developing", "belonging": "developing", "craft": "strong"},
     },
-    "Performer": {
-        "tagline": "Brings skill to life in front of an audience",
+    # === SEEKER (A↓ B↓ C↓) ===
+    "Steady Seeker": {
+        "tagline": "Exploring without friction",
         "description": (
-            "High craft satisfaction combined with high extraversion. The Performer develops "
-            "skill partly through public practice — teaching, presenting, demonstrating. They "
-            "refine their craft by explaining it to others and thrive when their work is visible."
+            "No domain is fully activated but none is frustrated either. This "
+            "person is in an open, exploratory phase — unattached to any "
+            "particular need. The canvas is blank."
+        ),
+        "strengths": ["Openness", "Low attachment", "Fresh perspective", "Ready to commit"],
+        "watch_for": "Prolonged seeking without activation leads to drift.",
+        "growth_edge": "Pick one domain and invest deliberately. Commitment creates momentum.",
+        "pattern": {"ambition": "developing", "belonging": "developing", "craft": "developing"},
+    },
+    "Striving Seeker": {
+        "tagline": "Searching with one edge of urgency",
+        "description": (
+            "No domain is fully activated but one carries frustration. "
+            "The friction in one area creates urgency to find direction. "
+            "The frustrated domain may point toward the most important need."
         ),
         "strengths": [
-            "Teaching through demonstration",
-            "Engaging presentations",
-            "Makes expertise accessible",
+            "Self-awareness",
+            "Urgency to grow",
+            "Willingness to change",
+            "Emotional honesty",
         ],
-        "watch_for": "May optimise for audience reaction rather than genuine quality improvement.",
-        "growth_edge": "Practice in private sometimes. Not all growth needs an audience.",
-        "domain": "craft",
-        "trait": "High Extraversion",
+        "watch_for": "The frustration may be a compass — pointing toward what matters most.",
+        "growth_edge": "Follow the friction. The domain that hurts may be the one that matters.",
+        "pattern": {"ambition": "developing", "belonging": "developing", "craft": "developing"},
     },
-    "Flow State": {
-        "tagline": "Does their best work in deep solitude",
+    "Resolute Seeker": {
+        "tagline": "Persevering through the fog",
         "description": (
-            "Craft-focused with low extraversion. Flow State enters deep concentration more "
-            "easily than most people and produces their best work during uninterrupted solo "
-            "sessions. They experience skill development as an intrinsically rewarding, "
-            "private practice."
-        ),
-        "strengths": ["Deep focus", "Sustained concentration", "High-quality solo output"],
-        "watch_for": "May resist collaboration or become invisible to the team during deep work periods.",
-        "growth_edge": "Share work-in-progress, not just finished products. Collaboration sharpens craft.",
-        "domain": "craft",
-        "trait": "Low Extraversion",
-    },
-    "Collaborator": {
-        "tagline": "Builds skill through partnership",
-        "description": (
-            "High craft satisfaction paired with high agreeableness. The Collaborator grows "
-            "through shared work — pair programming, co-authoring, joint problem-solving. "
-            "They elevate both their own skills and their partners' through generous exchange."
-        ),
-        "strengths": ["Pair work", "Knowledge sharing", "Elevates team capability"],
-        "watch_for": "May depend on others to drive direction or avoid independent technical decisions.",
-        "growth_edge": "Take a solo project to completion. Prove to yourself you can build alone.",
-        "domain": "craft",
-        "trait": "High Agreeableness",
-    },
-    "Lone Wolf": {
-        "tagline": "Masters craft through independent work",
-        "description": (
-            "Craft-dominant with low agreeableness. The Lone Wolf develops skill independently "
-            "and trusts their own judgement over group consensus. They produce distinctive work "
-            "because they are willing to disagree with conventional approaches."
+            "No domain is fully activated and multiple carry frustration. "
+            "This is the most challenging profile — low satisfaction and high "
+            "friction across the board. But the person is still here."
         ),
         "strengths": [
-            "Independent judgement",
-            "Original solutions",
-            "Uncompromising quality standards",
+            "Survival instinct",
+            "Raw determination",
+            "Nothing left to lose",
+            "Capacity for transformation",
         ],
-        "watch_for": "May reject valid feedback or create knowledge silos that hurt the team.",
-        "growth_edge": "Invite one reviewer before shipping. Independence is not infallibility.",
-        "domain": "craft",
-        "trait": "Low Agreeableness",
-    },
-    "Perfectionist": {
-        "tagline": "Driven to mastery by the fear of falling short",
-        "description": (
-            "High craft satisfaction combined with high neuroticism. The Perfectionist produces "
-            "exceptional work because their internal standards are relentlessly high. Their "
-            "anxiety about inadequacy pushes them to refine and polish beyond what others "
-            "would consider sufficient."
-        ),
-        "strengths": ["Exceptional attention to detail", "High quality output", "Self-correcting"],
-        "watch_for": "May delay shipping indefinitely, paralysed by the gap between output and ideal.",
-        "growth_edge": "Define 'good enough' before starting. Perfection is the enemy of completion.",
-        "domain": "craft",
-        "trait": "High Neuroticism",
-    },
-    "Craftsman": {
-        "tagline": "Quietly excellent, unbothered by the noise",
-        "description": (
-            "Craft-focused with low neuroticism. The Craftsman builds skill with patience and "
-            "emotional steadiness. They handle setbacks in their work without spiralling and "
-            "maintain consistent quality because their mood does not fluctuate with results."
-        ),
-        "strengths": ["Consistent quality", "Resilient to setbacks", "Patient skill development"],
-        "watch_for": "May lack urgency or appear indifferent to deadlines and external standards.",
-        "growth_edge": "Channel calm into speed occasionally. Some situations reward urgency over patience.",
-        "domain": "craft",
-        "trait": "Low Neuroticism",
-    },
-    # === CROSS-DOMAIN ===
-    "Integrator": {
-        "tagline": "Balanced across all needs, no single drive dominates",
-        "description": (
-            "The Integrator has no single dominant domain or extreme personality trait. They "
-            "distribute energy evenly across ambition, belonging, and craft. This balance "
-            "makes them adaptable generalists who move fluidly between roles."
-        ),
-        "strengths": ["Versatility", "Balanced perspective", "Bridges specialised team members"],
-        "watch_for": "May lack the intensity needed to break through in any single area.",
-        "growth_edge": "Identify which need matters most right now. Temporary focus sharpens general skill.",
-        "domain": "any",
-        "trait": "Balanced",
+        "watch_for": "This profile requires immediate support. The risk of disengagement is highest here.",
+        "growth_edge": "Start with the smallest possible win in any domain. One spark changes everything.",
+        "pattern": {"ambition": "developing", "belonging": "developing", "craft": "developing"},
     },
 }
 
@@ -587,9 +520,6 @@ def get_type_description(type_name: str) -> dict | None:
     """Look up a type description by name.
 
     Reference: abc-assessment-spec Section 2.4
-
-    Returns dict with tagline, description, strengths, watch_for,
-    growth_edge, domain, trait. Returns None if type_name not found.
     """
     return TYPE_DESCRIPTIONS.get(type_name)
 
@@ -598,8 +528,5 @@ def get_state_description(state: str) -> dict | None:
     """Look up a domain state description by name.
 
     Reference: abc-assessment-spec Section 2.2
-
-    Returns dict with label, condition, summary, science, implication,
-    colour. Returns None if state not found.
     """
     return DOMAIN_STATE_DESCRIPTIONS.get(state)

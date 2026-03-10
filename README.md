@@ -29,6 +29,20 @@ Prove the model's factor structure is statistically sound before production depl
 | Unit tests | All pass | 106/106 |
 | Code coverage | >= 85% | 97.5% |
 
+## How the Simulation Generates Data
+
+The dashboard generates synthetic participants client-side using fixed statistical parameters. Each run draws from the same underlying distributions, so the graphs will show a consistent spread across runs. This is by design: the simulation validates the scoring pipeline under controlled conditions, not the variance of a real population.
+
+Three mechanisms produce this stability:
+
+1. **Fixed distribution parameters.** Six subscale scores are drawn from independent normal distributions with tuned means (`[0.24, -0.31, 0.24, -0.31, 0.24, -0.31]`). These offsets ensure no single type exceeds 15% of the population.
+2. **Cholesky decomposition with an identity correlation matrix.** Subscales are sampled independently (zero inter-subscale correlation). Real respondent data will introduce natural correlations between domains.
+3. **Convergence at scale.** With hundreds or thousands of participants, the law of large numbers pulls every run toward the same shape. The noise slider controls item-level variance, but the population-level distribution remains stable.
+
+The offline validation (R and Python) uses fixed random seeds (`set.seed(42)`) and a structured correlation matrix with cross-domain relationships. The dashboard uses simpler parameters to keep the client-side code lightweight and the type distribution unbiased.
+
+Empirical data will replace these fixed parameters and introduce the natural skews, correlations, and variance that real populations produce.
+
 ## Quick Start
 
 ```bash

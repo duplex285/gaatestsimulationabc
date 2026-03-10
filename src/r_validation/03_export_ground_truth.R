@@ -161,7 +161,7 @@ colnames(latent_normalized) <- factor_names
 classify_state <- function(sat, frust) {
   ifelse(sat >= 5.5 & frust < 5.5, "Thriving",
   ifelse(sat >= 5.5 & frust >= 5.5, "Vulnerable",
-  ifelse(sat < 5.5 & frust < 5.5, "Dormant",
+  ifelse(sat < 5.5 & frust < 5.5, "Mild",
          "Distressed")))
 }
 

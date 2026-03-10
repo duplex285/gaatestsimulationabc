@@ -30,7 +30,7 @@ DOMAIN_COLOURS = {
 STATE_COLOURS = {
     "Thriving": "#3ABF5E",
     "Vulnerable": "#F5A623",
-    "Dormant": "#A0A0A0",
+    "Mild": "#A0A0A0",
     "Distressed": "#E8563A",
 }
 
@@ -89,7 +89,7 @@ def plot_type_distribution(results, ax):
 def plot_domain_states(results, ax):
     """Stacked bar chart of domain states across the three domains."""
     domains = ["ambition", "belonging", "craft"]
-    states = ["Thriving", "Vulnerable", "Dormant", "Distressed"]
+    states = ["Thriving", "Vulnerable", "Mild", "Distressed"]
 
     data = {}
     for domain in domains:
@@ -205,7 +205,7 @@ def plot_domain_scatter(results, axes):
         # Quadrant labels
         ax.text(8, 1, "Thriving", fontsize=7, color="#2a9d4a", ha="center", alpha=0.7)
         ax.text(8, 9, "Vulnerable", fontsize=7, color="#c58a1e", ha="center", alpha=0.7)
-        ax.text(2, 1, "Dormant", fontsize=7, color="#707070", ha="center", alpha=0.7)
+        ax.text(2, 1, "Mild", fontsize=7, color="#707070", ha="center", alpha=0.7)
         ax.text(2, 9, "Distressed", fontsize=7, color="#c44030", ha="center", alpha=0.7)
 
 

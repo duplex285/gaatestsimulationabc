@@ -1,14 +1,16 @@
 """Tests for domain state classification module.
 
 Reference: abc-assessment-spec Section 2.2 (domain state classification)
-Threshold: 5.5 on the 0-10 normalized scale.
+Split thresholds on the 0-10 normalized scale:
+  Satisfaction threshold: 6.46
+  Frustration threshold:  4.38
 
 | Satisfaction | Frustration | State      |
 |-------------|-------------|------------|
-| >= 5.5      | < 5.5       | Thriving   |
-| >= 5.5      | >= 5.5      | Vulnerable |
-| < 5.5       | < 5.5       | Dormant    |
-| < 5.5       | >= 5.5      | Distressed |
+| >= 6.46     | < 4.38      | Thriving   |
+| >= 6.46     | >= 4.38     | Vulnerable |
+| < 6.46      | < 4.38      | Mild    |
+| < 6.46      | >= 4.38     | Distressed |
 """
 
 from src.python_scoring.domain_classification import (
@@ -27,26 +29,27 @@ class TestClassifyDomainState:
         assert classify_domain_state(sat=8.0, frust=8.0) == "Vulnerable"
 
     def test_dormant(self):
-        assert classify_domain_state(sat=2.0, frust=2.0) == "Dormant"
+        assert classify_domain_state(sat=2.0, frust=2.0) == "Mild"
 
     def test_distressed(self):
         assert classify_domain_state(sat=2.0, frust=8.0) == "Distressed"
 
-    # Boundary tests at threshold 5.5
-    def test_boundary_sat_exactly_5point5_frust_below(self):
-        """sat=5.5 is >= threshold -> Thriving (not Dormant)."""
-        assert classify_domain_state(sat=5.5, frust=5.4) == "Thriving"
+    # Boundary tests at split thresholds (sat=6.46, frust=4.38)
+    def test_boundary_sat_above_frust_below(self):
+        """sat >= 6.46, frust < 4.38 -> Thriving."""
+        assert classify_domain_state(sat=6.46, frust=4.37) == "Thriving"
 
-    def test_boundary_sat_exactly_5point5_frust_exactly_5point5(self):
+    def test_boundary_both_at_threshold(self):
         """Both at threshold -> Vulnerable."""
-        assert classify_domain_state(sat=5.5, frust=5.5) == "Vulnerable"
+        assert classify_domain_state(sat=6.46, frust=4.38) == "Vulnerable"
 
-    def test_boundary_sat_below_frust_exactly_5point5(self):
-        """sat<5.5, frust=5.5 -> Distressed."""
-        assert classify_domain_state(sat=5.4, frust=5.5) == "Distressed"
+    def test_boundary_sat_below_frust_at(self):
+        """sat < 6.46, frust >= 4.38 -> Distressed."""
+        assert classify_domain_state(sat=6.45, frust=4.38) == "Distressed"
 
-    def test_boundary_both_just_below(self):
-        assert classify_domain_state(sat=5.4, frust=5.4) == "Dormant"
+    def test_boundary_both_below(self):
+        """sat < 6.46, frust < 4.38 -> Mild."""
+        assert classify_domain_state(sat=6.45, frust=4.37) == "Mild"
 
     # Extreme values
     def test_perfect_thriving_scores(self):
@@ -56,7 +59,7 @@ class TestClassifyDomainState:
         assert classify_domain_state(sat=0.0, frust=10.0) == "Distressed"
 
     def test_all_zero(self):
-        assert classify_domain_state(sat=0.0, frust=0.0) == "Dormant"
+        assert classify_domain_state(sat=0.0, frust=0.0) == "Mild"
 
     def test_all_max(self):
         assert classify_domain_state(sat=10.0, frust=10.0) == "Vulnerable"
@@ -117,9 +120,9 @@ class TestClassifyAllDomains:
             "c_frust": 0.0,
         }
         states = classify_all_domains(subscales)
-        assert states["ambition"] == "Dormant"
-        assert states["belonging"] == "Dormant"
-        assert states["craft"] == "Dormant"
+        assert states["ambition"] == "Mild"
+        assert states["belonging"] == "Mild"
+        assert states["craft"] == "Mild"
 
     def test_mixed_states(self):
         subscales = {

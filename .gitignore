@@ -36,5 +36,11 @@ outputs/datasets/*.rds
 outputs/plots/*.png
 outputs/plots/*.pdf
 
+# Coverage
+.coverage
+
+# Generated site
+outputs/site/
+
 # Environment
 .env

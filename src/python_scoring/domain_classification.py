@@ -1,17 +1,23 @@
 """Domain state classification for ABC Assessment.
 
 Reference: abc-assessment-spec Section 2.2
-Threshold: 5.5 on the 0-10 normalized scale.
+Split thresholds on the 0-10 normalized scale:
+  Satisfaction threshold: 6.46
+  Frustration threshold:  4.38
+
+These sit between discrete score boundaries (scores spaced 0.417 apart)
+to counteract argmax selection bias and within-domain anticorrelation.
 
 | Satisfaction | Frustration | State      |
 |-------------|-------------|------------|
-| >= 5.5      | < 5.5       | Thriving   |
-| >= 5.5      | >= 5.5      | Vulnerable |
-| < 5.5       | < 5.5       | Dormant    |
-| < 5.5       | >= 5.5      | Distressed |
+| >= 6.46     | < 4.38      | Thriving   |
+| >= 6.46     | >= 4.38     | Vulnerable |
+| < 6.46      | < 4.38      | Mild    |
+| < 6.46      | >= 4.38     | Distressed |
 """
 
-THRESHOLD = 5.5
+SAT_THRESHOLD = 6.46
+FRUST_THRESHOLD = 4.38
 
 DOMAIN_PAIRS = {
     "ambition": ("a_sat", "a_frust"),
@@ -24,16 +30,17 @@ def classify_domain_state(sat: float, frust: float) -> str:
     """Classify a single domain into one of four states.
 
     Reference: abc-assessment-spec Section 2.2
+    Uses split thresholds: sat >= 6.46, frust >= 4.38.
     """
-    high_sat = sat >= THRESHOLD
-    high_frust = frust >= THRESHOLD
+    high_sat = sat >= SAT_THRESHOLD
+    high_frust = frust >= FRUST_THRESHOLD
 
     if high_sat and not high_frust:
         return "Thriving"
     if high_sat and high_frust:
         return "Vulnerable"
     if not high_sat and not high_frust:
-        return "Dormant"
+        return "Mild"
     return "Distressed"
 
 
@@ -42,7 +49,7 @@ def classify_all_domains(subscales: dict[str, float]) -> dict[str, str]:
 
     Reference: abc-assessment-spec Section 2.2
     Returns dict with keys: ambition, belonging, craft.
-    Values are one of: Thriving, Vulnerable, Dormant, Distressed.
+    Values are one of: Thriving, Vulnerable, Mild, Distressed.
     """
     result = {}
     for domain, (sat_key, frust_key) in DOMAIN_PAIRS.items():

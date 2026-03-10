@@ -78,7 +78,7 @@ Raw responses (1-7)
   -> Reverse-score items (8 - r)
   -> Subscale means (1.0 - 7.0)
   -> Normalize to 0-10: ((mean - 1) / 6) * 10
-  -> Domain state classification (Thriving / Vulnerable / Dormant / Distressed)
+  -> Domain state classification (Thriving / Vulnerable / Mild / Distressed)
   -> Big Five inference (weight matrix -> percentile)
   -> 36-type derivation (dominant domain x primary Big Five trait)
   -> Frustration signature detection
@@ -95,7 +95,7 @@ Threshold: 5.5 on the 0-10 normalized scale.
 |-------------|-------------|-------|------|
 | >= 5.5 | < 5.5 | **Thriving** | Low |
 | >= 5.5 | >= 5.5 | **Vulnerable** | Medium — appears fine but environment is eroding |
-| < 5.5 | < 5.5 | **Dormant** | Low-medium — disengaged, low salience |
+| < 5.5 | < 5.5 | **Mild** | Low-medium — disengaged, low salience |
 | < 5.5 | >= 5.5 | **Distressed** | High — need actively frustrated |
 
 **The Overinvestment Pattern.** Research shows that highly self-determined individuals can overinvest effort under chronic demands, leading to resource depletion even when their needs appear well-met (Towair et al., 2025; Mobarak et al., 2024). In ABC terms: an athlete who shows sustained high satisfaction across two or more domains (Thriving on both Ambition and Craft, for example) while daily cognitive signals show declining Recovery Slope or rising Cognitive Load may be in an overinvestment state. Their needs are satisfied — so satisfied they cannot stop pushing — but their recovery capacity is eroding.
@@ -110,15 +110,20 @@ This is a coach-only alert. The player sees Thriving. The coach sees Thriving pl
 
 ### 2.3 Big Five Inference
 
-Weight matrix applied to centred subscale scores:
+Weight matrix applied to centred subscale scores. Each non-N trait anchors
+on its most theoretically defensible ABC domain using a template of three
+magnitude tiers (primary/secondary/tertiary). L2 norms are equal by
+construction (~0.54 for O/E/A, ~0.56 for C). No post-hoc normalisation.
+
+Domain anchors: O → Craft, C → Craft + Belonging, E → Ambition, A → Belonging, N → all frustration.
 
 | Trait | A-sat | A-frust | B-sat | B-frust | C-sat | C-frust |
 |-------|-------|---------|-------|---------|-------|---------|
-| Openness | 0.25 | -0.10 | 0.15 | -0.05 | 0.35 | -0.15 |
-| Conscientiousness | 0.40 | -0.25 | 0.10 | -0.10 | 0.55 | -0.30 |
-| Extraversion | 0.30 | -0.15 | 0.45 | -0.20 | 0.15 | -0.10 |
-| Agreeableness | 0.05 | -0.15 | 0.50 | -0.40 | 0.10 | -0.05 |
-| Neuroticism | -0.20 | 0.48 | -0.25 | 0.45 | -0.15 | 0.42 |
+| Openness | 0.15 | -0.10 | 0.22 | -0.16 | 0.35 | -0.25 |
+| Conscientiousness | 0.15 | -0.16 | 0.30 | -0.22 | 0.28 | -0.22 |
+| Extraversion | 0.35 | -0.25 | 0.22 | -0.16 | 0.15 | -0.10 |
+| Agreeableness | 0.15 | -0.10 | 0.35 | -0.25 | 0.22 | -0.16 |
+| Neuroticism | -0.18 | 0.33 | -0.18 | 0.33 | -0.18 | 0.33 |
 
 Steps:
 1. Centre each subscale: `(score - 5) / 5` (yields roughly -1.0 to +1.0)
@@ -232,7 +237,7 @@ The system handles this ambiguity in two ways:
 | team_b_frust | float | Team context B-frust |
 | team_c_sat | float | Team context C-sat |
 | team_c_frust | float | Team context C-frust |
-| domain_states | JSONB | `{ambition: "thriving", belonging: "vulnerable", craft: "dormant"}` |
+| domain_states | JSONB | `{ambition: "thriving", belonging: "vulnerable", craft: "mild"}` |
 | big_five | JSONB | `{openness: 62, conscientiousness: 74, ...}` |
 | type_name | varchar(50) | 36-type name ("Mentor", "Forge", etc.) |
 | type_domain | varchar(20) | Dominant domain |
@@ -323,7 +328,7 @@ The relationship: `abc_profiles` = fast daily signal. `abc_assessments` = deep b
 Three horizontal bars, one per domain. Each bar shows:
 - Satisfaction score (left-aligned, filled green-to-amber gradient).
 - Frustration score (right-aligned, filled grey-to-red gradient).
-- State label in the centre: Thriving / Vulnerable / Dormant / Distressed, colour-coded.
+- State label in the centre: Thriving / Vulnerable / Mild / Distressed, colour-coded.
 
 Visual example (Belonging):
 ```
@@ -371,7 +376,7 @@ The existing `/member/typology` page already shows the 36-type detail, personali
 A 3x4 grid showing how many members are in each state per domain:
 
 ```
-              Thriving  Vulnerable  Dormant  Distressed
+              Thriving  Vulnerable  Mild  Distressed
  Ambition        5          3          2          2
  Belonging       4          4          1          3
  Craft           6          2          3          1
@@ -802,7 +807,7 @@ reverse_coded = 8 − raw_score        for reverse items
 |-------------|-------------|-------|
 | ≥ 5.5 | < 5.5 | Thriving |
 | ≥ 5.5 | ≥ 5.5 | Vulnerable |
-| < 5.5 | < 5.5 | Dormant |
+| < 5.5 | < 5.5 | Mild |
 | < 5.5 | ≥ 5.5 | Distressed |
 
 The Vulnerable state — high satisfaction masking high frustration — is the clinically important detection that requires the six-subscale split.

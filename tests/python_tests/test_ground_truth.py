@@ -99,37 +99,37 @@ class TestPerfectVulnerable:
         assert result["domain_states"]["craft"] == "Vulnerable"
 
 
-class TestPerfectDormant:
+class TestPerfectMild:
     """All items produce min score (1 after reverse scoring).
 
     Both sat and frust = 1.0 raw, normalized = 0.0.
-    All domains: Dormant.
+    All domains: Mild.
     """
 
-    def test_satisfaction_scores(self, scorer, perfect_dormant_responses):
-        result = scorer.score(perfect_dormant_responses)
+    def test_satisfaction_scores(self, scorer, perfect_mild_responses):
+        result = scorer.score(perfect_mild_responses)
         assert result["subscales"]["a_sat"] == pytest.approx(0.0)
         assert result["subscales"]["b_sat"] == pytest.approx(0.0)
         assert result["subscales"]["c_sat"] == pytest.approx(0.0)
 
-    def test_frustration_scores(self, scorer, perfect_dormant_responses):
-        result = scorer.score(perfect_dormant_responses)
+    def test_frustration_scores(self, scorer, perfect_mild_responses):
+        result = scorer.score(perfect_mild_responses)
         assert result["subscales"]["a_frust"] == pytest.approx(0.0)
         assert result["subscales"]["b_frust"] == pytest.approx(0.0)
         assert result["subscales"]["c_frust"] == pytest.approx(0.0)
 
-    def test_domain_states(self, scorer, perfect_dormant_responses):
-        result = scorer.score(perfect_dormant_responses)
-        assert result["domain_states"]["ambition"] == "Dormant"
-        assert result["domain_states"]["belonging"] == "Dormant"
-        assert result["domain_states"]["craft"] == "Dormant"
+    def test_domain_states(self, scorer, perfect_mild_responses):
+        result = scorer.score(perfect_mild_responses)
+        assert result["domain_states"]["ambition"] == "Mild"
+        assert result["domain_states"]["belonging"] == "Mild"
+        assert result["domain_states"]["craft"] == "Mild"
 
 
 class TestKnownMidpoint:
     """All items at 4 (midpoint of 1-7 scale).
 
     Subscale mean = 4.0, normalized = ((4-1)/6)*10 = 5.0.
-    All domains: Dormant (5.0 < 5.5 threshold).
+    All domains: Distressed (5.0 < sat threshold 6.46, 5.0 >= frust threshold 4.38).
     """
 
     def test_all_subscales_at_midpoint(self, scorer, midpoint_responses):
@@ -137,11 +137,11 @@ class TestKnownMidpoint:
         for subscale in ["a_sat", "a_frust", "b_sat", "b_frust", "c_sat", "c_frust"]:
             assert result["subscales"][subscale] == pytest.approx(5.0), f"{subscale} should be 5.0"
 
-    def test_domain_states_all_dormant(self, scorer, midpoint_responses):
-        """5.0 < 5.5 threshold, so all Dormant."""
+    def test_domain_states_all_distressed(self, scorer, midpoint_responses):
+        """5.0 < sat threshold 6.46, 5.0 >= frust threshold 4.38 -> Distressed."""
         result = scorer.score(midpoint_responses)
         for domain in ["ambition", "belonging", "craft"]:
-            assert result["domain_states"][domain] == "Dormant"
+            assert result["domain_states"][domain] == "Distressed"
 
     def test_big_five_all_at_50(self, scorer, midpoint_responses):
         """Midpoint subscales -> centred to 0 -> all Big Five at 50th percentile."""

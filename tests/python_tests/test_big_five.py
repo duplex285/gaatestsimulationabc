@@ -8,14 +8,14 @@ Steps:
 2. Dot product with weight row
 3. Convert to percentile: 50 + z * 30, clamped to [1, 99]
 
-Weight matrix:
+Weight matrix v4 (covariance-aware optimised, domain-anchored):
 | Trait           | A-sat | A-frust | B-sat | B-frust | C-sat | C-frust |
 |-----------------|-------|---------|-------|---------|-------|---------|
-| Openness        | 0.25  | -0.10   | 0.15  | -0.05   | 0.35  | -0.15   |
-| Conscientiousness| 0.40 | -0.25   | 0.10  | -0.10   | 0.55  | -0.30   |
-| Extraversion    | 0.30  | -0.15   | 0.45  | -0.20   | 0.15  | -0.10   |
-| Agreeableness   | 0.05  | -0.15   | 0.50  | -0.40   | 0.10  | -0.05   |
-| Neuroticism     | -0.20 | 0.48    | -0.25 | 0.45    | -0.15 | 0.42    |
+| Openness        | 0.12  |  0.16   | -0.36 | -0.35   | 0.52  |  0.33   |
+| Conscientiousness| 0.03 |  0.13   |  0.20 |  0.30   | 0.18  | -0.45   |
+| Extraversion    | 0.47  |  0.02   |  0.27 |  0.19   |-0.12  |  0.11   |
+| Agreeableness   |-0.23  |  0.19   |  0.43 | -0.13   | 0.08  |  0.18   |
+| Neuroticism     | 0.00  |  0.24   |  0.05 |  0.41   |-0.03  |  0.05   |
 """
 
 import pytest
@@ -134,52 +134,76 @@ class TestComputeBigFive:
         for trait, val in big_five.items():
             assert 1 <= val <= 99, f"{trait}={val} out of [1, 99]"
 
-    def test_high_sat_low_frust_raises_conscientiousness(self):
-        """High sat + low frust should produce above-average Conscientiousness.
+    def test_low_craft_frust_raises_conscientiousness(self):
+        """Low C-frust should produce above-average Conscientiousness.
 
-        C has strongest positive weights on A-sat(0.40), C-sat(0.55) and
-        strongest negative weights on A-frust(-0.25), C-frust(-0.30).
+        C anchors on c_frust (-0.45): discipline = low craft friction.
         """
         subscales = {
-            "a_sat": 9.0,
-            "a_frust": 1.0,
-            "b_sat": 9.0,
-            "b_frust": 1.0,
-            "c_sat": 9.0,
+            "a_sat": 5.0,
+            "a_frust": 5.0,
+            "b_sat": 5.0,
+            "b_frust": 5.0,
+            "c_sat": 7.0,
             "c_frust": 1.0,
         }
         big_five = compute_big_five(subscales)
         assert big_five["conscientiousness"] > 50
 
-    def test_high_frust_raises_neuroticism(self):
-        """High frustration should produce above-average Neuroticism.
+    def test_high_b_frust_raises_neuroticism(self):
+        """High belonging frustration should produce above-average Neuroticism.
 
-        N has positive weights on all frust subscales (0.48, 0.45, 0.42).
+        N anchors on b_frust (+0.41) and a_frust (+0.24).
         """
         subscales = {
-            "a_sat": 2.0,
-            "a_frust": 9.0,
-            "b_sat": 2.0,
+            "a_sat": 5.0,
+            "a_frust": 7.0,
+            "b_sat": 5.0,
             "b_frust": 9.0,
-            "c_sat": 2.0,
-            "c_frust": 9.0,
+            "c_sat": 5.0,
+            "c_frust": 5.0,
         }
         big_five = compute_big_five(subscales)
         assert big_five["neuroticism"] > 50
 
-    def test_high_b_sat_raises_extraversion_and_agreeableness(self):
-        """High B-sat should boost Extraversion (0.45) and Agreeableness (0.50)."""
+    def test_high_a_sat_raises_extraversion(self):
+        """High A-sat should boost Extraversion. E anchors on a_sat (+0.47)."""
         subscales = {
-            "a_sat": 5.0,
+            "a_sat": 9.0,
             "a_frust": 5.0,
-            "b_sat": 10.0,
-            "b_frust": 0.0,
+            "b_sat": 5.0,
+            "b_frust": 5.0,
             "c_sat": 5.0,
             "c_frust": 5.0,
         }
         big_five = compute_big_five(subscales)
         assert big_five["extraversion"] > 50
+
+    def test_high_b_sat_raises_agreeableness(self):
+        """High B-sat should boost Agreeableness. A anchors on b_sat (+0.43)."""
+        subscales = {
+            "a_sat": 5.0,
+            "a_frust": 5.0,
+            "b_sat": 9.0,
+            "b_frust": 5.0,
+            "c_sat": 5.0,
+            "c_frust": 5.0,
+        }
+        big_five = compute_big_five(subscales)
         assert big_five["agreeableness"] > 50
+
+    def test_high_c_sat_raises_openness(self):
+        """High C-sat should boost Openness. O anchors on c_sat (+0.52)."""
+        subscales = {
+            "a_sat": 5.0,
+            "a_frust": 5.0,
+            "b_sat": 5.0,
+            "b_frust": 5.0,
+            "c_sat": 9.0,
+            "c_frust": 5.0,
+        }
+        big_five = compute_big_five(subscales)
+        assert big_five["openness"] > 50
 
     def test_differentiable_extreme_profiles(self):
         """All-high and all-low profiles should produce different Big Five estimates.

@@ -9,7 +9,7 @@ Pipeline:
     -> Normalize to 0-10
     -> Domain state classification
     -> Big Five inference
-    -> 36-type derivation
+    -> 10-type motivational derivation
     -> Frustration signature detection
     -> Belbin role inference
     -> Context gap analysis (when team scores provided)
@@ -97,9 +97,9 @@ class ABCScorer:
         # Reference: abc-assessment-spec Section 2.3
         big_five = compute_big_five(subscales)
 
-        # Step 6: 36-type derivation
+        # Step 6: Motivational type derivation (from subscale profile shape)
         # Reference: abc-assessment-spec Section 2.4
-        type_result = derive_type(subscales, big_five)
+        type_result = derive_type(subscales)
 
         # Step 7: Frustration signature detection
         # Reference: abc-assessment-spec Section 2.5
@@ -107,7 +107,7 @@ class ABCScorer:
 
         # Step 8: Belbin role inference
         # Reference: abc-assessment-spec Section 2.6
-        belbin_roles = infer_belbin_roles(subscales)
+        belbin_roles = infer_belbin_roles(subscales, big_five)
 
         # Step 9: Context gap analysis
         # Reference: abc-assessment-spec Section 2.7
@@ -119,6 +119,7 @@ class ABCScorer:
             "big_five": big_five,
             "type_name": type_result["type_name"],
             "type_domain": type_result["type_domain"],
+            "profile": type_result["profile"],
             "frustration_signatures": frustration_signatures,
             "belbin_roles": belbin_roles,
             "context_gaps": context_gaps,

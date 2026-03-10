@@ -172,7 +172,7 @@ class TestEdgeCases:
         import random
 
         random.seed(789)
-        valid_states = {"Thriving", "Vulnerable", "Dormant", "Distressed"}
+        valid_states = {"Thriving", "Vulnerable", "Mild", "Distressed"}
         for _ in range(50):
             responses = {}
             for item in ALL_ITEMS:

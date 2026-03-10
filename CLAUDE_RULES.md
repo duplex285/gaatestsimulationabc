@@ -68,7 +68,7 @@ ALWAYS test against known-answer datasets:
 - Perfect Thriving: all sat items 7, frust items 1 -> sat=10.0, frust=0.0, state=Thriving
 - Perfect Distressed: all sat items 1, frust items 7 -> sat=0.0, frust=10.0, state=Distressed
 - Perfect Vulnerable: all items 7 -> sat=10.0, frust=10.0, state=Vulnerable
-- Perfect Dormant: all items 1 -> sat=0.0, frust=0.0, state=Dormant
+- Perfect Mild: all items 1 -> sat=0.0, frust=0.0, state=Mild
 - Known Midpoint: all items 4 -> all subscales=5.0
 
 These tests must pass with 100% accuracy.
