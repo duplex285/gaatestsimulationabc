@@ -1,0 +1,500 @@
+"""Leading indicator model for ABC Assessment.
+
+Determines which patterns of ABC score changes predict burnout transitions
+and how early those patterns become detectable. Uses continuous theta scores
+with RCI-based change detection per Phase 2b's finding that categorical
+state classifications are too unstable.
+
+Reference: abc-assessment-spec Section 11.7 (trajectory detection targets)
+"""
+
+import numpy as np
+from scipy.optimize import differential_evolution
+from sklearn.metrics import roc_auc_score
+
+
+def compute_transition_probability(
+    scores: np.ndarray,
+    burnout_onset: np.ndarray,  # noqa: ARG001
+    lead_window: int = 3,
+) -> np.ndarray:
+    """Estimate P(burnout within lead_window | current trajectory).
+
+    Reference: abc-assessment-spec Section 11.7
+
+    For each person, computes a simple risk score based on the slope of
+    their most recent scores. Persons with steeper decline have higher
+    transition probability.
+
+    Uses logistic transformation of the trailing slope as a probability
+    estimate. This is a simulation placeholder; empirical data would use
+    logistic regression with multiple predictors.
+
+    Args:
+        scores: score trajectories, shape (n_persons, n_timepoints)
+        burnout_onset: first burnout timepoint per person (-1 if none)
+        lead_window: number of timepoints ahead to predict
+
+    Returns:
+        Array of transition probabilities, shape (n_persons,)
+    """
+    n_persons, n_timepoints = scores.shape
+    probs = np.zeros(n_persons)
+
+    for p in range(n_persons):
+        # Use slope of last lead_window+1 points as predictor
+        end = n_timepoints
+        start = max(0, end - lead_window - 1)
+        window = scores[p, start:end]
+
+        if len(window) < 2:
+            probs[p] = 0.5
+            continue
+
+        # Compute slope
+        time = np.arange(len(window), dtype=float)
+        time_c = time - np.mean(time)
+        denom = np.sum(time_c**2)
+        slope = np.sum(time_c * window) / denom if denom > 0 else 0.0
+
+        # Convert slope to probability via sigmoid
+        # Negative slope (decline) -> higher probability
+        probs[p] = 1.0 / (1.0 + np.exp(3.0 * slope))
+
+    return probs
+
+
+def identify_leading_indicators(
+    subscale_trajectories: dict[str, np.ndarray],
+    burnout_onset: np.ndarray,
+    lead_window: int = 3,
+) -> list[dict]:
+    """Identify which subscale changes have the highest predictive value.
+
+    Reference: abc-assessment-spec Section 11.7
+
+    For each subscale, computes the AUC of the trailing slope as a
+    predictor of burnout within the lead window. Subscales with higher
+    AUC are stronger leading indicators.
+
+    Args:
+        subscale_trajectories: dict mapping subscale name to score matrix
+                               shape (n_persons, n_timepoints)
+        burnout_onset: first burnout timepoint per person (-1 if none)
+        lead_window: number of timepoints ahead
+
+    Returns:
+        List of dicts sorted by AUC (highest first), each with:
+            subscale: name
+            auc: area under ROC curve for predicting burnout
+            mean_slope_burnout: average slope for persons who burn out
+            mean_slope_no_burnout: average slope for persons who do not
+    """
+    burnout_binary = (np.array(burnout_onset) >= 0).astype(int)
+
+    # Need both classes for AUC
+    if len(np.unique(burnout_binary)) < 2:
+        return [
+            {"subscale": name, "auc": 0.5, "mean_slope_burnout": 0.0, "mean_slope_no_burnout": 0.0}
+            for name in subscale_trajectories
+        ]
+
+    results = []
+    for name, trajectories in subscale_trajectories.items():
+        n_persons, n_timepoints = trajectories.shape
+
+        # Compute trailing slope per person
+        slopes = np.zeros(n_persons)
+        end = n_timepoints
+        start = max(0, end - lead_window - 1)
+        for p in range(n_persons):
+            window = trajectories[p, start:end]
+            time = np.arange(len(window), dtype=float)
+            time_c = time - np.mean(time)
+            denom = np.sum(time_c**2)
+            slopes[p] = np.sum(time_c * window) / denom if denom > 0 else 0.0
+
+        # For burnout prediction, negative slope = higher risk
+        # Invert so that higher score = higher risk for AUC
+        risk_scores = -slopes
+
+        try:
+            auc = roc_auc_score(burnout_binary, risk_scores)
+        except ValueError:
+            auc = 0.5
+
+        burnout_mask = burnout_binary == 1
+        results.append(
+            {
+                "subscale": name,
+                "auc": float(auc),
+                "mean_slope_burnout": float(np.mean(slopes[burnout_mask]))
+                if np.any(burnout_mask)
+                else 0.0,
+                "mean_slope_no_burnout": float(np.mean(slopes[~burnout_mask]))
+                if np.any(~burnout_mask)
+                else 0.0,
+            }
+        )
+
+    results.sort(key=lambda x: x["auc"], reverse=True)
+    return results
+
+
+def compute_detection_lag(
+    scores: np.ndarray,
+    burnout_onset: np.ndarray,
+    alert_threshold: float,
+    se: np.ndarray,
+) -> np.ndarray:
+    """Compute detection lag for each person with burnout.
+
+    Reference: abc-assessment-spec Section 11.7
+
+    For each person who experiences burnout, finds the first timepoint
+    where a reliable decline was detected (RCI < alert_threshold) and
+    reports the lag between that detection and the burnout onset.
+
+    Detection lag = burnout_onset - first_alert_timepoint
+    Positive lag = alert fired before burnout (good: lead time)
+    Zero = alert fired at same time as burnout (no lead time)
+    -1 = alert never fired (missed)
+
+    Args:
+        scores: score trajectories, shape (n_persons, n_timepoints)
+        burnout_onset: first burnout timepoint per person (-1 if none)
+        alert_threshold: RCI value below which an alert fires (e.g., -1.96)
+        se: standard errors, shape (n_persons, n_timepoints)
+
+    Returns:
+        Array of detection lags for persons with burnout only.
+        -1 for missed detections.
+    """
+    burnout_mask = np.array(burnout_onset) >= 0
+    burnout_persons = np.where(burnout_mask)[0]
+
+    lags = np.full(len(burnout_persons), -1, dtype=int)
+
+    for i, p in enumerate(burnout_persons):
+        onset = burnout_onset[p]
+
+        # Compute RCI for consecutive pairs
+        for t in range(len(scores[p]) - 1):
+            change = scores[p, t + 1] - scores[p, t]
+            se_diff = np.sqrt(se[p, t] ** 2 + se[p, t + 1] ** 2)
+            rci = change / se_diff if se_diff > 0 else 0.0
+
+            if rci < alert_threshold:
+                # Alert fired at timepoint t+1
+                lag = onset - (t + 1)
+                lags[i] = max(lag, 0)
+                break
+
+    return lags
+
+
+def optimize_alert_thresholds(
+    scores: np.ndarray,
+    burnout_onset: np.ndarray,
+    se: np.ndarray,
+    threshold_candidates: np.ndarray | None = None,
+    max_fpr: float = 0.15,
+) -> dict:
+    """Find the alert threshold that maximizes detection lead time.
+
+    Reference: Minerva optimization framework (decision variables + constraints)
+
+    Searches over candidate RCI thresholds to find the one that minimizes
+    mean detection lag (maximizes lead time) subject to the constraint
+    that the false positive rate does not exceed max_fpr.
+
+    Decision variable: alert_threshold (continuous)
+    Objective: minimize mean detection lag (maximize early detection)
+    Constraint: false_positive_rate <= max_fpr
+
+    Args:
+        scores: score trajectories, shape (n_persons, n_timepoints)
+        burnout_onset: burnout timepoint per person (-1 if none)
+        se: standard errors, shape (n_persons, n_timepoints)
+        threshold_candidates: RCI values to search over (default: -3.0 to -0.5)
+        max_fpr: maximum false positive rate constraint
+
+    Returns:
+        dict with keys:
+            optimal_threshold: best RCI threshold
+            mean_detection_lag: average lead time at optimal threshold
+            sensitivity: proportion of burnout cases detected
+            false_positive_rate: proportion of non-burnout cases with false alerts
+            all_results: list of results at each candidate threshold
+    """
+    if threshold_candidates is None:
+        threshold_candidates = np.arange(-3.0, -0.3, 0.25)
+
+    burnout_arr = np.array(burnout_onset)
+    has_burnout = burnout_arr >= 0
+    no_burnout = ~has_burnout
+    np.sum(has_burnout)
+    n_no_burnout = np.sum(no_burnout)
+
+    all_results = []
+    best_result = None
+    best_lag = -float("inf")
+
+    for threshold in threshold_candidates:
+        # Compute detection lags for burnout cases
+        lags = compute_detection_lag(scores, burnout_onset, threshold, se)
+        detected = lags >= 0
+        sensitivity = np.mean(detected) if len(detected) > 0 else 0.0
+        mean_lag = np.mean(lags[detected]) if np.any(detected) else 0.0
+
+        # Compute false positive rate for non-burnout cases
+        false_alerts = 0
+        if n_no_burnout > 0:
+            no_burnout_indices = np.where(no_burnout)[0]
+            for p in no_burnout_indices:
+                for t in range(len(scores[p]) - 1):
+                    change = scores[p, t + 1] - scores[p, t]
+                    se_diff = np.sqrt(se[p, t] ** 2 + se[p, t + 1] ** 2)
+                    rci = change / se_diff if se_diff > 0 else 0.0
+                    if rci < threshold:
+                        false_alerts += 1
+                        break
+            fpr = false_alerts / n_no_burnout
+        else:
+            fpr = 0.0
+
+        entry = {
+            "threshold": float(threshold),
+            "mean_detection_lag": float(mean_lag),
+            "sensitivity": float(sensitivity),
+            "false_positive_rate": float(fpr),
+        }
+        all_results.append(entry)
+
+        # Update best if within FPR constraint and better lag
+        if fpr <= max_fpr and mean_lag > best_lag and sensitivity > 0:
+            best_lag = mean_lag
+            best_result = entry
+
+    if best_result is None:
+        # No threshold met the constraint; return the least-bad option
+        best_result = min(all_results, key=lambda x: x["false_positive_rate"])
+
+    return {
+        "optimal_threshold": best_result["threshold"],
+        "mean_detection_lag": best_result["mean_detection_lag"],
+        "sensitivity": best_result["sensitivity"],
+        "false_positive_rate": best_result["false_positive_rate"],
+        "all_results": all_results,
+    }
+
+
+def _compute_weighted_rci(
+    subscale_scores: dict[str, np.ndarray],
+    subscale_se: dict[str, np.ndarray],
+    weights: np.ndarray,
+    rci_threshold: float,
+    window_size: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute weighted composite RCI alerts across subscales.
+
+    For each person at each timepoint, computes a weighted sum of
+    per-subscale RCI values and fires an alert if the composite
+    exceeds the threshold over the specified window.
+
+    Returns:
+        (alert_timepoints, composite_rci)
+        alert_timepoints: shape (n_persons,), first alert timepoint per person (-1 if none)
+        composite_rci: shape (n_persons, n_timepoints-1), weighted RCI per pair
+    """
+    subscale_names = sorted(subscale_scores.keys())
+    n_persons = len(next(iter(subscale_scores.values())))
+    first_scores = next(iter(subscale_scores.values()))
+    n_timepoints = first_scores.shape[1] if first_scores.ndim == 2 else len(first_scores)
+
+    composite_rci = np.zeros((n_persons, n_timepoints - 1))
+
+    for s_idx, name in enumerate(subscale_names):
+        scores = subscale_scores[name]
+        se = subscale_se[name]
+        w = weights[s_idx] if s_idx < len(weights) else 0.0
+
+        for p in range(n_persons):
+            for t in range(n_timepoints - 1):
+                change = scores[p, t + 1] - scores[p, t]
+                se_diff = np.sqrt(se[p, t] ** 2 + se[p, t + 1] ** 2)
+                rci = change / se_diff if se_diff > 0 else 0.0
+                composite_rci[p, t] += w * rci
+
+    # Detect alerts: composite RCI below threshold over window
+    alert_timepoints = np.full(n_persons, -1, dtype=int)
+    window_size = max(1, min(window_size, n_timepoints - 1))
+
+    for p in range(n_persons):
+        for t in range(window_size - 1, n_timepoints - 1):
+            window_mean = np.mean(composite_rci[p, t - window_size + 1 : t + 1])
+            if window_mean < rci_threshold:
+                alert_timepoints[p] = t
+                break
+
+    return alert_timepoints, composite_rci
+
+
+def optimize_alert_multidimensional(
+    subscale_scores: dict[str, np.ndarray],
+    subscale_se: dict[str, np.ndarray],
+    burnout_onset: np.ndarray,
+    max_fpr: float = 0.15,
+    seed: int = 42,
+) -> dict:
+    """Optimize alert configuration across multiple decision variables.
+
+    Reference: Minerva optimization framework
+    Reference: Mebane & Sekhon, rgenoud (R GENetic Optimization Using Derivatives)
+
+    Uses scipy.optimize.differential_evolution (analogous to rgenoud's GA
+    component) to search the multi-dimensional decision space:
+
+    Decision variables:
+        - 6 subscale weights (how much each subscale contributes to composite risk)
+        - RCI alert threshold (how large a composite change triggers alert)
+        - Window size (how many timepoints to average over)
+
+    Objective: maximize mean detection lag (lead time before burnout)
+    Constraint: false positive rate <= max_fpr (enforced via penalty)
+
+    This replaces the single-dimensional grid search in optimize_alert_thresholds()
+    with a global optimizer that can find non-obvious weight combinations where,
+    for example, frustration subscales receive higher weight than satisfaction
+    subscales as leading indicators.
+
+    Args:
+        subscale_scores: dict mapping subscale name to score matrix (n_persons, n_timepoints)
+        subscale_se: dict mapping subscale name to SE matrix (n_persons, n_timepoints)
+        burnout_onset: burnout timepoint per person (-1 if none)
+        max_fpr: maximum allowed false positive rate
+        seed: random seed for reproducibility
+
+    Returns:
+        dict with keys:
+            optimal_weights: dict mapping subscale name to optimized weight
+            optimal_threshold: best composite RCI threshold
+            optimal_window: best window size
+            mean_detection_lag: lead time at optimal configuration
+            sensitivity: proportion of burnout cases detected
+            false_positive_rate: FPR at optimal configuration
+            n_evaluations: number of fitness evaluations
+    """
+    subscale_names = sorted(subscale_scores.keys())
+    n_subscales = len(subscale_names)
+    burnout_arr = np.array(burnout_onset)
+    has_burnout = burnout_arr >= 0
+    no_burnout = ~has_burnout
+    n_burnout = int(np.sum(has_burnout))
+    n_no_burnout = int(np.sum(no_burnout))
+    burnout_indices = np.where(has_burnout)[0]
+    no_burnout_indices = np.where(no_burnout)[0]
+
+    n_evaluations = [0]
+
+    def fitness(params):
+        """Negative mean detection lag with FPR penalty (DE minimizes)."""
+        n_evaluations[0] += 1
+
+        weights = params[:n_subscales]
+        # Normalize weights to sum to 1
+        w_sum = np.sum(np.abs(weights))
+        weights = np.abs(weights) / w_sum if w_sum > 0 else np.ones(n_subscales) / n_subscales
+
+        rci_threshold = params[n_subscales]
+        window_size = max(1, int(round(params[n_subscales + 1])))
+
+        alert_times, _ = _compute_weighted_rci(
+            subscale_scores, subscale_se, weights, rci_threshold, window_size
+        )
+
+        # Sensitivity and lag for burnout cases
+        if n_burnout > 0:
+            burnout_alerts = alert_times[burnout_indices]
+            detected = burnout_alerts >= 0
+            np.mean(detected)
+            if np.any(detected):
+                lags = burnout_arr[burnout_indices[detected]] - burnout_alerts[detected]
+                lags = np.maximum(lags, 0)
+                mean_lag = np.mean(lags)
+            else:
+                mean_lag = 0.0
+        else:
+            mean_lag = 0.0
+
+        # FPR for non-burnout cases
+        if n_no_burnout > 0:
+            false_alerts = np.sum(alert_times[no_burnout_indices] >= 0)
+            fpr = false_alerts / n_no_burnout
+        else:
+            fpr = 0.0
+
+        # Penalty for FPR violation
+        penalty = 0.0
+        if fpr > max_fpr:
+            penalty = 50.0 * (fpr - max_fpr)
+
+        # DE minimizes, so return negative lag (we want to maximize lag)
+        return -mean_lag + penalty
+
+    # Bounds: n_subscales weights [0, 1], threshold [-3.5, -0.3], window [1, 5]
+    bounds = [(0.0, 1.0)] * n_subscales + [(-3.5, -0.3), (1.0, 5.0)]
+
+    result = differential_evolution(
+        fitness,
+        bounds=bounds,
+        seed=seed,
+        maxiter=50,
+        popsize=15,
+        tol=0.01,
+        mutation=(0.5, 1.5),
+        recombination=0.7,
+    )
+
+    # Extract optimal parameters
+    best_params = result.x
+    best_weights_raw = np.abs(best_params[:n_subscales])
+    w_sum = np.sum(best_weights_raw)
+    best_weights = best_weights_raw / w_sum if w_sum > 0 else np.ones(n_subscales) / n_subscales
+    best_threshold = best_params[n_subscales]
+    best_window = max(1, int(round(best_params[n_subscales + 1])))
+
+    # Evaluate at optimum
+    alert_times, _ = _compute_weighted_rci(
+        subscale_scores, subscale_se, best_weights, best_threshold, best_window
+    )
+
+    if n_burnout > 0:
+        burnout_alerts = alert_times[burnout_indices]
+        detected = burnout_alerts >= 0
+        sensitivity = float(np.mean(detected))
+        if np.any(detected):
+            lags = burnout_arr[burnout_indices[detected]] - burnout_alerts[detected]
+            mean_lag = float(np.mean(np.maximum(lags, 0)))
+        else:
+            mean_lag = 0.0
+    else:
+        sensitivity = 0.0
+        mean_lag = 0.0
+
+    if n_no_burnout > 0:
+        fpr = float(np.sum(alert_times[no_burnout_indices] >= 0) / n_no_burnout)
+    else:
+        fpr = 0.0
+
+    return {
+        "optimal_weights": {
+            n: float(w) for n, w in zip(subscale_names, best_weights, strict=False)
+        },
+        "optimal_threshold": float(best_threshold),
+        "optimal_window": best_window,
+        "mean_detection_lag": mean_lag,
+        "sensitivity": sensitivity,
+        "false_positive_rate": fpr,
+        "n_evaluations": n_evaluations[0],
+    }

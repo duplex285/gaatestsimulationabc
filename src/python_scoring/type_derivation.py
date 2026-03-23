@@ -7,21 +7,20 @@ Two-layer type system:
 Layer 1 — 125 Profile Combinations
   Each domain's satisfaction is classified into 5 levels (Very High, High,
   Medium, Low, Very Low). The profile is the combination of all three levels.
-  5 × 5 × 5 = 125 possible profiles. This is the granular view — no domain
+  5 x 5 x 5 = 125 possible profiles. This is the granular view, no domain
   is excluded. Every person's relationship with all three needs is captured.
 
-Layer 2 — 24 Named Archetypes
-  For human-readable labelling, profiles are grouped into 24 types:
-    8 base patterns × 3 frustration modifiers.
-
-  Base patterns use a binary threshold (sat >= 6.46) per domain:
-    (A_strong, B_strong, C_strong) → 2^3 = 8 patterns.
+Layer 2 — 8 Named Archetypes with Continuous Frustration
+  Base patterns use a binary threshold (sat >= 5.5) per domain:
+    (A_strong, B_strong, C_strong) -> 2^3 = 8 patterns.
     Each pattern has a name that describes the full A-B-C shape.
 
-  Modifiers count how many domains have frust >= 4.38:
-    0 frustrated = Steady (sustainable flow)
-    1 frustrated = Striving (productive friction in one area)
-    2-3 frustrated = Resolute (persevering through multiple challenges)
+  Frustration is reported as continuous scores per domain rather than
+  as a categorical modifier (Steady/Striving/Resolute). This change was
+  made because Phase 2b's decision consistency analysis showed the
+  categorical modifier produced only ~31% type agreement across
+  readministrations. Continuous frustration with confidence bands
+  preserves all information without the instability of categorical bins.
 
   All names are strengths-based.
 
@@ -85,17 +84,8 @@ BASE_PATTERNS = {
     (False, False, False): "Seeker",  # all three developing
 }
 
-# 3 modifiers from frustrated-domain count
-MODIFIER_THRESHOLDS = {
-    0: "Steady",  # no frustrated domains — sustainable
-    1: "Striving",  # one frustrated domain — productive friction
-}
-MODIFIER_DEFAULT = "Resolute"  # 2-3 frustrated domains — persevering
-
-# All valid type names
-ALL_TYPE_NAMES = {
-    f"{mod} {base}" for base in BASE_PATTERNS.values() for mod in ["Steady", "Striving", "Resolute"]
-}
+# All valid type names (8 base patterns, no modifier prefix)
+ALL_TYPE_NAMES = set(BASE_PATTERNS.values())
 
 # Domain order for tie-breaking
 _DOMAIN_ORDER = ["ambition", "belonging", "craft"]
@@ -168,10 +158,9 @@ def _get_base_pattern(subscales: dict[str, float]) -> str:
     return BASE_PATTERNS[(a_strong, b_strong, c_strong)]
 
 
-def _get_modifier(subscales: dict[str, float]) -> str:
-    """Count frustrated domains and return modifier."""
-    frust_count = sum(subscales[_DOMAIN_FRUST_KEY[d]] >= FRUST_THRESHOLD for d in _DOMAIN_ORDER)
-    return MODIFIER_THRESHOLDS.get(frust_count, MODIFIER_DEFAULT)
+def _get_frustration_levels(subscales: dict[str, float]) -> dict[str, float]:
+    """Extract per-domain frustration scores for continuous reporting."""
+    return {domain: subscales[_DOMAIN_FRUST_KEY[domain]] for domain in _DOMAIN_ORDER}
 
 
 def derive_type(subscales: dict[str, float]) -> dict:
@@ -180,17 +169,19 @@ def derive_type(subscales: dict[str, float]) -> dict:
     Reference: abc-assessment-spec Section 2.4
 
     Returns dict with:
-        type_name: str — one of 24 named archetypes
-        type_domain: str — dominant satisfaction domain
-        profile: dict — 125-combination profile (levels, codes, profile_code)
+        type_name: str, one of 8 base patterns (no modifier prefix)
+        type_domain: str, dominant satisfaction domain
+        profile: dict, 125-combination profile (levels, codes, profile_code)
+        frustration_levels: dict, continuous frustration score per domain
     """
     profile = compute_profile(subscales)
     base = _get_base_pattern(subscales)
-    modifier = _get_modifier(subscales)
     dominant = get_dominant_domain(subscales)
+    frustration_levels = _get_frustration_levels(subscales)
 
     return {
-        "type_name": f"{modifier} {base}",
+        "type_name": base,
         "type_domain": dominant,
         "profile": profile,
+        "frustration_levels": frustration_levels,
     }

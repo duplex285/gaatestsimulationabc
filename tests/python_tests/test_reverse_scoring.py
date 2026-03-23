@@ -66,41 +66,59 @@ class TestApplyReverseScoring:
     """Test applying reverse scoring to a full response dict."""
 
     def test_reverse_items_are_reversed(self):
-        """Item 4 of each subscale should be reversed."""
+        """Items 4 and 6 of each subscale should be reversed."""
         responses = {
             "AS1": 7,
             "AS2": 7,
             "AS3": 7,
             "AS4": 1,
+            "AS5": 7,
+            "AS6": 1,
             "AF1": 1,
             "AF2": 1,
             "AF3": 1,
             "AF4": 7,
+            "AF5": 1,
+            "AF6": 7,
             "BS1": 7,
             "BS2": 7,
             "BS3": 7,
             "BS4": 1,
+            "BS5": 7,
+            "BS6": 1,
             "BF1": 1,
             "BF2": 1,
             "BF3": 1,
             "BF4": 7,
+            "BF5": 1,
+            "BF6": 7,
             "CS1": 7,
             "CS2": 7,
             "CS3": 7,
             "CS4": 1,
+            "CS5": 7,
+            "CS6": 1,
             "CF1": 1,
             "CF2": 1,
             "CF3": 1,
             "CF4": 7,
+            "CF5": 1,
+            "CF6": 7,
         }
         scored = apply_reverse_scoring(responses)
-        # Reverse items should be flipped
+        # Reverse items (4 and 6) should be flipped
         assert scored["AS4"] == 7  # was 1, reversed to 7
         assert scored["AF4"] == 1  # was 7, reversed to 1
         assert scored["BS4"] == 7
         assert scored["BF4"] == 1
         assert scored["CS4"] == 7
         assert scored["CF4"] == 1
+        assert scored["AS6"] == 7  # was 1, reversed to 7
+        assert scored["AF6"] == 1  # was 7, reversed to 1
+        assert scored["BS6"] == 7
+        assert scored["BF6"] == 1
+        assert scored["CS6"] == 7
+        assert scored["CF6"] == 1
 
     def test_forward_items_unchanged(self):
         """Non-reverse items should pass through unchanged."""
@@ -117,7 +135,7 @@ class TestApplyReverseScoring:
         for item, val in scored.items():
             assert val == 4, f"{item} should be 4, got {val}"
 
-    def test_returns_all_24_items(self):
+    def test_returns_all_36_items(self):
         responses = dict.fromkeys(ALL_ITEMS, 4)
         scored = apply_reverse_scoring(responses)
-        assert len(scored) == 24
+        assert len(scored) == 36

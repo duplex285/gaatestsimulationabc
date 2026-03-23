@@ -20,5 +20,113 @@ phase_a_python:
     overall_accuracy_min: 0.80
     vulnerable_sensitivity_min: 0.75
   type_distribution:
-    max_single_type_pct: 0.15
-    min_types_observed: 30
+    max_single_type_pct: 0.20
+    min_types_observed: 8
+
+# Phase 1: IRT Infrastructure
+# Reference: Baker & Kim (2004), Bock & Mislevy (1982)
+phase_1_irt:
+  parameter_recovery:
+    discrimination_r_min: 0.90
+    difficulty_r_min: 0.95
+  theta_scoring:
+    theta_true_r_min: 0.90
+  item_fit:
+    sx2_p_min: 0.01
+    flagged_items_max: 3
+  model_fit:
+    rmsea_max: 0.08
+
+# Phase 2: Empirical Threshold Derivation
+# Reference: Swets (1988), Youden (1950), Jacobson & Truax (1991)
+phase_2_thresholds:
+  roc_analysis:
+    auc_min: 0.65
+    youden_ci_width_max: 0.15
+  bootstrap:
+    n_min: 1000
+    ci_coverage_target: 0.95
+  predictive_lead_time:
+    min_lead_points: 2
+
+# Phase 3: Advanced Factor Analysis
+# Reference: Reise (2012), Murphy et al. (2023)
+phase_3_factor_models:
+  bifactor:
+    omega_h_max: 0.50
+    omega_h_warning: 0.70
+    ecv_max: 0.60
+  model_comparison:
+    bifactor_vs_cfa_delta_aic_threshold: -10
+  method_factor:
+    method_loading_max: 0.30
+
+# Phase 2b: Decision Consistency
+# Reference: APA/AERA/NCME Standards (2014), Standards 2.4, 2.14, 2.16
+phase_2b_decision_consistency:
+  classification_agreement:
+    per_domain_min: 0.60
+    joint_domain_min: 0.25
+    type_agreement_min: 0.20
+    kappa_min: 0.40
+  difference_score_reliability:
+    min_per_domain: 0.50
+  conditional_sem:
+    report_at_thresholds: [6.46, 4.38, 5.50, 5.00]
+
+# Phase 5: Population Norming
+# Reference: McCall (1922), PROMIS scoring manual
+phase_5_norming:
+  t_score_distribution:
+    mean_target: 50.0
+    mean_tolerance: 2.0
+    sd_target: 10.0
+    sd_tolerance: 1.5
+  stratification:
+    min_stratum_n: 100
+
+# Phase 6: Leading Indicator Detection
+# Reference: abc-assessment-spec Section 11.7
+phase_6_leading_indicators:
+  trajectory_detection:
+    overall_accuracy_min: 0.50
+    decline_sensitivity_min: 0.60
+  alert_optimization:
+    max_fpr: 0.15
+    min_sensitivity: 0.30
+    min_mean_lag: 0
+  cascade:
+    min_detectable_lag: 1
+
+# Phase 5b: Tier-Specific Reliability
+# Reference: APA/AERA/NCME Standards (2014), Standards 2.3, 2.9
+phase_5b_tier_reliability:
+  per_tier:
+    6_item_min_reliability: 0.40
+    18_item_min_reliability: 0.60
+    36_item_min_reliability: 0.80
+  supportable_interpretations:
+    report_per_tier: true
+
+# Phase 4: Measurement Invariance
+# Reference: Chen (2007), APA Standards Chapter 3
+phase_4_invariance:
+  chen_2007_criteria:
+    delta_cfi_max: 0.01
+    delta_rmsea_max: 0.015
+  dif:
+    flagged_items_max: 3
+    effect_size_max: 0.10
+
+# Phase 7: Longitudinal CAT
+# Reference: PROMIS CAT guidelines
+phase_7_longitudinal_cat:
+  single_administration:
+    mean_items_max: 15
+    se_target: 0.30
+    theta_recovery_r_min: 0.90
+  longitudinal:
+    change_detection_sensitivity_min: 0.50
+    change_magnitude: 1.0
+  content_balance:
+    min_items_per_factor: 1

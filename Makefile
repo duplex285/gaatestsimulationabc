@@ -73,6 +73,51 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	@echo "Cleaned outputs."
 
+# Run psychometric IRT tests
+test-irt:
+	$(PYTEST) tests/psychometric_tests/test_irt*.py -v --tb=short
+
+# Run threshold derivation tests
+test-thresholds:
+	$(PYTEST) tests/psychometric_tests/test_threshold*.py tests/psychometric_tests/test_criterion*.py -v --tb=short
+
+# Run decision consistency tests
+test-consistency:
+	$(PYTEST) tests/psychometric_tests/test_decision_consistency.py -v --tb=short
+
+# Run factor analysis tests
+test-factor:
+	$(PYTEST) tests/psychometric_tests/test_factor*.py tests/psychometric_tests/test_omega*.py -v --tb=short
+
+# Run CAT tests
+test-cat:
+	$(PYTEST) tests/psychometric_tests/test_item_bank.py tests/psychometric_tests/test_cat*.py -v --tb=short
+
+# Run trajectory/leading indicator tests
+test-trajectory:
+	$(PYTEST) tests/psychometric_tests/test_trajectory*.py tests/psychometric_tests/test_leading*.py -v --tb=short
+
+# Run invariance tests
+test-invariance:
+	$(PYTEST) tests/psychometric_tests/test_invariance*.py tests/psychometric_tests/test_measurement*.py tests/psychometric_tests/test_dif*.py -v --tb=short
+
+# Run tier reliability tests
+test-tier-reliability:
+	$(PYTEST) tests/psychometric_tests/test_tier_reliability.py -v --tb=short
+
+# Run norming tests
+test-norming:
+	$(PYTEST) tests/psychometric_tests/test_norming*.py -v --tb=short
+
+# Run all psychometric tests
+test-psychometric:
+	$(PYTEST) tests/psychometric_tests/ -v --tb=short
+
+# Run all tests (existing + psychometric)
+validate-all:
+	@$(MAKE) test-python
+	@$(MAKE) test-psychometric
+
 # Show available commands
 help:
 	@echo "ABC Assessment Validation - Available Commands"
@@ -86,3 +131,6 @@ help:
 	@echo "  make check-spec   - Verify spec references in code"
 	@echo "  make reproduce    - Reproduce full validation end-to-end"
 	@echo "  make clean        - Remove generated outputs"
+	@echo "  make test-irt     - Run IRT psychometric tests"
+	@echo "  make test-psychometric - Run all psychometric tests"
+	@echo "  make validate-all - Run all tests (existing + psychometric)"
