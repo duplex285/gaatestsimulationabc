@@ -3,7 +3,7 @@
 Reference: abc-assessment-spec Section 2.1 (subscale means, normalization)
 Reference: abc-assessment-spec Section 13.2 (subscale scoring formulas)
 
-Subscale mean = mean of 4 items (after reverse coding), on 1-7 scale.
+Subscale mean = mean of 6 items (after reverse coding), on 1-7 scale.
 Normalized = ((mean - 1) / 6) * 10, yielding 0-10 scale.
 """
 
@@ -21,28 +21,28 @@ class TestSubscaleMean:
     """Test raw subscale mean computation (1-7 scale)."""
 
     def test_all_sevens(self):
-        assert compute_subscale_mean([7, 7, 7, 7]) == 7.0
+        assert compute_subscale_mean([7, 7, 7, 7, 7, 7]) == 7.0
 
     def test_all_ones(self):
-        assert compute_subscale_mean([1, 1, 1, 1]) == 1.0
+        assert compute_subscale_mean([1, 1, 1, 1, 1, 1]) == 1.0
 
     def test_all_fours(self):
-        assert compute_subscale_mean([4, 4, 4, 4]) == 4.0
+        assert compute_subscale_mean([4, 4, 4, 4, 4, 4]) == 4.0
 
     def test_mixed_values(self):
-        assert compute_subscale_mean([1, 3, 5, 7]) == 4.0
+        assert compute_subscale_mean([1, 3, 5, 7, 3, 5]) == 4.0
 
     def test_known_mean(self):
-        assert compute_subscale_mean([6, 7, 5, 6]) == 6.0
+        assert compute_subscale_mean([6, 7, 5, 6, 7, 5]) == 6.0
 
-    def test_requires_four_items(self):
-        """Subscales have exactly 4 items."""
+    def test_requires_six_items(self):
+        """Subscales have exactly 6 items."""
         with pytest.raises((ValueError, AssertionError)):
             compute_subscale_mean([7, 7, 7])
 
     def test_rejects_out_of_range(self):
         with pytest.raises((ValueError, AssertionError)):
-            compute_subscale_mean([0, 7, 7, 7])
+            compute_subscale_mean([0, 7, 7, 7, 7, 7])
 
 
 class TestNormalization:

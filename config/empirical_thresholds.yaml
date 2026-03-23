@@ -1,0 +1,41 @@
+# Empirical Thresholds for ABC Assessment
+# Reference: abc-assessment-spec Section 2.2
+#
+# Status: SYNTHETIC
+# Warning: These thresholds are derived from simulated criterion data,
+# not from empirical criterion-validated assessments. Replace with
+# empirically derived thresholds before clinical use.
+#
+# Method: ROC analysis with Youden's J statistic
+# Criterion: Simulated burnout inventory scores correlated with ABC frustration
+# Bootstrap: 2000 resamples for 95% CI
+
+data_source: synthetic
+
+satisfaction_threshold:
+  method: youden_index
+  criterion: simulated_wellbeing
+  point_estimate: null  # to be populated by scripts/derive_thresholds.py
+  ci_lower: null
+  ci_upper: null
+  auc: null
+  sensitivity: null
+  specificity: null
+  comparison_fixed: 6.46
+
+frustration_threshold:
+  method: youden_index
+  criterion: simulated_burnout
+  point_estimate: null  # to be populated by scripts/derive_thresholds.py
+  ci_lower: null
+  ci_upper: null
+  auc: null
+  sensitivity: null
+  specificity: null
+  comparison_fixed: 4.38
+
+reliable_change:
+  method: jacobson_truax
+  reliability: null  # requires empirical test-retest data
+  sd_pre: null
+  threshold_1_96: null

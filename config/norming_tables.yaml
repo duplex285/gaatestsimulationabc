@@ -1,0 +1,24 @@
+# Population Norms for ABC Assessment
+# Reference: abc-assessment-spec Section 2.1
+#
+# Status: SYNTHETIC
+# Warning: These norms are derived from simulated population data.
+# Replace with empirical norms from real athlete samples before clinical use.
+
+data_source: synthetic
+
+reference_population:
+  source: simulate_stratified_population
+  seed: 42
+  total_n: 1000
+  stratification: level
+
+severity_bands:
+  - {label: "Normal", t_max: 55}
+  - {label: "Mild", t_max: 60}
+  - {label: "Moderate", t_max: 65}
+  - {label: "Severe", t_max: 70}
+  - {label: "Extremely Severe", t_max: 999}
+
+# Norm tables populated by scripts/build_norms.py
+norms: null

@@ -35,11 +35,24 @@ def make_responses(sat_val, frust_val):
         "c_sat": "CS",
         "c_frust": "CF",
     }
-    reverse_items = {"AS4", "AF4", "BS4", "BF4", "CS4", "CF4"}
+    reverse_items = {
+        "AS4",
+        "AF4",
+        "BS4",
+        "BF4",
+        "CS4",
+        "CF4",
+        "AS6",
+        "AF6",
+        "BS6",
+        "BF6",
+        "CS6",
+        "CF6",
+    }
 
     for subscale in sat_subscales:
         prefix = prefixes[subscale]
-        for i in range(1, 5):
+        for i in range(1, 7):
             item = f"{prefix}{i}"
             if item in reverse_items:
                 responses[item] = 8 - sat_val
@@ -48,7 +61,7 @@ def make_responses(sat_val, frust_val):
 
     for subscale in frust_subscales:
         prefix = prefixes[subscale]
-        for i in range(1, 5):
+        for i in range(1, 7):
             item = f"{prefix}{i}"
             if item in reverse_items:
                 responses[item] = 8 - frust_val
@@ -70,10 +83,10 @@ class TestEndToEndPipeline:
         assert "type_name" in result
         assert "type_domain" in result
 
-    def test_pipeline_24_items_required(self, scorer):
-        """Pipeline should handle exactly 24 core items."""
+    def test_pipeline_36_items_required(self, scorer):
+        """Pipeline should handle exactly 36 core items."""
         responses = make_responses(sat_val=5, frust_val=3)
-        assert len(responses) == 24
+        assert len(responses) == 36
         result = scorer.score(responses)
         assert len(result["subscales"]) == 6
 
@@ -97,23 +110,23 @@ class TestRealisticProfiles:
         """Mixed profile: high ambition, low belonging."""
         responses = {}
         # A-sat high
-        for i, item in enumerate(["AS1", "AS2", "AS3", "AS4"]):
-            responses[item] = [7, 6, 7, 2][i]  # AS4 reverse: 8-2=6
+        for i, item in enumerate(["AS1", "AS2", "AS3", "AS4", "AS5", "AS6"]):
+            responses[item] = [7, 6, 7, 2, 7, 2][i]  # AS4,AS6 reverse: 8-2=6
         # A-frust low
-        for i, item in enumerate(["AF1", "AF2", "AF3", "AF4"]):
-            responses[item] = [1, 2, 1, 6][i]  # AF4 reverse: 8-6=2
+        for i, item in enumerate(["AF1", "AF2", "AF3", "AF4", "AF5", "AF6"]):
+            responses[item] = [1, 2, 1, 6, 1, 6][i]  # AF4,AF6 reverse: 8-6=2
         # B-sat low
-        for i, item in enumerate(["BS1", "BS2", "BS3", "BS4"]):
-            responses[item] = [2, 1, 2, 6][i]  # BS4 reverse: 8-6=2
+        for i, item in enumerate(["BS1", "BS2", "BS3", "BS4", "BS5", "BS6"]):
+            responses[item] = [2, 1, 2, 6, 2, 6][i]  # BS4,BS6 reverse: 8-6=2
         # B-frust high
-        for i, item in enumerate(["BF1", "BF2", "BF3", "BF4"]):
-            responses[item] = [6, 7, 6, 2][i]  # BF4 reverse: 8-2=6
+        for i, item in enumerate(["BF1", "BF2", "BF3", "BF4", "BF5", "BF6"]):
+            responses[item] = [6, 7, 6, 2, 6, 2][i]  # BF4,BF6 reverse: 8-2=6
         # C-sat mid
-        for i, item in enumerate(["CS1", "CS2", "CS3", "CS4"]):
-            responses[item] = [4, 4, 4, 4][i]  # CS4 reverse: 8-4=4
+        for i, item in enumerate(["CS1", "CS2", "CS3", "CS4", "CS5", "CS6"]):
+            responses[item] = [4, 4, 4, 4, 4, 4][i]  # CS4,CS6 reverse: 8-4=4
         # C-frust mid
-        for i, item in enumerate(["CF1", "CF2", "CF3", "CF4"]):
-            responses[item] = [4, 4, 4, 4][i]  # CF4 reverse: 8-4=4
+        for i, item in enumerate(["CF1", "CF2", "CF3", "CF4", "CF5", "CF6"]):
+            responses[item] = [4, 4, 4, 4, 4, 4][i]  # CF4,CF6 reverse: 8-4=4
 
         result = scorer.score(responses)
 

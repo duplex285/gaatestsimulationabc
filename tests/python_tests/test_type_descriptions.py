@@ -20,8 +20,8 @@ class TestTypeDescriptionsCoverage:
             assert name in TYPE_DESCRIPTIONS, f"Missing description for type: {name}"
 
     def test_description_count(self):
-        """24 motivational types: 8 base patterns × 3 modifiers."""
-        assert len(TYPE_DESCRIPTIONS) == 24
+        """8 motivational types: 8 base patterns with continuous frustration."""
+        assert len(TYPE_DESCRIPTIONS) == 8
 
 
 class TestTypeDescriptionStructure:
@@ -62,7 +62,7 @@ class TestGetTypeDescription:
     """Test the lookup function."""
 
     def test_valid_type(self):
-        result = get_type_description("Steady Mentor")
+        result = get_type_description("Mentor")
         assert result is not None
         assert result["pattern"]["belonging"] == "strong"
 

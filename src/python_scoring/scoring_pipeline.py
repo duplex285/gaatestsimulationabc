@@ -30,26 +30,38 @@ REQUIRED_ITEMS = frozenset(
         "AS2",
         "AS3",
         "AS4",
+        "AS5",
+        "AS6",
         "AF1",
         "AF2",
         "AF3",
         "AF4",
+        "AF5",
+        "AF6",
         "BS1",
         "BS2",
         "BS3",
         "BS4",
+        "BS5",
+        "BS6",
         "BF1",
         "BF2",
         "BF3",
         "BF4",
+        "BF5",
+        "BF6",
         "CS1",
         "CS2",
         "CS3",
         "CS4",
+        "CS5",
+        "CS6",
         "CF1",
         "CF2",
         "CF3",
         "CF4",
+        "CF5",
+        "CF6",
     ]
 )
 
@@ -65,7 +77,7 @@ class ABCScorer:
         responses: dict[str, int],
         team_scores: dict[str, float] | None = None,
     ) -> dict:
-        """Score a complete set of 24 item responses.
+        """Score a complete set of 36 item responses.
 
         Reference: abc-assessment-spec Section 2.1
 
@@ -126,7 +138,7 @@ class ABCScorer:
         }
 
     def _validate_responses(self, responses: dict[str, int]) -> None:
-        """Validate that all 24 required items are present and in range.
+        """Validate that all 36 required items are present and in range.
 
         Reference: abc-assessment-spec Section 1.1
         """

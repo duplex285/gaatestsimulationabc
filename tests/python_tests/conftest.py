@@ -6,18 +6,31 @@ Reference: abc-assessment-spec Section 2.1 (scoring pipeline)
 
 import pytest
 
-# Item codes per subscale. Item 4 in each is reverse-scored.
+# Item codes per subscale. Items 4 and 6 in each are reverse-scored.
 # Reference: abc-assessment-spec Section 1.2
 SUBSCALE_ITEMS = {
-    "a_sat": ["AS1", "AS2", "AS3", "AS4"],
-    "a_frust": ["AF1", "AF2", "AF3", "AF4"],
-    "b_sat": ["BS1", "BS2", "BS3", "BS4"],
-    "b_frust": ["BF1", "BF2", "BF3", "BF4"],
-    "c_sat": ["CS1", "CS2", "CS3", "CS4"],
-    "c_frust": ["CF1", "CF2", "CF3", "CF4"],
+    "a_sat": ["AS1", "AS2", "AS3", "AS4", "AS5", "AS6"],
+    "a_frust": ["AF1", "AF2", "AF3", "AF4", "AF5", "AF6"],
+    "b_sat": ["BS1", "BS2", "BS3", "BS4", "BS5", "BS6"],
+    "b_frust": ["BF1", "BF2", "BF3", "BF4", "BF5", "BF6"],
+    "c_sat": ["CS1", "CS2", "CS3", "CS4", "CS5", "CS6"],
+    "c_frust": ["CF1", "CF2", "CF3", "CF4", "CF5", "CF6"],
 }
 
-REVERSE_ITEMS = {"AS4", "AF4", "BS4", "BF4", "CS4", "CF4"}
+REVERSE_ITEMS = {
+    "AS4",
+    "AF4",
+    "BS4",
+    "BF4",
+    "CS4",
+    "CF4",
+    "AS6",
+    "AF6",
+    "BS6",
+    "BF6",
+    "CS6",
+    "CF6",
+}
 
 ALL_ITEMS = [item for items in SUBSCALE_ITEMS.values() for item in items]
 

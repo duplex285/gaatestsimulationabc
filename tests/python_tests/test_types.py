@@ -3,8 +3,8 @@
 Reference: abc-assessment-spec Section 2.4
 
 Two-layer type system:
-  Layer 1: 125 profile combinations (5 sat levels × 3 domains)
-  Layer 2: 24 named archetypes (8 base patterns × 3 frustration modifiers)
+  Layer 1: 125 profile combinations (5 sat levels x 3 domains)
+  Layer 2: 8 named archetypes with continuous frustration reporting
 """
 
 from src.python_scoring.type_derivation import (
@@ -109,105 +109,91 @@ class TestBasePatterns:
 
     def test_integrator_all_strong(self):
         result = derive_type(_subs(a_sat=8.0, b_sat=8.0, c_sat=8.0))
-        assert "Integrator" in result["type_name"]
+        assert result["type_name"] == "Integrator"
 
     def test_captain_ab_strong(self):
         result = derive_type(_subs(a_sat=8.0, b_sat=8.0, c_sat=3.0))
-        assert "Captain" in result["type_name"]
+        assert result["type_name"] == "Captain"
 
     def test_architect_ac_strong(self):
         result = derive_type(_subs(a_sat=8.0, b_sat=3.0, c_sat=8.0))
-        assert "Architect" in result["type_name"]
+        assert result["type_name"] == "Architect"
 
     def test_mentor_bc_strong(self):
         result = derive_type(_subs(a_sat=3.0, b_sat=8.0, c_sat=8.0))
-        assert "Mentor" in result["type_name"]
+        assert result["type_name"] == "Mentor"
 
     def test_pioneer_a_strong(self):
         result = derive_type(_subs(a_sat=8.0, b_sat=3.0, c_sat=3.0))
-        assert "Pioneer" in result["type_name"]
+        assert result["type_name"] == "Pioneer"
 
     def test_anchor_b_strong(self):
         result = derive_type(_subs(a_sat=3.0, b_sat=8.0, c_sat=3.0))
-        assert "Anchor" in result["type_name"]
+        assert result["type_name"] == "Anchor"
 
     def test_artisan_c_strong(self):
         result = derive_type(_subs(a_sat=3.0, b_sat=3.0, c_sat=8.0))
-        assert "Artisan" in result["type_name"]
+        assert result["type_name"] == "Artisan"
 
     def test_seeker_none_strong(self):
         result = derive_type(_subs(a_sat=3.0, b_sat=3.0, c_sat=3.0))
-        assert "Seeker" in result["type_name"]
+        assert result["type_name"] == "Seeker"
 
 
-class TestModifiers:
-    """3 modifiers from frustrated-domain count."""
+class TestFrustrationLevels:
+    """Continuous frustration reporting replaces categorical modifiers."""
 
-    def test_steady_zero_frustrated(self):
-        """No domains with frust >= 4.38 -> Steady."""
+    def test_frustration_levels_in_result(self):
+        """derive_type returns continuous frustration levels per domain."""
         result = derive_type(
-            _subs(a_sat=8.0, b_sat=8.0, c_sat=8.0, a_frust=2.0, b_frust=2.0, c_frust=2.0)
+            _subs(a_sat=8.0, b_sat=8.0, c_sat=8.0, a_frust=5.0, b_frust=2.0, c_frust=7.0)
         )
-        assert result["type_name"] == "Steady Integrator"
+        assert "frustration_levels" in result
+        assert result["frustration_levels"]["ambition"] == 5.0
+        assert result["frustration_levels"]["belonging"] == 2.0
+        assert result["frustration_levels"]["craft"] == 7.0
 
-    def test_striving_one_frustrated(self):
-        """One domain with frust >= 4.38 -> Striving."""
-        result = derive_type(
-            _subs(a_sat=8.0, b_sat=8.0, c_sat=8.0, a_frust=5.0, b_frust=2.0, c_frust=2.0)
-        )
-        assert result["type_name"] == "Striving Integrator"
+    def test_frustration_levels_all_low(self):
+        """Low frustration across all domains."""
+        result = derive_type(_subs(a_frust=1.0, b_frust=2.0, c_frust=1.5))
+        assert all(v < 3.0 for v in result["frustration_levels"].values())
 
-    def test_resolute_two_frustrated(self):
-        """Two domains with frust >= 4.38 -> Resolute."""
-        result = derive_type(
-            _subs(a_sat=8.0, b_sat=8.0, c_sat=8.0, a_frust=5.0, b_frust=5.0, c_frust=2.0)
-        )
-        assert result["type_name"] == "Resolute Integrator"
+    def test_frustration_levels_all_high(self):
+        """High frustration across all domains."""
+        result = derive_type(_subs(a_frust=8.0, b_frust=7.0, c_frust=9.0))
+        assert all(v > 6.0 for v in result["frustration_levels"].values())
 
-    def test_resolute_three_frustrated(self):
-        """Three domains with frust >= 4.38 -> Resolute."""
+    def test_frustration_levels_has_three_domains(self):
+        """Frustration levels include all three domains."""
+        result = derive_type(_subs())
+        assert set(result["frustration_levels"].keys()) == {"ambition", "belonging", "craft"}
+
+    def test_type_name_has_no_modifier_prefix(self):
+        """Type name is a bare base pattern, not prefixed with Steady/Striving/Resolute."""
         result = derive_type(
             _subs(a_sat=8.0, b_sat=8.0, c_sat=8.0, a_frust=5.0, b_frust=5.0, c_frust=5.0)
         )
-        assert result["type_name"] == "Resolute Integrator"
+        assert result["type_name"] == "Integrator"
+        assert "Steady" not in result["type_name"]
+        assert "Striving" not in result["type_name"]
+        assert "Resolute" not in result["type_name"]
 
-    def test_frust_boundary_at_threshold(self):
-        """frust=5.0 is >= threshold -> counts as frustrated."""
-        result = derive_type(
-            _subs(a_sat=8.0, b_sat=8.0, c_sat=8.0, a_frust=5.0, b_frust=2.0, c_frust=2.0)
+    def test_frustration_independent_of_base_pattern(self):
+        """Frustration levels are the same regardless of base pattern."""
+        result_integrator = derive_type(
+            _subs(a_sat=8.0, b_sat=8.0, c_sat=8.0, a_frust=5.0, b_frust=2.0, c_frust=7.0)
         )
-        assert "Striving" in result["type_name"]
-
-    def test_frust_just_below_threshold(self):
-        """frust=4.99 is < threshold -> not frustrated."""
-        result = derive_type(
-            _subs(a_sat=8.0, b_sat=8.0, c_sat=8.0, a_frust=4.99, b_frust=2.0, c_frust=2.0)
+        result_seeker = derive_type(
+            _subs(a_sat=3.0, b_sat=3.0, c_sat=3.0, a_frust=5.0, b_frust=2.0, c_frust=7.0)
         )
-        assert "Steady" in result["type_name"]
+        assert result_integrator["frustration_levels"] == result_seeker["frustration_levels"]
 
 
-class TestModifierIndependentOfBase:
-    """Modifier depends on frustration count, not on which domains are strong."""
+class TestAllEightReachable:
+    """Every base pattern should be producible."""
 
-    def test_seeker_can_be_steady(self):
-        result = derive_type(
-            _subs(a_sat=3.0, b_sat=3.0, c_sat=3.0, a_frust=2.0, b_frust=2.0, c_frust=2.0)
-        )
-        assert result["type_name"] == "Steady Seeker"
-
-    def test_seeker_can_be_resolute(self):
-        result = derive_type(
-            _subs(a_sat=3.0, b_sat=3.0, c_sat=3.0, a_frust=7.0, b_frust=7.0, c_frust=7.0)
-        )
-        assert result["type_name"] == "Resolute Seeker"
-
-
-class TestAllTwentyFourReachable:
-    """Every type name should be producible."""
-
-    def test_all_24_types_reachable(self):
+    def test_all_8_types_reachable(self):
         produced = set()
-        # 8 base patterns
         patterns = [
             (8, 8, 8),  # Integrator
             (8, 8, 3),  # Captain
@@ -218,25 +204,9 @@ class TestAllTwentyFourReachable:
             (3, 3, 8),  # Artisan
             (3, 3, 3),  # Seeker
         ]
-        # 3 modifier levels (0, 1, 2 frustrated domains)
-        frust_configs = [
-            (2, 2, 2),  # 0 frustrated -> Steady
-            (5, 2, 2),  # 1 frustrated -> Striving
-            (5, 5, 2),  # 2 frustrated -> Resolute
-        ]
         for a_s, b_s, c_s in patterns:
-            for a_f, b_f, c_f in frust_configs:
-                result = derive_type(
-                    _subs(
-                        a_sat=a_s,
-                        b_sat=b_s,
-                        c_sat=c_s,
-                        a_frust=a_f,
-                        b_frust=b_f,
-                        c_frust=c_f,
-                    )
-                )
-                produced.add(result["type_name"])
+            result = derive_type(_subs(a_sat=a_s, b_sat=b_s, c_sat=c_s))
+            produced.add(result["type_name"])
         assert produced == ALL_TYPE_NAMES, f"Missing: {ALL_TYPE_NAMES - produced}"
 
 
@@ -257,6 +227,7 @@ class TestReturnStructure:
         assert "type_name" in result
         assert "type_domain" in result
         assert "profile" in result
+        assert "frustration_levels" in result
 
     def test_type_name_is_valid(self):
         result = derive_type(

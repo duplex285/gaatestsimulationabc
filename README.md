@@ -1,70 +1,112 @@
-# ABC Assessment Psychometric Validation
+# ABC Assessment Simulation
 
-Computational validation of Ero's ABC psychometric model — a 6-subscale instrument measuring satisfaction and frustration across three psychological need domains (Ambition, Belonging, Craft), grounded in Self-Determination Theory.
+Psychometric validation and simulation of the ABC assessment, a 36-item instrument measuring satisfaction and frustration across three psychological need domains (Ambition, Belonging, Craft), grounded in Self-Determination Theory.
 
-**Status**: All validation gates PASS. See [`docs/validation-report.md`](docs/validation-report.md) for the full report.
+## What this is
 
-## Purpose
+A purpose-built psychometric instrument developed through AI-assisted research and iterative simulation. The simulation validates the scoring infrastructure on synthetic data before empirical deployment with real athletes. Every threshold, weight, and classification is documented for auditor review.
 
-Prove the model's factor structure is statistically sound before production deployment. The simulation validates the math; empirical data validates the instrument.
+**Status:** All simulation phases complete. 493 tests passing, 0 failures. Empirical validation pending.
 
-## Structure
+## Instrument
 
-| Phase | Tool | What it proves | Status |
-|-------|------|----------------|--------|
-| Phase 0 | R (lavaan) | 6-factor CFA fits, sat/frust are separable constructs | PASS |
-| Phase A | Python (numpy, scipy) | Scoring pipeline preserves signal from raw responses to typed profiles | PASS |
+| Property | Value |
+|---|---|
+| Items | 36 (6 per subscale) |
+| Subscales | 6 (satisfaction + frustration per domain) |
+| Domains | 3 (Ambition, Belonging, Craft) |
+| Response scale | 1-7 Likert |
+| Reverse-coded items | 12 (items 4 and 6 per subscale) |
+| Archetype types | 8 base patterns with continuous frustration |
+| Measurement tiers | 6 / 18 / 36 items |
+| Mean type stability | 90% (with 6 items per subscale) |
 
-## Results
+## Dashboard
 
-| Gate | Target | Achieved |
-|------|--------|----------|
-| CFA fit (CFI) | >= 0.95 | 1.000 |
-| CFA fit (RMSEA) | <= 0.06 | 0.000 |
-| Cronbach's alpha | >= 0.70 | All pass |
-| Scoring correlation | >= 0.85 | 1.000 |
-| Domain accuracy | >= 80% | 100.0% |
-| Vulnerable sensitivity | >= 75% | 100.0% |
-| Type balance | <= 15% max | 11.0% |
-| Unit tests | All pass | 106/106 |
-| Code coverage | >= 85% | 97.5% |
+Open `outputs/site/index.html` in a browser to run the interactive simulation. The dashboard includes:
 
-## How the Simulation Generates Data
+- Population generation with configurable parameters
+- Type distribution (8 archetypes)
+- Domain state classification (Thriving/Vulnerable/Mild/Distressed)
+- Satisfaction vs frustration scatter plots per domain
+- Belbin team role inference
+- Frustration signature detection
+- Trajectory analysis with burnout cascade modeling
+- Stability analysis with boundary participant identification
+- Full methodology reference (14 sections, 27 numbered academic references)
+- Run computation log showing exact parameters and sample participants
 
-The dashboard generates synthetic participants client-side using fixed statistical parameters. Each run draws from the same underlying distributions, so the graphs will show a consistent spread across runs. This is by design: the simulation validates the scoring pipeline under controlled conditions, not the variance of a real population.
+## Psychometric Engine
 
-Three mechanisms produce this stability:
+The `src/psychometric/` package (21 modules) provides gold standard methods:
 
-1. **Fixed distribution parameters.** Six subscale scores are drawn from independent normal distributions with tuned means (`[0.24, -0.31, 0.24, -0.31, 0.24, -0.31]`). These offsets ensure no single type exceeds 15% of the population.
-2. **Cholesky decomposition with an identity correlation matrix.** Subscales are sampled independently (zero inter-subscale correlation). Real respondent data will introduce natural correlations between domains.
-3. **Convergence at scale.** With hundreds or thousands of participants, the law of large numbers pulls every run toward the same shape. The noise slider controls item-level variance, but the population-level distribution remains stable.
-
-The offline validation (R and Python) uses fixed random seeds (`set.seed(42)`) and a structured correlation matrix with cross-domain relationships. The dashboard uses simpler parameters to keep the client-side code lightweight and the type distribution unbiased.
-
-Empirical data will replace these fixed parameters and introduce the natural skews, correlations, and variance that real populations produce.
+| Capability | Module | Method |
+|---|---|---|
+| IRT scoring | irt_estimation.py | Graded Response Model, EAP theta with SE |
+| Threshold derivation | threshold_derivation.py | ROC, Youden Index, bootstrap CI, Jacobson-Truax RCI |
+| Decision consistency | decision_consistency.py | Classification agreement, difference reliability, conditional SEM |
+| Factor analysis | factor_models.py | CFA, bifactor, method-factor via semopy |
+| Measurement invariance | measurement_invariance.py | Configural/metric/scalar, DIF |
+| Population norming | norming.py | T-scores, percentile ranks, severity bands |
+| Tier reliability | tier_reliability.py | Per-tier reliability and supportable interpretations |
+| Leading indicators | leading_indicator_model.py | Trajectory detection, cascade model, differential evolution optimizer |
+| Adaptive testing | cat_engine.py, cat_longitudinal.py | Max-info and change-aware item selection |
+| Integrated pipeline | psychometric_pipeline.py | ABCPsychometricScorer with tier-aware output |
 
 ## Quick Start
 
 ```bash
-# R validation
-Rscript src/r_validation/02_abc_6factor_cfa.R
-Rscript src/r_validation/03_export_ground_truth.R
+# Setup
+make setup
 
-# Python scoring (activate venv first)
-source abc-venv/bin/activate
-pytest tests/python_tests/ -v
-python scripts/validate_scoring_accuracy.py
+# Run Python tests (493 tests)
+make test-python        # Original scoring pipeline (198 tests)
+make test-psychometric  # Psychometric engine (295 tests)
+make validate-all       # Both
+
+# Run analysis scripts
+python scripts/derive_thresholds.py
+python scripts/run_model_comparison.py
+python scripts/run_decision_consistency.py
+python scripts/build_norms.py
+python scripts/run_leading_indicator_analysis.py
 ```
 
 ## Project Layout
 
 ```
-src/r_validation/       # Phase 0: CFA scripts (3 files)
-src/python_scoring/     # Phase A: Production scoring engine (6 modules)
-tests/python_tests/     # 106 unit/integration tests
-scripts/                # Validation and pre-commit scripts
-config/                 # Correlation matrices, thresholds
-outputs/reports/        # CFA and scoring validation outputs
-outputs/datasets/       # Ground truth CSVs (1000 participants)
-docs/                   # Spec and validation report
+src/python_scoring/     # Production scoring engine (36-item pipeline)
+src/psychometric/       # Gold standard psychometric engine (21 modules)
+tests/python_tests/     # Scoring pipeline tests (198)
+tests/psychometric_tests/ # Psychometric engine tests (295)
+scripts/                # Analysis and validation scripts
+config/                 # IRT parameters, thresholds, correlation matrices, norms
+outputs/site/           # Interactive simulation dashboard
+docs/                   # Specifications, plans, and validation documents
 ```
+
+## Documentation
+
+| Document | Purpose |
+|---|---|
+| [gold-standard-upgrade-plan.md](docs/gold-standard-upgrade-plan.md) | Complete work plan with phase-by-phase results |
+| [phase-two-plan-instrument-expansion.md](docs/phase-two-plan-instrument-expansion.md) | 36-item expansion and archetype revision plan |
+| [validity-argument.md](docs/validity-argument.md) | Formal validity argument per APA Standards (2014) |
+| [new-items-draft.md](docs/new-items-draft.md) | 12 new items for expert review |
+| [abq-coach-integration-spec.md](docs/abq-coach-integration-spec.md) | ABQ and coach rating integration specification |
+| [prd-second-game-criterion-integration.md](docs/prd-second-game-criterion-integration.md) | PRD for platform integration |
+| [big-five-belbin-audit.md](docs/big-five-belbin-audit.md) | Big Five weight matrix and Belbin audit |
+| [abc-assessment-spec.md](docs/abc-assessment-spec.md) | Technical specification |
+| [white-paper-abc-simulator.md](docs/white-paper-abc-simulator.md) | Simulation methodology |
+
+## Key Findings
+
+1. **Type stability at 90%** with 6 items per subscale (up from 82% with 4 items)
+2. **Frustration rises 1.5 timepoints before satisfaction drops** (SDT cascade confirmed)
+3. **8 base patterns** are more reliable than 24 types (~50-55% vs ~31% agreement)
+4. **Empirical thresholds** (frust: 4.82, sat: 6.09) differ from fixed (4.38, 6.46) but both within 95% CIs
+5. **Bifactor omega-h = 0.246**: six subscales carry independent variance, no dominant general factor
+
+## Transparency
+
+This is an AI-developed instrument. No licensed SDT materials were used. We are transparent about what has confidence (the analytic infrastructure, the theoretical framework, the simulation results) and where further research is needed (empirical criterion validation, item-level calibration on real data). See [validity-argument.md](docs/validity-argument.md) for the full evidence map.

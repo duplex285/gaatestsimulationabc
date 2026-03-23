@@ -2,10 +2,25 @@
 
 Reference: abc-assessment-spec Section 2.1
 Formula: reverse = 8 - response
-Item 4 of each subscale is reverse-scored.
+Items 4 and 6 of each subscale are reverse-scored.
 """
 
-REVERSE_ITEMS = frozenset({"AS4", "AF4", "BS4", "BF4", "CS4", "CF4"})
+REVERSE_ITEMS = frozenset(
+    {
+        "AS4",
+        "AF4",
+        "BS4",
+        "BF4",
+        "CS4",
+        "CF4",
+        "AS6",
+        "AF6",
+        "BS6",
+        "BF6",
+        "CS6",
+        "CF6",
+    }
+)
 
 
 def reverse_score(response: int) -> int:
@@ -22,10 +37,11 @@ def reverse_score(response: int) -> int:
 
 
 def apply_reverse_scoring(responses: dict[str, int]) -> dict[str, int]:
-    """Apply reverse scoring to a full response dict (24 core items).
+    """Apply reverse scoring to a full response dict (36 core items).
 
     Reference: abc-assessment-spec Section 1.2, Section 2.1
-    Items AS4, AF4, BS4, BF4, CS4, CF4 are reverse-scored.
+    Items 4 and 6 of each subscale are reverse-scored:
+    AS4, AF4, BS4, BF4, CS4, CF4, AS6, AF6, BS6, BF6, CS6, CF6.
     All other items pass through unchanged.
     """
     scored = {}
