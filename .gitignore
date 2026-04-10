@@ -44,3 +44,4 @@ outputs/site/
 
 # Environment
 .env
+.claude/settings.local.json

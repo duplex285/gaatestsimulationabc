@@ -1,0 +1,119 @@
+# Base Rates for ABC Assessment: Demographic-Stratified Population Priors
+#
+# These base rates represent prevalence of near-constant mental exhaustion
+# among collegiate athletes, used as Bayesian priors for domain state
+# classification. They anchor ABC assessment classifications against
+# epidemiological reality, reducing false-positive rates in low-prevalence
+# populations and false-negative rates in high-prevalence ones.
+#
+# Status: LITERATURE-DERIVED
+# Warning: Rates are population-level prevalence estimates, not individual
+# diagnostic probabilities. Professional role rates are placeholders
+# pending empirical data collection.
+
+data_source: literature_derived
+last_updated: "2026-04-10"
+
+sources:
+  - citation: "NCAA Student-Athlete Health and Wellness Study (SAHWS), 2022-23"
+    sample_size: 23272
+    population: "NCAA Division I, II, III student-athletes"
+    notes: "Primary source for gender, sexual orientation, race/ethnicity, financial stress, and division stratifications"
+  - citation: "American College Health Association National College Health Assessment (ACHA-NCHA), 2018-19"
+    sample_size: 9057
+    population: "Student-athletes subset of ACHA-NCHA survey"
+    notes: "Supplementary prevalence data for exhaustion and mental health indicators"
+  - citation: "Madigan, D.J. et al. (2022). Meta-analysis of burnout in athletes. k=91 studies."
+    sample_size: 21012
+    population: "Athletes across competitive levels"
+    notes: "Pooled prevalence estimates for burnout and exhaustion"
+
+# ---------------------------------------------------------------------------
+# Near-constant mental exhaustion prevalence
+# ---------------------------------------------------------------------------
+near_constant_exhaustion:
+  overall: 0.25
+
+  by_gender:
+    male: 0.19
+    female: 0.365
+    nonbinary: 0.48
+
+  by_sexual_orientation:
+    straight: 0.22
+    lgbtq_plus: 0.475
+
+  by_race_ethnicity:
+    white: 0.23
+    black: 0.24
+    latinx: 0.27
+    other: 0.29
+
+  by_financial_stress:
+    low: 0.27
+    high: 0.58
+
+  by_division:
+    d1: 0.245
+    d2: 0.26
+    d3: 0.26
+
+# ---------------------------------------------------------------------------
+# Professional role base rates (placeholders)
+# ---------------------------------------------------------------------------
+professional_roles:
+  military:
+    near_constant_exhaustion: null
+    source: null
+    notes: "Pending DoD epidemiological data"
+  healthcare:
+    near_constant_exhaustion: null
+    source: null
+    notes: "Pending WHO/healthcare worker burnout meta-analysis integration"
+  law_enforcement:
+    near_constant_exhaustion: null
+    source: null
+    notes: "Pending law enforcement occupational health data"
+  executive:
+    near_constant_exhaustion: null
+    source: null
+    notes: "Pending executive burnout prevalence studies"
+
+# ---------------------------------------------------------------------------
+# Mapping base rates to ABC domain states
+# ---------------------------------------------------------------------------
+# The ABC classifies each domain (Ambition, Belonging, Craft) into four
+# states: Thriving, Vulnerable, Mild, Distressed. Base rates inform the
+# prior probability that a respondent truly belongs in the
+# Distressed/Vulnerable group before ABC item responses are considered.
+#
+# distressed_vulnerable_prior: Maps directly to near_constant_exhaustion
+#   rates. Respondents reporting near-constant exhaustion are the population
+#   most likely to classify as Distressed or Vulnerable on ABC domains.
+#
+# any_recent_exhaustion: Broader threshold capturing any recent exhaustion
+#   (not just near-constant). Approximately 1.6x the near-constant rate,
+#   capped at 0.80. This maps to a wider net that includes Mild states
+#   trending toward Vulnerable.
+
+domain_state_mapping:
+  distressed_vulnerable_prior:
+    description: "Prior probability of Distressed or Vulnerable classification"
+    source_rate: near_constant_exhaustion
+    multiplier: 1.0
+    notes: "Direct mapping from near-constant exhaustion prevalence"
+
+  any_recent_exhaustion:
+    description: "Broader exhaustion threshold for sensitivity analysis"
+    source_rate: near_constant_exhaustion
+    multiplier: 1.6
+    cap: 0.80
+    notes: "Approximately 1.6x near-constant rate; captures episodic exhaustion"
+
+# ---------------------------------------------------------------------------
+# Classification calibration parameters
+# ---------------------------------------------------------------------------
+classification_calibration:
+  sensitivity: 0.81
+  specificity: 0.84
+  notes: "Estimated from simulated criterion data. Replace with empirical values after criterion validation study."

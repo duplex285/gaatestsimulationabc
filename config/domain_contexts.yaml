@@ -1,0 +1,127 @@
+# Domain Contexts Configuration
+# Maps the ABC's three domains (Ambition, Belonging, Craft) to different
+# life contexts. The underlying measurement model (6 subscales, 0-10 scale)
+# is identical across contexts. Only the item wording, labels, and
+# narrative framing change.
+#
+# SDT foundation: Ambition = autonomy, Belonging = relatedness, Craft = competence.
+# These three needs are universal per Ryan & Deci (2017).
+
+data_source: theory_derived
+last_updated: 2026-04-10
+
+contexts:
+  sport:
+    label: "Athletic Context"
+    description: "For active athletes in competitive or recreational sport"
+    domains:
+      ambition:
+        label: "Ambition"
+        sdt_need: "autonomy"
+        description: "Goal pursuit and autonomous motivation in sport"
+        satisfaction_prompt: "How often did you feel genuinely excited about a goal you're working toward?"
+        frustration_prompt: "How often did you feel like you were going through the motions without knowing why?"
+      belonging:
+        label: "Belonging"
+        sdt_need: "relatedness"
+        description: "Relationships and connection within your team"
+        satisfaction_prompt: "How often did you feel genuinely heard by a teammate?"
+        frustration_prompt: "How often did you feel like you had to perform a version of yourself to fit in?"
+      craft:
+        label: "Craft"
+        sdt_need: "competence"
+        description: "Skill development and mastery in your sport"
+        satisfaction_prompt: "How often did you lose track of time working on a specific skill?"
+        frustration_prompt: "How often did you feel like feedback was more about judgment than improvement?"
+
+  professional:
+    label: "Professional Context"
+    description: "For professionals in high-stress, high-performance roles"
+    domains:
+      ambition:
+        label: "Drive"
+        sdt_need: "autonomy"
+        description: "Goal pursuit and autonomous motivation in your career"
+        satisfaction_prompt: "How often did you feel genuinely excited about a project you're leading?"
+        frustration_prompt: "How often did you feel like your work was driven by obligation rather than purpose?"
+      belonging:
+        label: "Connection"
+        sdt_need: "relatedness"
+        description: "Relationships and trust within your team or organization"
+        satisfaction_prompt: "How often did you feel you could be honest with a colleague?"
+        frustration_prompt: "How often did you feel like you had to manage impressions rather than be yourself?"
+      craft:
+        label: "Mastery"
+        sdt_need: "competence"
+        description: "Skill development and competence in your professional domain"
+        satisfaction_prompt: "How often did you lose track of time working on a complex problem?"
+        frustration_prompt: "How often did you feel like your expertise was not valued or used?"
+
+  transition:
+    label: "Transition Context"
+    description: "For post-career athletes and career changers"
+    domains:
+      ambition:
+        label: "Purpose"
+        sdt_need: "autonomy"
+        description: "Direction and meaning beyond sport"
+        satisfaction_prompt: "How often did you feel a sense of direction about what comes next?"
+        frustration_prompt: "How often did you feel stuck or without a clear path forward?"
+      belonging:
+        label: "Community"
+        sdt_need: "relatedness"
+        description: "Connection and identity beyond your team"
+        satisfaction_prompt: "How often did you feel part of a group that knows you, not your athlete identity?"
+        frustration_prompt: "How often did you feel like people only see the athlete, not the person?"
+      craft:
+        label: "Growth"
+        sdt_need: "competence"
+        description: "Learning and competence in new domains"
+        satisfaction_prompt: "How often did you feel challenged in a way that felt productive?"
+        frustration_prompt: "How often did you feel like a beginner in a way that was discouraging?"
+
+  military:
+    label: "Military Context"
+    description: "For active duty and veteran service members"
+    domains:
+      ambition:
+        label: "Mission"
+        sdt_need: "autonomy"
+        description: "Purpose and autonomous commitment to objectives"
+        satisfaction_prompt: "How often did you feel your work contributes to something that matters?"
+        frustration_prompt: "How often did you feel like your effort was wasted on tasks without purpose?"
+      belonging:
+        label: "Unit Cohesion"
+        sdt_need: "relatedness"
+        description: "Trust and connection within your unit"
+        satisfaction_prompt: "How often did you feel you could rely on the people around you?"
+        frustration_prompt: "How often did you feel isolated or unsupported by your chain of command?"
+      craft:
+        label: "Proficiency"
+        sdt_need: "competence"
+        description: "Tactical and technical skill development"
+        satisfaction_prompt: "How often did you feel sharp and prepared for what was required?"
+        frustration_prompt: "How often did you feel under-trained or over-deployed for the demands?"
+
+  healthcare:
+    label: "Healthcare Context"
+    description: "For clinicians, nurses, and medical professionals"
+    domains:
+      ambition:
+        label: "Calling"
+        sdt_need: "autonomy"
+        description: "Autonomous motivation and purpose in patient care"
+        satisfaction_prompt: "How often did you feel that your work makes a genuine difference?"
+        frustration_prompt: "How often did you feel like bureaucracy blocked you from doing your job?"
+      belonging:
+        label: "Team Trust"
+        sdt_need: "relatedness"
+        description: "Relationships and psychological safety with colleagues"
+        satisfaction_prompt: "How often did you feel supported by your clinical team?"
+        frustration_prompt: "How often did you feel like raising a concern would be held against you?"
+      craft:
+        label: "Clinical Skill"
+        sdt_need: "competence"
+        description: "Clinical competence and professional development"
+        satisfaction_prompt: "How often did you feel confident in your clinical decisions?"
+        frustration_prompt: "How often did you feel overwhelmed by cases beyond your training?"

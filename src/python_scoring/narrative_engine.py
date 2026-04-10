@@ -1,0 +1,1068 @@
+"""Narrative engine for the ABC Assessment.
+
+Transforms scoring outputs into personalized language for athletes and coaches.
+Scores become stories. Stories become conversations. Conversations become change.
+
+Reference: abc-assessment-spec Section 2.4 (type derivation)
+Reference: abc-assessment-spec Section 2.2 (domain classification)
+Reference: abc-assessment-spec Section 2.5 (frustration signatures)
+
+Research basis for effort-cost framing:
+  Pessiglione et al. (2025): fatigue as rising effort cost, not depleted resource.
+  Van Cutsem et al. (2017): mental fatigue increases perceived effort cost.
+  Frustration = the cost of effort is rising relative to reward, not a sign that
+  something is broken.
+"""
+
+from __future__ import annotations
+
+# ---------------------------------------------------------------------------
+# Archetype narrative content
+# ---------------------------------------------------------------------------
+
+_ARCHETYPE_NARRATIVES = {
+    "Integrator": {
+        "athlete": {
+            "identity_description": (
+                "You draw energy from all three domains: ambition, belonging, "
+                "and craft. You pursue goals, invest in relationships, and care "
+                "about the quality of your work. This balance gives you range. "
+                "Where others specialize, you connect."
+            ),
+            "strengths": [
+                "You adapt to different situations because you draw from "
+                "multiple sources of motivation.",
+                "You see how individual goals, team dynamics, and skill development fit together.",
+                "You sustain engagement even when one domain dips, because "
+                "the others provide lift.",
+                "You bring perspective that specialists sometimes miss.",
+            ],
+            "growth_edge": (
+                "Your range is real, but it can also scatter your focus. "
+                "Pick one domain to push from strong to exceptional. "
+                "Depth in one area sharpens the others."
+            ),
+        },
+        "coach": {
+            "identity_description": (
+                "This athlete draws energy from all three domains: ambition, "
+                "belonging, and craft. They pursue goals, invest in relationships, "
+                "and care about quality. This balance creates resilience. "
+                "Where others specialize, this athlete connects."
+            ),
+            "strengths": [
+                "Adapts across situations by drawing from multiple sources of motivation.",
+                "Sees how goals, team dynamics, and skill development fit together.",
+                "Sustains engagement when one domain dips, because the others provide lift.",
+                "Brings perspective that specialists sometimes miss.",
+            ],
+            "growth_edge": (
+                "This athlete's range can scatter focus. Help them choose one "
+                "domain to push from strong to exceptional. Depth in one area "
+                "will sharpen the others."
+            ),
+        },
+    },
+    "Captain": {
+        "athlete": {
+            "identity_description": (
+                "You lead through people. Ambition and belonging fuel you: you "
+                "set goals and bring others along. You want to win, and you "
+                "want everyone in the room when it happens. Craft is your "
+                "developing frontier."
+            ),
+            "strengths": [
+                "You rally people around a shared objective.",
+                "You build coalitions. Others follow because they trust "
+                "your direction and your investment in them.",
+                "You translate competitive drive into collective energy.",
+                "You read group dynamics and adjust your leadership accordingly.",
+            ],
+            "growth_edge": (
+                "Your leadership earns trust. Your next step is deepening one "
+                "technical skill that reinforces your credibility. The best "
+                "captains lead and do."
+            ),
+        },
+        "coach": {
+            "identity_description": (
+                "This athlete leads through people. Ambition and belonging are "
+                "both strong: they set goals and bring others along. They want "
+                "to win and want the team present for it. Craft is their "
+                "developing frontier."
+            ),
+            "strengths": [
+                "Rallies people around a shared objective.",
+                "Builds coalitions through trust and relational investment.",
+                "Translates competitive drive into collective energy.",
+                "Reads group dynamics and adjusts leadership style.",
+            ],
+            "growth_edge": (
+                "Help this athlete invest in one technical skill that deepens "
+                "their leadership credibility. Their relational strength is "
+                "established. Craft development is the next lever."
+            ),
+        },
+    },
+    "Architect": {
+        "athlete": {
+            "identity_description": (
+                "You build with purpose. Ambition and craft drive you: you set "
+                "high standards and develop the skills to meet them. You think "
+                "strategically about how performance fits together. Belonging "
+                "is your developing frontier."
+            ),
+            "strengths": [
+                "You combine drive with technical depth. Your goals are backed by skill.",
+                "You hold high standards and do the work to justify them.",
+                "You think in systems. You see how the parts connect.",
+                "You produce quality output under pressure.",
+            ],
+            "growth_edge": (
+                "Your work speaks for itself, but work alone does not build "
+                "teams. Bring one collaborator into your next project early. "
+                "Shared craft strengthens belonging."
+            ),
+        },
+        "coach": {
+            "identity_description": (
+                "This athlete builds with purpose. Ambition and craft are both "
+                "strong: they set high standards and develop the skills to meet "
+                "them. They think strategically about performance. Belonging "
+                "is their developing frontier."
+            ),
+            "strengths": [
+                "Combines drive with technical depth. Goals are backed by skill.",
+                "Holds high standards and does the work to justify them.",
+                "Thinks in systems. Sees how the parts connect.",
+                "Produces quality output under pressure.",
+            ],
+            "growth_edge": (
+                "This athlete's work speaks for itself, but work alone does not "
+                "build teams. Create opportunities for them to collaborate "
+                "early in a process, not just deliver at the end."
+            ),
+        },
+    },
+    "Mentor": {
+        "athlete": {
+            "identity_description": (
+                "You grow others through what you know. Belonging and craft "
+                "fuel you: you build deep expertise and share it generously. "
+                "You teach, guide, and build trust through competence. "
+                "Ambition is your developing frontier."
+            ),
+            "strengths": [
+                "You build trust through demonstrated competence. People "
+                "listen because you know your craft.",
+                "You share knowledge without holding it back. Others improve around you.",
+                "You bring patience to complexity. You simplify hard things for others.",
+                "You create psychological safety through consistent, reliable presence.",
+            ],
+            "growth_edge": (
+                "Your expertise and generosity are clear. The next step is "
+                "making your work visible beyond your immediate circle. "
+                "Expertise scales when it reaches a wider audience."
+            ),
+        },
+        "coach": {
+            "identity_description": (
+                "This athlete grows others through their knowledge. Belonging "
+                "and craft are both strong: they build deep expertise and share "
+                "it generously. They teach, guide, and build trust through "
+                "competence. Ambition is their developing frontier."
+            ),
+            "strengths": [
+                "Builds trust through demonstrated competence. Others "
+                "listen because they know their craft.",
+                "Shares knowledge without holding it back. Others improve around them.",
+                "Brings patience to complexity. Simplifies hard things for others.",
+                "Creates psychological safety through consistent, reliable presence.",
+            ],
+            "growth_edge": (
+                "Help this athlete claim credit for their contributions. "
+                "They give freely but may avoid the visibility that ambition "
+                "requires. Small steps toward public recognition build the "
+                "ambition domain without forcing it."
+            ),
+        },
+    },
+    "Pioneer": {
+        "athlete": {
+            "identity_description": (
+                "You know where you want to go. Ambition is your engine. "
+                "You set goals, chase them, and clear obstacles. Belonging and "
+                "craft are developing. Your drive is your foundation. The "
+                "question is what you build on it."
+            ),
+            "strengths": [
+                "You set clear goals and pursue them with focus.",
+                "You take initiative when others wait.",
+                "You bring competitive energy that raises the bar.",
+                "You make decisions and commit.",
+            ],
+            "growth_edge": (
+                "Your drive is powerful, but drive alone narrows. Pick one "
+                "relationship or one skill to invest in alongside your goals. "
+                "Ambition lasts longer when it is supported."
+            ),
+        },
+        "coach": {
+            "identity_description": (
+                "This athlete knows where they want to go. Ambition is their "
+                "engine. They set goals, chase them, and clear obstacles. "
+                "Belonging and craft are both developing. Their drive is real. "
+                "The question is what they build around it."
+            ),
+            "strengths": [
+                "Sets clear goals and pursues them with focus.",
+                "Takes initiative when others wait.",
+                "Brings competitive energy that raises the bar.",
+                "Makes decisions and commits.",
+            ],
+            "growth_edge": (
+                "Help this athlete invest in one relationship or one skill "
+                "that supports their goals. Their drive is not the issue. "
+                "A broader base will sustain it."
+            ),
+        },
+    },
+    "Anchor": {
+        "athlete": {
+            "identity_description": (
+                "You ground the people around you. Belonging is your strength. "
+                "You build trust, hold space, and keep groups stable. Ambition "
+                "and craft are developing. Your relational presence is what "
+                "others rely on."
+            ),
+            "strengths": [
+                "You create stability in your environment. Others feel settled around you.",
+                "You build trust through consistency and empathy.",
+                "You hold groups together during difficult stretches.",
+                "You notice when someone is struggling before they say it.",
+            ],
+            "growth_edge": (
+                "Your relational strength is clear. The next step is using "
+                "it to grow: learn from someone you admire, or push into a "
+                "skill that excites you. Growth does not require leaving "
+                "your relationships behind."
+            ),
+        },
+        "coach": {
+            "identity_description": (
+                "This athlete grounds the people around them. Belonging is "
+                "their strength. They build trust, hold space, and keep "
+                "groups stable. Ambition and craft are both developing. "
+                "Others rely on their relational presence."
+            ),
+            "strengths": [
+                "Creates stability in the environment. Others feel settled around them.",
+                "Builds trust through consistency and empathy.",
+                "Holds groups together during difficult stretches.",
+                "Notices when someone is struggling before they say it.",
+            ],
+            "growth_edge": (
+                "Help this athlete use their relationships as a platform for "
+                "growth. They will not pursue goals or skills at the expense "
+                "of connection, but they can pursue them through it. Frame "
+                "development as something the team needs from them."
+            ),
+        },
+    },
+    "Artisan": {
+        "athlete": {
+            "identity_description": (
+                "You lead with craft. Quality and mastery drive you. You go "
+                "deep where others stay on the surface. Ambition and belonging "
+                "are developing. Your foundation is what you can do, and how "
+                "well you can do it."
+            ),
+            "strengths": [
+                "You build deep expertise. You know your craft at a level others do not reach.",
+                "You hold yourself to high standards without needing external validation.",
+                "You bring patience to problems that demand it.",
+                "You find satisfaction in the process, not just the result.",
+            ],
+            "growth_edge": (
+                "Your skill is real. The next step is sharing it. Teach one "
+                "thing you have mastered. Teaching builds belonging from "
+                "craft, and it makes your work visible."
+            ),
+        },
+        "coach": {
+            "identity_description": (
+                "This athlete leads with craft. Quality and mastery are their "
+                "drivers. They go deep where others stay on the surface. "
+                "Ambition and belonging are both developing. Their foundation "
+                "is competence."
+            ),
+            "strengths": [
+                "Builds deep expertise. Knows their craft at a level others do not reach.",
+                "Holds high standards without needing external validation.",
+                "Brings patience to problems that demand it.",
+                "Finds satisfaction in the process, not just the result.",
+            ],
+            "growth_edge": (
+                "Help this athlete share their expertise. They may resist "
+                "visibility, but teaching creates belonging without requiring "
+                "social performance. Pair them with someone who wants to learn "
+                "what they know."
+            ),
+        },
+    },
+    "Seeker": {
+        "athlete": {
+            "identity_description": (
+                "You are in an open phase. No single domain dominates your "
+                "profile right now. This is not a deficit: it is a starting "
+                "point. You have room to explore what drives you and where "
+                "your energy wants to go."
+            ),
+            "strengths": [
+                "You bring fresh eyes. You are not locked into patterns that no longer serve you.",
+                "You are open to change in ways that established profiles are not.",
+                "You have the capacity for real transformation.",
+                "You can choose your direction rather than inherit it.",
+            ],
+            "growth_edge": (
+                "Openness is a strength, but it needs direction. Pick one "
+                "domain and invest deliberately. It does not have to be the "
+                "right one forever. Commitment creates momentum, and momentum "
+                "reveals what matters."
+            ),
+        },
+        "coach": {
+            "identity_description": (
+                "This athlete is in an open phase. No single domain dominates "
+                "their profile. This is not a deficit: it is a starting point. "
+                "The frustration levels reveal whether this is peaceful "
+                "exploration or distressed searching."
+            ),
+            "strengths": [
+                "Brings fresh eyes. Not locked into patterns that no longer serve them.",
+                "Open to change in ways that established profiles are not.",
+                "Has the capacity for real transformation.",
+                "Can choose direction rather than inherit it.",
+            ],
+            "growth_edge": (
+                "Help this athlete pick one domain and invest. Do not force "
+                "all three at once. If frustration is high, start by reducing "
+                "it in one domain before building satisfaction. If frustration "
+                "is low, explore what genuinely excites them."
+            ),
+        },
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Domain state narrative content
+# ---------------------------------------------------------------------------
+
+_DOMAIN_NAMES = {
+    "ambition": "Ambition",
+    "belonging": "Belonging",
+    "craft": "Craft",
+}
+
+_DOMAIN_STATE_NARRATIVES = {
+    "Thriving": {
+        "athlete": {
+            "state_description": (
+                "Your {domain} is strong and the effort feels worth it. "
+                "This domain is fueling you right now. The conditions around "
+                "you are supporting what you need."
+            ),
+            "reflection_prompt": (
+                "What is it about your current environment that makes "
+                "{domain_lower} feel this good? Name it, so you can protect it."
+            ),
+        },
+        "coach": {
+            "state_description": (
+                "This athlete's {domain} is strong, and the effort cost is low. "
+                "The domain is fueling them. The current environment supports "
+                "what they need here."
+            ),
+            "conversation_starter": (
+                "Ask them what about their current situation makes "
+                "{domain_lower} feel sustainable. Understanding the conditions "
+                "that support this state helps you protect them."
+            ),
+        },
+    },
+    "Vulnerable": {
+        "athlete": {
+            "state_description": (
+                "Your {domain} scores high, but the cost of maintaining it is "
+                "rising. You are performing, yet something about the effort "
+                "feels harder than it should. This is not a failure. It is a "
+                "signal that the balance between effort and reward is shifting."
+            ),
+            "reflection_prompt": (
+                "Where does the effort around {domain_lower} feel heaviest? "
+                "What part of maintaining it is costing you the most right now?"
+            ),
+        },
+        "coach": {
+            "state_description": (
+                "This athlete's {domain} is high, but the effort cost is also "
+                "high. They are performing, yet the strain is real. This is "
+                "the highest-priority state for intervention because the "
+                "athlete is still engaged and the window to act is open."
+            ),
+            "conversation_starter": (
+                "Open with recognition: they are doing well in {domain_lower}. "
+                "Then ask what part of maintaining it feels heaviest. "
+                "The goal is to reduce effort cost, not to add more."
+            ),
+        },
+    },
+    "Mild": {
+        "athlete": {
+            "state_description": (
+                "Your {domain} is quiet right now. It is neither strong nor "
+                "blocked. This domain is not causing problems, but it is not "
+                "giving you energy either. It sits idle."
+            ),
+            "reflection_prompt": (
+                "Is {domain_lower} quiet because you have chosen to focus "
+                "elsewhere, or because the opportunity to engage it is "
+                "missing? The distinction matters."
+            ),
+        },
+        "coach": {
+            "state_description": (
+                "This athlete's {domain} is low, but frustration is also low. "
+                "The domain is dormant rather than distressed. The need is "
+                "not being engaged, but it is not being blocked either."
+            ),
+            "conversation_starter": (
+                "Explore whether the low engagement in {domain_lower} is a "
+                "choice or a gap. Ask whether the environment offers "
+                "opportunities to engage this need. Sometimes dormancy "
+                "reflects a missing context, not a missing desire."
+            ),
+        },
+    },
+    "Distressed": {
+        "athlete": {
+            "state_description": (
+                "Your {domain} is low, and the cost of effort here is high. "
+                "This domain is not just unfulfilled: something in your "
+                "environment is actively working against it. This is hard, "
+                "and it is not your fault that it feels hard."
+            ),
+            "reflection_prompt": (
+                "What is blocking your {domain_lower} right now? Is it a "
+                "person, a structure, a situation? Naming the source is the "
+                "first step toward changing it."
+            ),
+        },
+        "coach": {
+            "state_description": (
+                "This athlete's {domain} is low, and frustration is high. "
+                "The need is actively thwarted. This is the most urgent state. "
+                "Sustained thwarting predicts burnout, disengagement, and "
+                "dropout."
+            ),
+            "conversation_starter": (
+                "Lead with care, not diagnosis. Ask what is making "
+                "{domain_lower} difficult right now. Focus on removing "
+                "blockers before adding positive experiences. Reducing "
+                "frustration matters more than boosting satisfaction here."
+            ),
+        },
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Frustration signature narrative content
+# ---------------------------------------------------------------------------
+
+_SIGNATURE_NARRATIVES = {
+    "Blocked Drive": {
+        "athlete": {
+            "description": (
+                "You have strong ambition, but something is raising the cost "
+                "of pursuing your goals. You want to push forward, and the "
+                "resistance is real. The drive is intact. The environment is "
+                "not matching it."
+            ),
+            "action_prompt": (
+                "What specific obstacle is standing between you and your "
+                "goals right now? Is it something you can influence, or "
+                "something you need help with?"
+            ),
+        },
+        "coach": {
+            "description": (
+                "This athlete has strong ambition with high frustration. They "
+                "want to pursue goals, but something in the environment is "
+                "raising the effort cost. The drive is not the problem. The "
+                "conditions around it are."
+            ),
+            "action_prompt": (
+                "Ask what is getting in the way of their goals. Listen for "
+                "structural barriers: playing time, role clarity, feedback "
+                "gaps. These are often coachable."
+            ),
+        },
+    },
+    "Conditional Belonging": {
+        "athlete": {
+            "description": (
+                "You feel connected, but the connection has conditions. "
+                "Something about belonging here requires ongoing effort that "
+                "feels heavier than it should. You are not failing to belong. "
+                "You are paying a high price to belong."
+            ),
+            "action_prompt": (
+                "What part of fitting in feels like it takes the most energy? "
+                "Is there a version of belonging here that costs less?"
+            ),
+        },
+        "coach": {
+            "description": (
+                "This athlete reports strong belonging with high frustration. "
+                "They feel connected, but the connection is conditional or "
+                "costly. Watch for performance-contingent acceptance, "
+                "exclusionary group norms, or social effort that drains "
+                "rather than restores."
+            ),
+            "action_prompt": (
+                "Explore what the athlete feels they must do to maintain "
+                "their place. Belonging should restore energy, not consume "
+                "it. Ask what would make the team feel safer."
+            ),
+        },
+    },
+    "Evaluated Mastery": {
+        "athlete": {
+            "description": (
+                "Your skills are strong, but the way they are judged is "
+                "raising the effort cost. You care about quality, and the "
+                "evaluation pressure is making the craft feel heavier. "
+                "The skill is not the problem. The conditions around "
+                "performing it are."
+            ),
+            "action_prompt": (
+                "When does your craft feel lightest? When does it feel "
+                "heaviest? The gap between those moments often points to "
+                "the evaluation pressure."
+            ),
+        },
+        "coach": {
+            "description": (
+                "This athlete has strong craft with high frustration. Their "
+                "skills are solid, but the evaluation context is raising "
+                "effort cost. Watch for perfectionism driven by fear of "
+                "judgment, or environments where mistakes are punished "
+                "rather than used for learning."
+            ),
+            "action_prompt": (
+                "Create low-stakes practice opportunities. Ask when their "
+                "craft feels most natural and when it feels most pressured. "
+                "Reduce the evaluation load without lowering the standard."
+            ),
+        },
+    },
+    "Controlled Motivation": {
+        "athlete": {
+            "description": (
+                "Your goals feel imposed rather than chosen. The effort "
+                "cost of pursuing ambition is high because the direction "
+                "is not yours. This is not a lack of drive. It is drive "
+                "pointed somewhere you did not pick."
+            ),
+            "action_prompt": (
+                "Whose goals are you chasing right now? What would you "
+                "pursue if the choice were entirely yours?"
+            ),
+        },
+        "coach": {
+            "description": (
+                "This athlete shows low ambition satisfaction with high "
+                "frustration. Their goal pursuit feels controlled rather "
+                "than autonomous. The motivation is external: pressure, "
+                "obligation, or expectations they did not set. This is a "
+                "high-risk pattern for burnout."
+            ),
+            "action_prompt": (
+                "Start by asking what they want, not what they should want. "
+                "Look for places where you can offer choice within "
+                "structure. Autonomy does not mean no rules. It means "
+                "genuine input into direction."
+            ),
+        },
+    },
+    "Active Exclusion": {
+        "athlete": {
+            "description": (
+                "You do not feel like you belong, and the environment is "
+                "actively making that harder. This is not about your social "
+                "skills or effort. Something in the culture or structure "
+                "around you is blocking connection."
+            ),
+            "action_prompt": (
+                "Where do you feel most excluded? Is there one relationship "
+                "or setting where you do feel accepted? Start there."
+            ),
+        },
+        "coach": {
+            "description": (
+                "This athlete shows low belonging satisfaction with high "
+                "frustration. They do not just lack connection: something in "
+                "the environment is actively excluding them. This requires "
+                "immediate attention. Look at team culture, cliques, and "
+                "structural barriers to inclusion."
+            ),
+            "action_prompt": (
+                "Do not ask the athlete to try harder to fit in. The "
+                "environment must change, not just the individual. Examine "
+                "team norms, social dynamics, and your own role in who gets "
+                "included."
+            ),
+        },
+    },
+    "Competence Threat": {
+        "athlete": {
+            "description": (
+                "Your skills feel inadequate, and the environment is making "
+                "that worse. The cost of effort in craft is high because "
+                "every attempt feels like it confirms the gap. This is not "
+                "about a lack of talent. The conditions around skill "
+                "development are working against you."
+            ),
+            "action_prompt": (
+                "What is one small skill you could improve this week where "
+                "you control the process? Start where success is possible, "
+                "not where the pressure is highest."
+            ),
+        },
+        "coach": {
+            "description": (
+                "This athlete shows low craft satisfaction with high "
+                "frustration. Their competence feels threatened. Every "
+                "performance situation raises the effort cost because "
+                "failure feels confirming rather than informative. This is "
+                "the highest-risk craft pattern."
+            ),
+            "action_prompt": (
+                "Provide structured, low-stakes skill-building opportunities. "
+                "Separate development from evaluation. Give specific, "
+                "process-focused feedback rather than outcome judgment. "
+                "Rebuild confidence through small, visible wins."
+            ),
+        },
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Transition narrative templates
+# ---------------------------------------------------------------------------
+
+_TRANSITION_NARRATIVES = {
+    "growth": {
+        "athlete": (
+            "Your profile has shifted from {previous} to {current}. This is "
+            "growth. A domain that was developing has strengthened, and your "
+            "motivational base is broader now. The work you put in is showing."
+        ),
+        "coach": (
+            "This athlete's profile has shifted from {previous} to {current}. "
+            "This represents growth: a developing domain has strengthened. "
+            "Recognize the progress. Reinforcement here sustains the trajectory."
+        ),
+    },
+    "exploration": {
+        "athlete": (
+            "Your profile has shifted from {previous} to {current}. This "
+            "looks like exploration. You are trying new patterns, investing "
+            "energy in different places. This is healthy. New ground does not "
+            "feel settled, and that is fine."
+        ),
+        "coach": (
+            "This athlete's profile has shifted from {previous} to {current}. "
+            "This appears to be exploration rather than decline. They are "
+            "testing new motivational patterns. Normalize the shift and keep "
+            "the conversation open."
+        ),
+    },
+    "regression": {
+        "athlete": (
+            "Your profile has shifted from {previous} to {current}. A domain "
+            "that was strong is now developing. This does not erase what you "
+            "built. Context changes, demands shift, and your profile reflects "
+            "that. The question is whether this shift matches what is "
+            "happening in your environment."
+        ),
+        "coach": (
+            "This athlete's profile has shifted from {previous} to {current}. "
+            "A previously strong domain is now developing. Before interpreting "
+            "this as decline, ask what has changed in their environment: "
+            "new demands, role changes, or life events. Regression in the "
+            "profile often reflects context, not capability."
+        ),
+    },
+    "fluctuation": {
+        "athlete": (
+            "Your profile has moved from {previous} to {current}. Profiles "
+            "shift between measurements. Some movement is normal variation, "
+            "not meaningful change. If your experience feels stable, trust "
+            "that over the numbers."
+        ),
+        "coach": (
+            "This athlete's profile has moved from {previous} to {current}. "
+            "Some variation between measurements is expected. Before acting "
+            "on this change, check whether the athlete's lived experience "
+            "matches the shift. If it does not, treat this as measurement "
+            "noise rather than a signal."
+        ),
+    },
+    "sustained": {
+        "athlete": (
+            "Your profile remains {current}. Consistency over time means your "
+            "motivational pattern is stable. This does not mean static: the "
+            "same type can feel different depending on frustration levels and "
+            "context. Check in with how it feels, not just what it is called."
+        ),
+        "coach": (
+            "This athlete's profile remains {current}. A sustained type "
+            "suggests motivational stability. Use the frustration scores and "
+            "domain states to track change within the type. Stability in the "
+            "label does not mean nothing is moving underneath."
+        ),
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Measurement disclosure content
+# ---------------------------------------------------------------------------
+
+_MEASUREMENT_DISCLOSURES = {
+    "early": {
+        "athlete": (
+            "This profile is based on {count} self-report measurement{s}. "
+            "It is a starting point, not a verdict. Self-report captures how "
+            "you see yourself right now. It does not capture everything. "
+            "As you take more measurements, the picture will sharpen."
+        ),
+        "coach": (
+            "This profile is based on {count} self-report measurement{s}. "
+            "Treat it as a conversation starter, not a conclusion. "
+            "Self-report reflects the athlete's perception, which matters, "
+            "but it is one lens. Early profiles are useful for opening "
+            "dialogue, not for making decisions."
+        ),
+    },
+    "developing": {
+        "athlete": (
+            "This profile is based on {count} measurements. The picture is "
+            "becoming clearer. Patterns that appear across multiple "
+            "measurements carry more weight than any single snapshot. "
+            "You can start trusting the broad strokes."
+        ),
+        "coach": (
+            "This profile is based on {count} measurements. With repeated "
+            "data, patterns become more reliable. Consistent signals across "
+            "measurements deserve attention. Changes between measurements "
+            "are worth exploring. The profile is developing real diagnostic "
+            "value."
+        ),
+    },
+    "established": {
+        "athlete": (
+            "This profile is based on {count} measurements. It is well "
+            "calibrated. The patterns here reflect sustained tendencies, "
+            "not one-time snapshots. You can trust this as a reliable picture "
+            "of your motivational profile, while remembering that profiles "
+            "can and do change."
+        ),
+        "coach": (
+            "This profile is based on {count} measurements. At this depth, "
+            "the profile is well calibrated. Stable patterns are trustworthy. "
+            "Changes from established baselines are meaningful signals that "
+            "warrant conversation. Self-report limitations remain, but "
+            "repeated measurement reduces their impact."
+        ),
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Confidence language helper
+# ---------------------------------------------------------------------------
+
+
+def _confidence_qualifier(posterior_confidence: float | None) -> str:
+    """Return a qualifier word based on posterior confidence.
+
+    Reference: abc-assessment-spec Section 3
+
+    >0.7: "likely"
+    0.5-0.7: "appears to be"
+    <0.5: "may be"
+    None: "" (no qualifier)
+    """
+    if posterior_confidence is None:
+        return ""
+    if posterior_confidence > 0.7:
+        return "likely"
+    if posterior_confidence >= 0.5:
+        return "appears to be"
+    return "may be"
+
+
+# ---------------------------------------------------------------------------
+# NarrativeEngine
+# ---------------------------------------------------------------------------
+
+
+class NarrativeEngine:
+    """Generates personalized narrative text from ABC scoring outputs.
+
+    This is the layer that turns numbers into language athletes understand
+    and coaches can act on. Every method returns structured text keyed by
+    audience: athlete (second person) or coach (third person).
+
+    Reference: abc-assessment-spec Section 2.4 (type derivation)
+    Reference: abc-assessment-spec Section 2.2 (domain classification)
+    Reference: abc-assessment-spec Section 2.5 (frustration signatures)
+    """
+
+    VALID_AUDIENCES = ("athlete", "coach")
+    VALID_ARCHETYPES = (
+        "Integrator",
+        "Captain",
+        "Architect",
+        "Mentor",
+        "Pioneer",
+        "Anchor",
+        "Artisan",
+        "Seeker",
+    )
+    VALID_DOMAINS = ("ambition", "belonging", "craft")
+    VALID_STATES = ("Thriving", "Vulnerable", "Mild", "Distressed")
+    VALID_SIGNATURES = (
+        "Blocked Drive",
+        "Conditional Belonging",
+        "Evaluated Mastery",
+        "Controlled Motivation",
+        "Active Exclusion",
+        "Competence Threat",
+    )
+    VALID_TRANSITIONS = (
+        "growth",
+        "exploration",
+        "regression",
+        "fluctuation",
+        "sustained",
+    )
+
+    def _validate_audience(self, audience: str) -> None:
+        """Validate that the audience is 'athlete' or 'coach'.
+
+        Reference: abc-assessment-spec Section 3
+        """
+        if audience not in self.VALID_AUDIENCES:
+            raise ValueError(f"audience must be one of {self.VALID_AUDIENCES}, got '{audience}'")
+
+    def generate_archetype_narrative(self, type_name: str, audience: str) -> dict:
+        """Generate narrative text for a motivational archetype.
+
+        Reference: abc-assessment-spec Section 3
+
+        Args:
+            type_name: One of 8 archetype names (e.g., "Integrator").
+            audience: "athlete" (second person) or "coach" (third person).
+
+        Returns:
+            Dict with keys:
+                identity_description (str): Who this person is.
+                strengths (list[str]): What they do well.
+                growth_edge (str): Where they can develop next.
+
+        Raises:
+            ValueError: If type_name or audience is invalid.
+        """
+        self._validate_audience(audience)
+        if type_name not in _ARCHETYPE_NARRATIVES:
+            raise ValueError(f"type_name must be one of {self.VALID_ARCHETYPES}, got '{type_name}'")
+
+        content = _ARCHETYPE_NARRATIVES[type_name][audience]
+        return {
+            "identity_description": content["identity_description"],
+            "strengths": list(content["strengths"]),
+            "growth_edge": content["growth_edge"],
+        }
+
+    def generate_domain_state_narrative(
+        self,
+        domain: str,
+        state: str,
+        score: float,  # noqa: ARG002
+        audience: str,
+        posterior_confidence: float | None = None,
+    ) -> dict:
+        """Generate narrative text for a domain state.
+
+        Reference: abc-assessment-spec Section 3
+
+        Uses effort-cost reframing: frustration means the cost of effort is
+        rising, not that something is broken (Pessiglione 2025, Van Cutsem 2017).
+
+        Args:
+            domain: "ambition", "belonging", or "craft".
+            state: "Thriving", "Vulnerable", "Mild", or "Distressed".
+            score: Domain satisfaction score on 0-10 scale.
+            audience: "athlete" or "coach".
+            posterior_confidence: Optional confidence from Bayesian posterior.
+                Affects qualifier language: >0.7 "likely", 0.5-0.7 "appears
+                to be", <0.5 "may be".
+
+        Returns:
+            Dict with keys:
+                state_description (str): What this state means.
+                reflection_prompt (str): For athlete audience.
+                conversation_starter (str): For coach audience.
+
+        Raises:
+            ValueError: If domain, state, or audience is invalid.
+        """
+        self._validate_audience(audience)
+        if domain not in self.VALID_DOMAINS:
+            raise ValueError(f"domain must be one of {self.VALID_DOMAINS}, got '{domain}'")
+        if state not in self.VALID_STATES:
+            raise ValueError(f"state must be one of {self.VALID_STATES}, got '{state}'")
+
+        domain_label = _DOMAIN_NAMES[domain]
+        content = _DOMAIN_STATE_NARRATIVES[state][audience]
+
+        state_description = content["state_description"].format(
+            domain=domain_label, domain_lower=domain
+        )
+
+        # Insert confidence qualifier if provided
+        qualifier = _confidence_qualifier(posterior_confidence)
+        if qualifier:
+            # Inject qualifier into state description
+            state_description = state_description.replace(
+                f"Your {domain_label} is",
+                f"Your {domain_label} {qualifier}",
+                1,
+            ).replace(
+                f"This athlete's {domain_label} is",
+                f"This athlete's {domain_label} {qualifier}",
+                1,
+            )
+
+        result = {"state_description": state_description}
+
+        if audience == "athlete":
+            result["reflection_prompt"] = content["reflection_prompt"].format(
+                domain=domain_label, domain_lower=domain
+            )
+        else:
+            result["conversation_starter"] = content["conversation_starter"].format(
+                domain=domain_label, domain_lower=domain
+            )
+
+        return result
+
+    def generate_signature_narrative(self, signature: dict, audience: str) -> dict:
+        """Generate narrative text for a frustration signature.
+
+        Reference: abc-assessment-spec Section 3
+
+        Frustration signatures name specific patterns where the cost of
+        effort is rising relative to reward. Medium-risk signatures occur
+        when satisfaction is high but frustration is also high. High-risk
+        signatures occur when satisfaction is low and frustration is high.
+
+        Args:
+            signature: Dict with keys: label (str), domain (str), risk (str).
+            audience: "athlete" or "coach".
+
+        Returns:
+            Dict with keys:
+                description (str): What this signature means.
+                action_prompt (str): What to do next.
+
+        Raises:
+            ValueError: If signature label or audience is invalid.
+        """
+        self._validate_audience(audience)
+        label = signature.get("label", "")
+        if label not in _SIGNATURE_NARRATIVES:
+            raise ValueError(
+                f"signature label must be one of {self.VALID_SIGNATURES}, got '{label}'"
+            )
+
+        content = _SIGNATURE_NARRATIVES[label][audience]
+        return {
+            "description": content["description"],
+            "action_prompt": content["action_prompt"],
+        }
+
+    def generate_transition_narrative(
+        self,
+        previous_type: str,
+        current_type: str,
+        transition_type: str,
+        audience: str,
+    ) -> str:
+        """Generate narrative text about a type transition over time.
+
+        Reference: abc-assessment-spec Section 3
+
+        Args:
+            previous_type: Previous archetype name.
+            current_type: Current archetype name.
+            transition_type: One of "growth", "exploration", "regression",
+                "fluctuation", "sustained".
+            audience: "athlete" or "coach".
+
+        Returns:
+            Narrative string about what the change means.
+
+        Raises:
+            ValueError: If transition_type or audience is invalid.
+        """
+        self._validate_audience(audience)
+        if transition_type not in _TRANSITION_NARRATIVES:
+            raise ValueError(
+                f"transition_type must be one of {self.VALID_TRANSITIONS}, got '{transition_type}'"
+            )
+
+        template = _TRANSITION_NARRATIVES[transition_type][audience]
+        return template.format(previous=previous_type, current=current_type)
+
+    def generate_measurement_disclosure(self, measurement_count: int, audience: str) -> str:
+        """Generate self-report limitation text for a given measurement depth.
+
+        Reference: abc-assessment-spec Section 3
+
+        Args:
+            measurement_count: Number of completed measurements (1+).
+            audience: "athlete" or "coach".
+
+        Returns:
+            Disclosure string appropriate to the measurement depth.
+
+        Raises:
+            ValueError: If measurement_count < 1 or audience is invalid.
+        """
+        self._validate_audience(audience)
+        if measurement_count < 1:
+            raise ValueError(f"measurement_count must be >= 1, got {measurement_count}")
+
+        if measurement_count <= 2:
+            tier = "early"
+        elif measurement_count <= 5:
+            tier = "developing"
+        else:
+            tier = "established"
+
+        template = _MEASUREMENT_DISCLOSURES[tier][audience]
+        s = "" if measurement_count == 1 else "s"
+        return template.format(count=measurement_count, s=s)
