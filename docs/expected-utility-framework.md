@@ -6,191 +6,193 @@
 
 ---
 
-## 1. Why Expected Utility, Not Expected Value
+## 1. What This Does
 
-Expected value treats all outcomes as commensurable numbers on a single scale. Expected utility recognizes that the same score change means different things in different contexts. A 1-point drop in Belonging satisfaction for a freshman transfer athlete is not the same as a 1-point drop for a senior captain. The objective magnitude is identical. The subjective cost is not.
+The ABC assessment classifies athletes into 8 archetypes. Each archetype has strengths, watch-fors, and a growth edge. Today, those are static: every Pioneer gets the same text.
 
-SDT predicts this asymmetry. Need frustration produces distinct negative outcomes (burnout, depression, disengagement) that are not the mirror image of need satisfaction's positive outcomes (intrinsic motivation, engagement, performance). The dark pathway is not the absence of the bright one (Bartholomew et al., 2011). Expected utility captures this: the disutility of frustration exceeds the utility of equivalent satisfaction.
+This framework makes them dynamic. Two Pioneers with different score distributions get different guidance, because their scores tell us different things about what they value, what they risk losing, and where a small investment would matter most.
 
----
+The athlete never sees utility theory. They see:
 
-## 2. The Utility Functions
+> "Your Ambition is your anchor. Belonging is where a small shift would make the biggest difference right now."
 
-### 2.1 Athlete Utility
-
-An athlete's utility is a function of satisfaction and frustration across all three domains. The key insight: domains interact. High Ambition satisfaction with low Belonging satisfaction is not the same total utility as moderate satisfaction in both, even if the arithmetic means are equal.
-
-**Proposed form:**
-
-$$U_{\text{athlete}} = \sum_{d \in \{A,B,C\}} \left[ w_d \cdot u_s(S_d) - \lambda_d \cdot u_f(F_d) \right] + \gamma \cdot I(S_A, S_B, S_C)$$
-
-Where:
-- $S_d$ = satisfaction score for domain $d$ (0-10)
-- $F_d$ = frustration score for domain $d$ (0-10)
-- $w_d$ = domain weight (reflects individual priorities; derived from archetype)
-- $\lambda_d$ = loss aversion multiplier for frustration ($\lambda > 1$, frustration hurts more than satisfaction helps)
-- $u_s$, $u_f$ = satisfaction and frustration utility curves (concave for satisfaction, convex for frustration)
-- $I(S_A, S_B, S_C)$ = integration bonus: additional utility when multiple domains are satisfied simultaneously
-- $\gamma$ = integration weight
-
-**Why this form matters:**
-
-1. **Loss aversion ($\lambda > 1$):** A frustration increase of 1 point costs more utility than a satisfaction increase of 1 point provides. This matches the SDT evidence that need frustration uniquely predicts depression beyond low satisfaction (Bartholomew et al., 2011). Estimated $\lambda \approx 1.5$-$2.0$, calibrated from ABQ burnout data.
-
-2. **Diminishing returns (concave $u_s$):** Going from 2.0 to 4.0 satisfaction is more valuable than going from 7.0 to 9.0. The athlete who is starving for competence benefits more from a skill session than the athlete who is already thriving. This has direct coaching implications: interventions should target the lowest-satisfaction domain first.
-
-3. **Accelerating harm (convex $u_f$):** Going from 6.0 to 8.0 frustration is worse than going from 2.0 to 4.0. Frustration compounds. This matches the cascade model: once frustration crosses a threshold, it accelerates into distress.
-
-4. **Integration bonus ($I$):** An Integrator (all three domains satisfied) has higher total utility than the sum of three single-domain athletes. This is because need satisfaction in one domain supports the others. An athlete with strong Belonging recovers faster from Craft frustration because their relational support buffers the setback.
-
-### 2.2 Domain-Specific Scenarios
-
-**Ambition utility scenarios:**
-
-| Scenario | S_A | F_A | Utility implication |
-|----------|-----|-----|-------------------|
-| Autonomous drive | 8.0 | 2.0 | High positive utility. Goals feel self-chosen. |
-| Controlled motivation | 3.0 | 7.0 | Strong negative utility. Goals feel imposed. The athlete is performing for others, not themselves. Burnout risk highest here. |
-| Overinvestment | 9.0 | 5.0 | Moderate net utility but unstable. The Vulnerable state: high drive with rising cost. The expected utility of continuing to push is declining because $u_f$ is convex. |
-| Amotivation | 3.0 | 2.0 | Low magnitude. Neither driven nor blocked. The Mild state: disengaged. Expected utility of intervention is high because the athlete is near the steepest part of the $u_s$ curve. |
-
-**Belonging utility scenarios:**
-
-| Scenario | S_B | F_B | Utility implication |
-|----------|-----|-----|-------------------|
-| Authentic connection | 8.0 | 2.0 | High utility. Relationships feel genuine. Buffers stress in other domains. |
-| Conditional belonging | 7.0 | 6.0 | Net utility is lower than the scores suggest because $\lambda > 1$ amplifies the frustration. The athlete feels accepted but at a cost. This is the Vulnerable state, and it is the hardest for coaches to detect because satisfaction is still high. |
-| Active exclusion | 2.0 | 8.0 | Strong negative utility, amplified by convex $u_f$. Transfer portal risk is highest here. The expected utility of staying on the team is negative. |
-| Fresh start (transfer) | 4.0 | 3.0 | Low magnitude. New team, relationships not yet formed. Expected utility of belonging investment is high because the $u_s$ curve is steepest here. This is the onboarding window. |
-
-**Craft utility scenarios:**
-
-| Scenario | S_C | F_C | Utility implication |
-|----------|-----|-----|-------------------|
-| Flow state | 9.0 | 1.0 | Peak utility for this domain. Skill development is intrinsically rewarding. |
-| Evaluated mastery | 7.0 | 6.0 | Similar to conditional belonging: high satisfaction masked by high frustration. The athlete is skilled but feels judged. Expected utility of continued effort is declining. |
-| Competence threat | 2.0 | 8.0 | Strong negative utility. The athlete doubts their ability. Combined with low Ambition, this predicts sport devaluation (ABQ SD subscale). |
-| Beginner's mind | 4.0 | 2.0 | Low satisfaction but low frustration. The athlete is learning without pressure. Expected utility of coaching investment is high (steep $u_s$ curve). |
-
-### 2.3 Coach Utility
-
-The coach's utility function is different. It is defined over the team distribution, not individual scores.
-
-$$U_{\text{coach}} = \sum_{i=1}^{N} U_{\text{athlete}_i} - C(\text{interventions}) + V(\text{distribution shape})$$
-
-Where:
-- $N$ = roster size
-- $C$ = cost of interventions (coach time, attention, emotional labor)
-- $V$ = value of the distribution shape (a balanced team with diverse archetypes is more resilient than a team of all Pioneers)
-
-**The coach's decision problem:** Given limited time, which interventions maximize expected utility across the team? This is a resource allocation problem under uncertainty:
-
-$$\max_{\text{interventions}} \sum_{i=1}^{N} E\left[ U_{\text{athlete}_i} \mid \text{intervention} \right] - C(\text{intervention})$$
-
-**Key insight from your paper:** "The answer to the coaching constraint is not that coaches do more. It is that the system asks less of any single person." The expected utility framework operationalizes this: the system should recommend the intervention with the highest expected utility per unit of coach cost. A team-wide Belonging activity (low cost per athlete, moderate expected benefit) may dominate individual conversations (high cost per athlete, high expected benefit for that one athlete).
+The math underneath produces that sentence. The sentence is the product.
 
 ---
 
-## 3. How This Changes the Simulator
+## 2. How It Works
 
-### 3.1 For the Athlete
+### 2.1 The score distribution tells us preferences
 
-The current results view shows scores, states, and narratives. Expected utility adds a layer: **how much does each domain contribute to your overall wellbeing, and where is the highest-return investment?**
+An athlete's satisfaction and frustration scores across Ambition, Belonging, and Craft are not just numbers. They reveal what the athlete values and where they invest their energy.
 
-**New output: Domain utility breakdown**
+- A Pioneer with A-Sat 9.0 values goal pursuit intensely. A threat to Ambition (rising frustration, declining satisfaction) costs them more than the same shift in a domain they are less invested in.
+- A Pioneer with A-Sat 6.5 has Ambition activated but not dominant. They are closer to the type boundary. Their profile is less settled.
 
-Instead of just showing "Ambition: 7.2 satisfaction, 3.1 frustration, Thriving," show:
+The distribution shape, not just the type label, drives the personalization.
 
-> Ambition is contributing positively to your wellbeing. Craft is your highest-return opportunity right now: a small improvement there would matter more than the same improvement in Ambition, because you are on the steeper part of the curve.
+### 2.2 Frustration costs more than satisfaction delivers
 
-This is the $u_s$ curve made concrete. The athlete does not need to understand utility theory. They need to know: where should I focus?
+SDT research shows an asymmetry: need frustration predicts burnout, depression, and disengagement at a rate that exceeds what need satisfaction predicts for engagement and motivation (Bartholomew et al., 2011; Lonsdale et al., 2009). The dark pathway is not the absence of the bright one.
 
-**New output: Frustration cost signal**
+In practical terms: a 1-point rise in frustration is worse than a 1-point drop in satisfaction. An athlete with Belonging satisfaction 7.0 and frustration 6.0 looks fine on the satisfaction score alone. The frustration tells a different story. The system should weight that frustration more heavily when generating watch-fors and growth edges.
 
-> Your Belonging frustration (5.8) is costing you more than you might realize. Research shows that relational frustration weighs roughly 1.5x heavier than the equivalent satisfaction. Your Belonging satisfaction (6.9) looks strong on paper, but the net effect is less positive than the numbers suggest.
+The multiplier is approximately 1.5-2.0x, based on the finding that frustration accounts for up to 74% of variance in burnout (Lonsdale et al., 2009).
 
-This is $\lambda > 1$ made concrete. The Vulnerable state becomes legible.
+### 2.3 Small investments matter most where the score is lowest
 
-### 3.2 For the Coach
+An athlete with Craft satisfaction at 3.0 benefits more from a skill development session than an athlete with Craft satisfaction at 8.0 benefits from the same session. The return on investment is higher when the score is low, because the psychological need is most responsive when it is least satisfied.
 
-The current coach view shows individual athletes and aggregated patterns. Expected utility adds: **where is the highest-return coaching investment across the team?**
+This is diminishing returns: the first unit of satisfaction gained is worth more than the tenth. The implication for the growth edge: always point toward the domain where the athlete sits on the steepest part of the curve.
 
-**New output: Team utility map**
+### 2.4 Having multiple domains satisfied is more than the sum
 
-A scatter plot or heatmap showing each athlete's expected utility contribution by domain. Athletes in the lower-left (low satisfaction, high frustration) are the highest-cost individuals. Athletes in the upper-right are contributing the most. The gap between them is the coach's opportunity.
-
-**New output: Intervention expected utility comparison**
-
-| Intervention | Athletes affected | Expected utility gain | Coach cost | EU per unit cost |
-|-------------|------------------|----------------------|------------|-----------------|
-| Team belonging activity | 44 | +0.3 per athlete | 2 hours | +6.6/hr |
-| Individual craft session with athlete #12 | 1 | +2.1 | 1 hour | +2.1/hr |
-| Ambition autonomy conversation with athlete #7 | 1 | +1.8 | 0.5 hours | +3.6/hr |
-
-The team activity wins on EU per unit cost even though the individual session has a larger per-athlete effect. This is the "distribute the burden" principle from the paper, expressed as an optimization.
-
-### 3.3 For the Reassessment Decision
-
-Expected utility replaces the current threshold-based reassessment trigger with a decision-theoretic one.
-
-Current: reassess when variance exceeds 3.0 points for 2+ weeks.
-
-Expected utility: reassess when the expected utility of having updated information exceeds the cost of the assessment.
-
-$$EU(\text{reassess}) = P(\text{state changed}) \times V(\text{updated baseline}) - C(\text{assessment time})$$
-
-If the athlete's check-ins show low variance, the probability of a meaningful state change is low, and reassessment has low expected utility even if scheduled. If check-ins show high variance, the expected utility of reassessment is high because the current baseline is unreliable.
-
-This makes the reassessment schedule adaptive, not fixed. Some athletes need reassessment every 6 weeks. Others can go a full season on one baseline. The expected utility calculation determines which.
+An Integrator (all three domains active) is more resilient than three single-domain specialists combined. When one domain dips temporarily, the other two provide a buffer. This integration bonus means the system should value maintaining breadth, not just maximizing any single domain.
 
 ---
 
-## 4. Calibration: Where Do the Numbers Come From?
+## 3. What Changes for the Athlete
 
-The utility function parameters ($w_d$, $\lambda_d$, $\gamma$, curve shapes) are not arbitrary. They are calibrated from:
+### 3.1 Dynamic strengths
 
-1. **$\lambda$ (loss aversion):** From SDT burnout literature. Lonsdale et al. (2009) reported frustration accounts for up to 74% of variance in burnout, while satisfaction explains a smaller proportion of engagement. This asymmetry implies $\lambda \approx 1.5$-$2.0$.
+Current (static): Every Integrator sees "Versatility, Balanced judgment, Cross-domain insight, Broad competence."
 
-2. **$w_d$ (domain weights):** Derived from the athlete's archetype. A Pioneer weights Ambition higher than Belonging. An Anchor weights Belonging higher. These are not preferences the athlete reports. They are inferred from the satisfaction distribution.
+Dynamic: The strengths reflect which domains are actually strongest and how balanced they are.
 
-3. **$\gamma$ (integration bonus):** From the observation that Integrators (all three domains active) have disproportionately lower burnout risk than the sum of individual domain satisfactions would predict. The Phase A empirical pilot can calibrate this by comparing Integrator burnout rates to predicted rates from a simple additive model.
+| Integrator profile | Dynamic strengths |
+|-------------------|-------------------|
+| A:9.0, B:6.2, C:6.0 | "Your Ambition drives the team forward. Your Belonging and Craft provide a stable foundation, though they are closer to the threshold. Your strength is that you lead from the front without losing connection." |
+| A:6.5, B:6.5, C:6.5 | "Your balance is genuine. No single domain dominates. Your strength is consistency: you hold steady when specialists burn hot and cold." |
+| A:7.0, B:8.5, C:6.2 | "Your Belonging is your anchor. People trust you because you invest in relationships first. Your Ambition and Craft are active but secondary to the relational core." |
 
-4. **Curve shapes:** Concavity of $u_s$ and convexity of $u_f$ are calibrated from the Bayesian scorer's posterior distributions. An athlete whose satisfaction has been consistently high (narrow posterior, high mean) is on the flat part of the curve. An athlete whose satisfaction has been consistently low is on the steep part. The posterior shape tells you where on the curve the athlete sits.
+Same archetype. Different narrative. Driven by the score distribution.
+
+### 3.2 Dynamic watch-fors
+
+The watch-for is personalized based on what the athlete risks losing.
+
+The principle: your highest-satisfaction domain is your biggest asset and your biggest vulnerability. If it drops, the psychological cost is higher than if a lower domain drops, because you have organized your identity around it.
+
+| Pioneer profile | Dynamic watch-for |
+|----------------|-------------------|
+| A:9.0, B:3.0, C:4.0 | "Your Ambition is carrying your motivation. If goal pursuit is disrupted (coaching change, injury, loss of starting role), the impact will hit harder than you expect because Belonging and Craft are not yet strong enough to buffer it." |
+| A:7.0, B:5.5, C:2.0 | "Your Craft is underdeveloped. If you hit a performance plateau, you may lack the intrinsic interest in skill development to push through it. The risk is that declining performance erodes your Ambition from below." |
+
+### 3.3 Dynamic growth edge
+
+The growth edge points toward the domain where a small investment has the largest return. This is where the score is lowest but frustration is not yet high, meaning the athlete is underinvested, not blocked.
+
+| Profile | Growth edge |
+|---------|------------|
+| A:8.0, B:3.0, C:5.0 (frustration all low) | "Belonging is your biggest opportunity. You are not blocked here, you just have not invested yet. One genuine connection with a teammate would shift this domain more than any amount of goal-setting would shift your already-strong Ambition." |
+| A:8.0, B:3.0, C:5.0 (B-frust: 7.0) | "Belonging is low AND frustrated. This is not a growth opportunity, it is an active problem. Something in your team environment is making connection feel costly. Start there before investing elsewhere." |
+
+The distinction matters: low satisfaction with low frustration is "underdeveloped" (growth opportunity). Low satisfaction with high frustration is "actively blocked" (urgent concern). The growth edge adapts.
 
 ---
 
-## 5. Connection to Game Theory
+## 4. What Changes for the Coach
 
-Expected utility is the language game theory uses to model decisions. Once utility functions are defined, the game-theoretic questions from your original framing become precise:
+### 4.1 Team distribution insight
 
-**Institutional design:** What incentive structure (NIL policy, transfer rules, mental health staffing) maximizes expected utility across the student-athlete population? This is mechanism design with the ABC utility function as the objective.
+The coach sees all athletes on one diagram. The expected utility framework adds: where is the highest-return coaching investment across the team?
 
-**Coach-team interaction:** Given the coach's utility function and the team's distribution, what is the Nash equilibrium of coaching attention? Does the equilibrium match the EU-optimal allocation, or does it systematically under-invest in Belonging (because Belonging outcomes are less visible than Ambition outcomes)?
+If 8 of 44 athletes have Belonging satisfaction below 4.0, a team-wide Belonging activity (shared meals, structured partner work, team building) has higher total return than 8 individual conversations, because the per-athlete cost is lower and the aggregate benefit is larger.
 
-**Onboarding design:** The paper notes that freshman Belonging scores are 23% below the team average. The expected utility framework quantifies the cost: freshmen are on the steep part of the $u_s$ curve for Belonging, meaning each unit of Belonging investment produces the highest marginal utility. The optimal onboarding design front-loads Belonging activities because that is where the curve is steepest.
+If only 1 athlete has Craft below 4.0 while the rest are above 6.0, individual attention is warranted because a team-wide skill session does not address an individual gap.
 
----
+### 4.2 Coach-profile-to-distribution match
 
-## 6. Implementation Phases
+The coach takes the assessment too. If the coach is a Pioneer (Ambition-dominant), and the team distribution shows low Belonging across the roster, the system can surface: "Your coaching emphasis on goal pursuit may not be reaching athletes whose primary need is connection. Consider whether your approach is reinforcing the distribution you see."
 
-| Phase | What | Depends on |
-|-------|------|-----------|
-| A | Define utility function form and parameter priors | This document (done) |
-| B | Add EU computation to EnhancedABCScorer | Phase A + existing Bayesian scorer |
-| C | Add "highest-return domain" signal to athlete narratives | Phase B + narrative engine |
-| D | Add team utility map to coach view | Phase B + coach intelligence |
-| E | Replace threshold-based reassessment with EU-based decision | Phase B + trajectory engine |
-| F | Calibrate parameters from Phase A empirical pilot data | Requires real athlete data |
-
-Phase A is this document. Phases B-E are simulator work. Phase F requires the empirical pilot.
+This is not a judgment. It is pattern recognition. The coach's profile is not wrong. It creates predictable blind spots, and the system makes those visible.
 
 ---
 
-## 7. What This Does Not Do
+## 5. How the Check-ins Refine This Over Time
 
-This framework does not:
+The initial assessment gives a point-in-time distribution. The check-ins reveal how the distribution moves.
 
-- Replace the SDT foundation. It extends it by quantifying the asymmetry between satisfaction and frustration.
-- Require athletes to understand utility theory. The outputs are natural language: "this domain is your highest-return investment."
-- Assume rational agents. The utility function describes the psychological reality (frustration hurts more than satisfaction helps). It does not assume athletes optimize.
-- Work without the indirect inference layer. The utility function takes subscale scores as inputs. Those scores must come from a measurement system that avoids the self-report failures the paper documents. The simulator validates the measurement. The utility framework interprets it.
+**What the check-ins add to the utility picture:**
+
+1. **Which domain is most volatile?** High volatility means the athlete's investment in that domain is unstable. The growth edge should not point toward a volatile domain (the athlete is already wrestling with it). It should point toward the most stable low domain.
+
+2. **Is frustration leading or lagging?** The cascade model (frustration rises before satisfaction drops) tells us which domain is about to shift. The watch-for becomes predictive: "Your Craft frustration has risen for 3 weeks while satisfaction is still holding. This pattern often precedes a satisfaction drop. Pay attention here."
+
+3. **Has the growth edge changed?** If the athlete acts on the initial growth edge (invests in Belonging), the check-ins will show Belonging satisfaction rising. The growth edge should then shift to the next-highest-return domain automatically. The system evolves with the athlete.
+
+---
+
+## 6. The 125-Profile Code as Input
+
+The simulator already computes a 125-combination profile code (5 satisfaction levels per domain: Very High, High, Medium, Low, Very Low). This code (e.g., "4-3-5" meaning A:High, B:Medium, C:Very High) is the input to the dynamic narrative generator.
+
+The mapping:
+
+```
+Type (8 archetypes)          --> frame (who you are)
+Profile code (125 combos)    --> specifics (where you sit within that frame)
+Frustration scores (0-10)    --> risk (what to watch for)
+Score-to-utility curve       --> priority (where to invest)
+Check-in trajectory          --> change (what is shifting)
+```
+
+The type is stable (changes slowly, requires high confidence). The profile code and frustration scores change with each measurement. The narrative regenerates each time, producing personalized output that evolves with the athlete.
+
+---
+
+## 7. Implementation Approach
+
+### Phase 1: Dynamic narrative rules
+
+Replace static archetype narratives with a rule-based generator that takes the profile code and frustration scores as input. No utility math visible. The rules encode the principles:
+
+- Strengths: name the highest-satisfaction domain and describe how it shapes the archetype
+- Watch-for: identify the highest-investment domain and describe the cost of losing it
+- Growth edge: point toward the lowest-satisfaction, lowest-frustration domain (underdeveloped, not blocked). If lowest-satisfaction has high frustration, flag it as an active concern instead
+
+### Phase 2: Frustration weighting
+
+Apply the 1.5x frustration multiplier when computing which domain to highlight. This changes the growth edge for Vulnerable athletes: a domain with sat 7.0 and frust 6.0 has lower net value than the raw satisfaction score suggests.
+
+### Phase 3: Check-in integration
+
+Update the dynamic narrative after each check-in based on trajectory. The growth edge shifts as the athlete develops. The watch-for becomes predictive when the cascade pattern is detected.
+
+### Phase 4: Coach team-level view
+
+Aggregate individual utility profiles into a team distribution. Show the coach where the highest-return team-level intervention is.
+
+---
+
+## 8. What the Athlete Sees
+
+**Before (static):**
+> Type: Pioneer
+> Strengths: Autonomy, goal clarity, competitive drive, forward momentum
+> Watch for: May neglect relationships or skill depth in pursuit of goals
+> Growth edge: Pick one relationship or one skill to invest in alongside your goals
+
+**After (dynamic, Pioneer A with A:9.0, B:3.0, C:4.0):**
+> Type: Pioneer
+> Strengths: Your Ambition is exceptionally strong. You set direction and pursue it with conviction. This is rare and valuable.
+> Watch for: Your motivation depends almost entirely on goal pursuit. If that is disrupted (injury, coaching change, role loss), you have little to fall back on. Belonging and Craft are not yet providing support.
+> Growth edge: Belonging is your biggest opportunity right now. You are not frustrated here, just uninvested. One genuine connection would diversify your motivational foundation.
+
+**After (dynamic, Pioneer B with A:7.0, B:5.5, C:2.0, C-frust:6.0):**
+> Type: Pioneer
+> Strengths: Your Ambition is activated and your Belonging is developing alongside it. You are building a broader base than most Pioneers.
+> Watch for: Craft frustration is high (6.0) with low satisfaction (2.0). You feel blocked in skill development. This combination predicts disengagement from training if not addressed.
+> Growth edge: Craft is not a growth opportunity right now, it is an active concern. The frustration needs to be addressed before investment can take hold. Talk to your coach about what is making skill development feel evaluative rather than developmental.
+
+Same type. Different guidance. Driven by the scores, explained in plain language.
+
+---
+
+## 9. What This Does Not Do
+
+- It does not require the athlete to understand utility theory, SDT, or statistics
+- It does not replace the archetype system. The 8 types remain. The narratives within them become personalized
+- It does not add new survey questions. The input is the same 36 items plus check-ins
+- It does not create 125 separate narrative templates. It creates rules that generate narratives from score distributions
+- It does not expose numbers to the athlete beyond what is already shown (subscale scores, domain states)
