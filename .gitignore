@@ -39,8 +39,8 @@ outputs/plots/*.pdf
 # Coverage
 .coverage
 
-# Generated site
-outputs/site/
+# Generated site - now tracked for deployment
+# outputs/site/
 
 # Environment
 .env
