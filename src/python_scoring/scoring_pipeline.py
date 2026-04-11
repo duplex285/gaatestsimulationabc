@@ -22,16 +22,24 @@ Enhanced pipeline (personalization engine layer):
 """
 
 from src.python_scoring.base_rate_engine import BaseRateEngine
-from src.python_scoring.bayesian_scorer import ABCBayesianProfile
+from src.python_scoring.bayesian_scorer import (
+    DOMAIN_PAIRS,
+    ABCBayesianProfile,
+    classify_with_uncertainty,
+)
 from src.python_scoring.belbin_inference import infer_belbin_roles
 from src.python_scoring.big_five_inference import compute_big_five
 from src.python_scoring.context_gap import compute_context_gaps
+from src.python_scoring.context_manager import DomainContextManager
 from src.python_scoring.domain_classification import classify_all_domains
 from src.python_scoring.frustration_signatures import detect_signatures
 from src.python_scoring.narrative_engine import NarrativeEngine
 from src.python_scoring.reverse_scoring import apply_reverse_scoring
 from src.python_scoring.subscale_computation import compute_all_subscales
-from src.python_scoring.transition_engine import TransitionTracker
+from src.python_scoring.transition_engine import (
+    TransitionTracker,
+    classify_fatigue_timescale,
+)
 from src.python_scoring.type_derivation import derive_type
 
 REQUIRED_ITEMS = frozenset(
@@ -186,10 +194,12 @@ class EnhancedABCScorer:
         self,
         demographics: dict | None = None,
         base_rate_config_path: str | None = None,
+        context: str = "sport",
+        context_config_path: str | None = None,
     ):
         """Initialize the enhanced scorer.
 
-        Reference: abc-assessment-spec Section 4
+        Reference: abc-assessment-spec Section 4, Section 7
 
         Args:
             demographics: Athlete demographic info for base rate
@@ -197,6 +207,11 @@ class EnhancedABCScorer:
                 race_ethnicity, financial_stress, division, sport_type.
             base_rate_config_path: Path to base_rates.yaml. Defaults
                 to config/base_rates.yaml.
+            context: Domain context name (sport, professional, military,
+                healthcare, transition). Determines domain labels and
+                narrative framing.
+            context_config_path: Path to domain_contexts.yaml. Defaults
+                to config/domain_contexts.yaml.
         """
         self._core_scorer = ABCScorer()
         self._narrative = NarrativeEngine()
@@ -208,6 +223,22 @@ class EnhancedABCScorer:
 
         self._bayesian_profile = ABCBayesianProfile()
         self._measurement_count = 0
+
+        # Task 2: Fatigue timescale history per domain
+        # Reference: abc-assessment-spec Section 12.1
+        self._frustration_history: dict[str, list[float]] = {
+            "ambition": [],
+            "belonging": [],
+            "craft": [],
+        }
+
+        # Task 3: Cross-domain context switching
+        # Reference: abc-assessment-spec Section 7
+        self._context_manager = DomainContextManager(
+            context=context, config_path=context_config_path
+        )
+        self._context = context
+        self._domain_labels = self._context_manager.get_labels()
 
     def score(
         self,
@@ -253,6 +284,37 @@ class EnhancedABCScorer:
             posterior_confidence=type_confidence,
             weeks_since_last=weeks_since_last,
         )
+
+        # Task 1: Personalized thresholds (after 6+ measurements)
+        # Reference: abc-assessment-spec Section 8
+        personalized_thresholds = {}
+        personalized_domain_states = {}
+        if self._measurement_count >= 6:
+            for domain, (sat_key, frust_key) in DOMAIN_PAIRS.items():
+                sat_scorer = self._bayesian_profile.scorers[sat_key]
+                frust_scorer = self._bayesian_profile.scorers[frust_key]
+                p_sat_thresh = sat_scorer.get_personalized_threshold(k=1.5, floor=3.0)
+                p_frust_thresh = frust_scorer.get_personalized_threshold(k=1.5, floor=3.0)
+                if p_sat_thresh is not None and p_frust_thresh is not None:
+                    personalized_thresholds[domain] = {
+                        "satisfaction": p_sat_thresh,
+                        "frustration": p_frust_thresh,
+                    }
+                    personalized_domain_states[domain] = classify_with_uncertainty(
+                        sat_scorer,
+                        frust_scorer,
+                        sat_threshold=p_sat_thresh,
+                        frust_threshold=p_frust_thresh,
+                    )
+
+        # Task 2: Fatigue timescale classification
+        # Reference: abc-assessment-spec Section 12.1
+        fatigue_timescales = {}
+        for domain, (_, frust_key) in DOMAIN_PAIRS.items():
+            self._frustration_history[domain].append(core["subscales"][frust_key])
+            if len(self._frustration_history[domain]) >= 3:
+                ts = classify_fatigue_timescale(self._frustration_history[domain])
+                fatigue_timescales[domain] = ts.value
 
         # Base rate adjustment per domain
         adjusted_states = {}
@@ -326,6 +388,21 @@ class EnhancedABCScorer:
                 "transition": transition,
                 "base_rate": self._prior,
                 "trajectory": self._tracker.get_summary(),
+                # Task 1: Personalized thresholds
+                # Reference: abc-assessment-spec Section 8
+                "personalized_thresholds": personalized_thresholds
+                if personalized_thresholds
+                else None,
+                "personalized_domain_states": personalized_domain_states
+                if personalized_domain_states
+                else None,
+                # Task 2: Fatigue timescales
+                # Reference: abc-assessment-spec Section 12.1
+                "fatigue_timescales": fatigue_timescales if fatigue_timescales else None,
+                # Task 3: Context switching
+                # Reference: abc-assessment-spec Section 7
+                "context": self._context,
+                "domain_labels": self._domain_labels,
             }
         )
 
