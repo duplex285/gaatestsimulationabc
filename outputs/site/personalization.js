@@ -1768,6 +1768,145 @@ const ABCPersonalization = (function () {
   }
 
   // =========================================================================
+  // Fatigue Timescale Classification
+  // =========================================================================
+
+  /**
+   * Compute OLS slope for a sequence of values.
+   * Port of transition_engine.py _compute_slope.
+   *
+   * @param {number[]} values - Chronological float values.
+   * @returns {number} Slope (change per measurement period).
+   */
+  function _computeSlope(values) {
+    var n = values.length;
+    if (n < 2) return 0.0;
+
+    var xMean = (n - 1) / 2.0;
+    var ySum = 0;
+    for (var i = 0; i < n; i++) ySum += values[i];
+    var yMean = ySum / n;
+
+    var numerator = 0.0;
+    var denominator = 0.0;
+    for (var j = 0; j < n; j++) {
+      var xDiff = j - xMean;
+      numerator += xDiff * (values[j] - yMean);
+      denominator += xDiff * xDiff;
+    }
+
+    if (denominator === 0) return 0.0;
+    return numerator / denominator;
+  }
+
+  /**
+   * Classify frustration as acute, chronic, or mixed.
+   * Port of transition_engine.py classify_fatigue_timescale (lines 152-206).
+   *
+   * Acute fatigue is a single spike (recoverable with rest).
+   * Chronic fatigue is a sustained trend (requires structural change).
+   * Based on Muller et al. (2021): two hidden fatigue states on different timescales.
+   *
+   * @param {number[]} frustrationHistory - Frustration scores (0-10), most recent last.
+   * @param {object} [opts] - Optional parameters.
+   * @param {number} [opts.windowShort=2] - Recent measurements for spike detection.
+   * @param {number} [opts.windowLong=6] - Measurements for trend detection.
+   * @param {number} [opts.spikeThreshold=1.5] - Minimum score increase for a spike.
+   * @param {number} [opts.slopeThreshold=0.3] - Minimum slope for a trend.
+   * @returns {string} "acute", "chronic", or "mixed"
+   */
+  function classifyFatigueTimescale(frustrationHistory, opts) {
+    opts = opts || {};
+    var windowShort = opts.windowShort !== undefined ? opts.windowShort : 2;
+    var windowLong = opts.windowLong !== undefined ? opts.windowLong : 6;
+    var spikeThreshold = opts.spikeThreshold !== undefined ? opts.spikeThreshold : 1.5;
+    var slopeThreshold = opts.slopeThreshold !== undefined ? opts.slopeThreshold : 0.3;
+
+    if (frustrationHistory.length < 3) return "acute";
+
+    var recent = frustrationHistory.slice(-windowShort);
+    var hasSpike = false;
+    if (recent.length >= 2) {
+      var change = recent[recent.length - 1] - recent[0];
+      hasSpike = change >= spikeThreshold;
+    }
+
+    var history = frustrationHistory.slice(-windowLong);
+    var hasTrend = false;
+    if (history.length >= 3) {
+      var slope = _computeSlope(history);
+      hasTrend = slope >= slopeThreshold;
+    }
+
+    if (hasSpike && hasTrend) return "mixed";
+    if (hasTrend) return "chronic";
+    return "acute";
+  }
+
+  // =========================================================================
+  // Domain Contexts
+  // =========================================================================
+
+  var DOMAIN_CONTEXTS = {
+    sport: {
+      label: "Athletic Context",
+      domains: {
+        ambition: { label: "Ambition" },
+        belonging: { label: "Belonging" },
+        craft: { label: "Craft" },
+      },
+    },
+    professional: {
+      label: "Professional Context",
+      domains: {
+        ambition: { label: "Drive" },
+        belonging: { label: "Connection" },
+        craft: { label: "Mastery" },
+      },
+    },
+    transition: {
+      label: "Transition Context",
+      domains: {
+        ambition: { label: "Purpose" },
+        belonging: { label: "Community" },
+        craft: { label: "Growth" },
+      },
+    },
+    military: {
+      label: "Military Context",
+      domains: {
+        ambition: { label: "Mission" },
+        belonging: { label: "Unit Cohesion" },
+        craft: { label: "Proficiency" },
+      },
+    },
+    healthcare: {
+      label: "Healthcare Context",
+      domains: {
+        ambition: { label: "Calling" },
+        belonging: { label: "Team Trust" },
+        craft: { label: "Clinical Skill" },
+      },
+    },
+  };
+
+  /**
+   * Get domain labels for a given context.
+   *
+   * @param {string} context - One of: sport, professional, transition, military, healthcare.
+   * @returns {object} Map of domain key to label, e.g. {ambition: "Drive", belonging: "Connection", craft: "Mastery"}.
+   */
+  function getDomainLabels(context) {
+    var ctx = DOMAIN_CONTEXTS[context];
+    if (!ctx) throw new Error("Unknown context: " + context);
+    var labels = {};
+    for (var dom in ctx.domains) {
+      labels[dom] = ctx.domains[dom].label;
+    }
+    return labels;
+  }
+
+  // =========================================================================
   // Public API
   // =========================================================================
 
@@ -1795,6 +1934,13 @@ const ABCPersonalization = (function () {
     generateMeasurementDisclosure: generateMeasurementDisclosure,
     confidenceQualifier: confidenceQualifier,
     fillTemplate: fillTemplate,
+
+    // Fatigue timescale
+    classifyFatigueTimescale: classifyFatigueTimescale,
+
+    // Domain contexts
+    DOMAIN_CONTEXTS: DOMAIN_CONTEXTS,
+    getDomainLabels: getDomainLabels,
 
     // Data
     NARRATIVE_DATA: NARRATIVE_DATA,

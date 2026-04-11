@@ -10,6 +10,8 @@ window._bayesianProfileScorers = window._bayesianProfileScorers || {};
 window._transitionTracker = window._transitionTracker || null;
 window._measurementCount = window._measurementCount || 0;
 window._currentAudience = 'athlete'; // toggle via UI
+window._frustrationHistory = window._frustrationHistory || {ambition: [], belonging: [], craft: []};
+window._currentContext = window._currentContext || 'sport';
 
 
 function submitAssessmentEnhanced() {
@@ -22,6 +24,11 @@ function submitAssessmentEnhanced() {
     const result = scoreAssessment();
     const audience = window._currentAudience || 'athlete';
     window._measurementCount++;
+
+    // Track frustration history per domain
+    window._frustrationHistory.ambition.push(result.subscales.a_frust);
+    window._frustrationHistory.belonging.push(result.subscales.b_frust);
+    window._frustrationHistory.craft.push(result.subscales.c_frust);
     const measurementCount = window._measurementCount;
 
     // Initialize transition tracker on first use
@@ -126,7 +133,12 @@ function submitAssessmentEnhanced() {
 
     } else {
         // === Standard/Full tier: narrative-first results ===
+        var contextLabels = P.getDomainLabels(window._currentContext);
+        var contextInfo = P.DOMAIN_CONTEXTS[window._currentContext];
         html += '<div class="result-type-card">';
+
+        // Context label
+        html += `<div style="text-align:center;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:0.5rem 0 0;">${contextInfo ? contextInfo.label : 'Athletic Context'}</div>`;
 
         // Header
         html += `<div class="result-type-header" style="background:${domColour}">`;
@@ -148,7 +160,7 @@ function submitAssessmentEnhanced() {
         // Domain cards with posterior confidence
         html += '<div class="result-domains">';
         domainPairsForBayes.forEach(([dom, satK, frustK]) => {
-            const label = dom.charAt(0).toUpperCase() + dom.slice(1);
+            const label = contextLabels[dom] || (dom.charAt(0).toUpperCase() + dom.slice(1));
             const state = result.domainStates[dom];
             const stateProb = domainStateProbs[dom];
             const stateConf = confLabel(stateProb.confidence);
@@ -161,6 +173,13 @@ function submitAssessmentEnhanced() {
             html += `<span class="state-badge" style="background:${stateCol}">${state}</span> `;
             html += `<span class="confidence-badge ${stateConf.cls}">${(stateProb.confidence * 100).toFixed(0)}%</span>`;
 
+            // Fatigue timescale badge (after 3+ measurements)
+            if (window._frustrationHistory[dom] && window._frustrationHistory[dom].length >= 3) {
+                const fatigueType = P.classifyFatigueTimescale(window._frustrationHistory[dom]);
+                const fatigueColors = {acute: '#22c55e', chronic: '#f59e0b', mixed: '#ef4444'};
+                html += ` <span style="display:inline-block;font-size:0.7rem;padding:0.15rem 0.4rem;border-radius:3px;color:#fff;background:${fatigueColors[fatigueType] || '#888'};margin-left:0.3rem;">${fatigueType}</span>`;
+            }
+
             if (domNarr.state_description) {
                 html += `<div style="margin-top:0.5rem;font-size:0.85rem;line-height:1.5;color:#555;">${domNarr.state_description}</div>`;
             }
@@ -170,6 +189,15 @@ function submitAssessmentEnhanced() {
             if (domNarr.conversation_starter && audience === 'coach') {
                 html += `<div class="reflection-prompt" style="margin-top:0.5rem;font-size:0.85rem;border-left-color:var(--craft);">${domNarr.conversation_starter}</div>`;
             }
+
+            // Personalized threshold (after 6+ measurements)
+            if (window._bayesianProfileScorers[satK]) {
+                const persThresh = window._bayesianProfileScorers[satK].getPersonalizedThreshold(1.5, 3.0);
+                if (persThresh !== null) {
+                    html += `<div style="margin-top:0.4rem;font-size:0.78rem;color:var(--muted);">Personal threshold: ${persThresh.toFixed(1)}</div>`;
+                }
+            }
+
             html += '</div>';
         });
         html += '</div>';
@@ -230,6 +258,14 @@ function submitAssessmentEnhanced() {
             }
         }
 
+        // Trajectory summary
+        if (window._transitionTracker && window._transitionTracker.history.length > 0) {
+            const trajSummary = window._transitionTracker.getSummary();
+            html += '<div style="margin-bottom:1.5rem;padding:0.6rem 1rem;background:#f8f8f8;border-radius:6px;font-size:0.8rem;color:var(--muted);">';
+            html += `Measurement ${trajSummary.measurementCount} | Type stability: ${trajSummary.sustainedCount} sustained | Highest level reached: ${trajSummary.highestLevelReached}`;
+            html += '</div>';
+        }
+
         html += '</div></div>';
     }
 
@@ -275,6 +311,10 @@ function submitAssessmentEnhanced() {
                 }
             });
             ABCOfflineStorage.saveBayesianState(bayesState);
+        }
+        // Persist frustration history
+        if (typeof ABCOfflineStorage.saveFrustrationHistory === 'function') {
+            ABCOfflineStorage.saveFrustrationHistory(window._frustrationHistory);
         }
     }
 }
