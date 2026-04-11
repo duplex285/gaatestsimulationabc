@@ -753,7 +753,36 @@ Where:
 - Intervention effectiveness: 10+ logged interventions with pre/post data
 - Cross-sport insights: 10+ athletes per sport context
 
-#### 10.1.6 Threshold Personalization
+#### 10.1.6 Fatigue Timescale Classification (transition_engine.py)
+
+**Method:** Dual-timescale frustration classification based on Muller et al. (2021).
+
+**Implementation:** The `EnhancedABCScorer` maintains a per-domain frustration history across measurements. After 3+ measurements, `classify_fatigue_timescale()` is called for each domain.
+
+**Classification logic:**
+- **Acute:** Recent spike (change >= 1.5 within 2 measurements) without a long-term trend. Likely recoverable with rest or schedule change.
+- **Chronic:** Sustained upward slope (>= 0.3 per measurement) over 6 measurements. Requires structural change in need satisfaction.
+- **Mixed:** Both spike and trend present simultaneously.
+
+**Slope computation:** OLS regression over the measurement window.
+
+**Output:** `fatigue_timescales` dict in the scoring output, keyed by domain.
+
+**Reference:** Muller, T., et al. (2021). Neural mechanisms of momentary fatigue and persistence. *Nature Communications*, 12, 4593.
+
+#### 10.1.7 Cross-Domain Context Switching (context_manager.py)
+
+**Method:** Configuration-driven domain label and item wording substitution across life contexts.
+
+**Implementation:** `DomainContextManager` loads `config/domain_contexts.yaml` and provides context-specific labels, descriptions, and item prompts. The `EnhancedABCScorer` accepts a `context` parameter (default: "sport") and passes context-specific labels through to the output.
+
+**Available contexts:** sport, professional, military, healthcare, transition (post-career).
+
+**Scoring invariance:** The underlying measurement model (6 subscales, 0-10 normalized) is identical across contexts. Only the surface presentation changes. An athlete's longitudinal profile carries across contexts because the math is the same.
+
+**Reference:** Ryan, R. M., & Deci, E. L. (2017). *Self-Determination Theory*. The three basic psychological needs (autonomy, relatedness, competence) are universal across populations and domains.
+
+#### 10.1.8 Threshold Personalization
 
 **Method:** Empirical Bayes shrinkage of individual thresholds toward population thresholds.
 
@@ -796,12 +825,22 @@ narrative_engine.py
     <- transition_engine.py (for growth narratives)
     <- frustration_signatures.py (existing; for signature narratives)
     <- domain_classification.py (existing; for state narratives)
-    <- config/narrative_templates.yaml (new)
 
 coach_intelligence.py
     <- bayesian_scorer.py (for per-athlete posteriors)
     <- transition_engine.py (for transition patterns)
     <- narrative_engine.py (for coach-facing text)
+
+context_manager.py
+    <- config/domain_contexts.yaml
+
+onboarding_scorer.py
+    <- bayesian_scorer.py (for archetype probabilities)
+    <- subscale_computation.py (existing; for normalization)
+
+scoring_pipeline.py (EnhancedABCScorer)
+    <- all of the above
+    <- ABCScorer (existing core pipeline, unchanged)
 ```
 
 #### 10.2.2 Testing Strategy
@@ -816,7 +855,20 @@ Each new module requires:
 | Property-based tests | Invariants that must hold | Posterior SD always decreases with more data; prior weight monotonically decreases; growth hierarchy is a total order |
 | Regression tests | Existing 493 tests continue passing | No existing behavior changes |
 
-**Test count estimate:** ~120 new tests across 5 new modules.
+**Actual test counts (as built):**
+
+| Test file | Tests | Module covered |
+|-----------|-------|---------------|
+| test_base_rate_engine.py | 44 | base_rate_engine.py |
+| test_bayesian_scorer.py | 27 | bayesian_scorer.py |
+| test_narrative_engine.py | 21 | narrative_engine.py |
+| test_transition_engine.py | 49 | transition_engine.py |
+| test_coach_intelligence.py | 16 | coach_intelligence.py |
+| test_onboarding_scorer.py | 15 | onboarding_scorer.py |
+| test_enhanced_pipeline.py | 19 | EnhancedABCScorer integration |
+| Existing tests (unchanged) | 198 | Core scoring pipeline |
+| **Total Python tests** | **389** | **All passing** |
+| Psychometric tests | 337 | All passing (4 SEM failures fixed) |
 
 #### 10.2.3 Configuration Management
 
@@ -826,25 +878,62 @@ All new configuration files follow the existing pattern in `config/`:
 - Version-controlled in git
 - Machine-readable for automated validation pipeline
 
-New config files:
-- `config/base_rates.yaml` (Section 2.3)
-- `config/domain_contexts.yaml` (Section 7.2)
-- `config/narrative_templates.yaml` (Section 3.2)
+Config files:
+- `config/base_rates.yaml` (Section 2.3): NCAA epidemiological priors
+- `config/domain_contexts.yaml` (Section 7.2): 5 life contexts with domain labels and prompts
+
+#### 10.2.4 Dashboard Implementation
+
+The simulation dashboard (`outputs/site/`) is a client-side static site with no backend. All scoring runs in the browser.
+
+**Files:**
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `index.html` | ~4,100 | Main dashboard with ARIA accessibility, mobile CSS, PWA meta tags |
+| `personalization.js` | 1,812 | JS port of Python modules: Bayesian scorer, narratives, transitions, onboarding |
+| `submit-assessment-enhanced.js` | ~280 | Narrative-first results renderer with audience toggle and IndexedDB persistence |
+| `offline-storage.js` | ~150 | IndexedDB persistence for responses, results, Bayesian state |
+| `sw.js` | ~60 | Cache-first service worker for offline assessment |
+| `manifest.json` | ~30 | PWA manifest for home screen installation |
+
+**Accessibility (WCAG 2.1 AA):**
+- Landmark roles (navigation, main, tabpanel)
+- ARIA live regions for dynamic content (results, stats, progress)
+- Focus management on tab switch and result display
+- Keyboard navigation (arrow keys in radiogroups, Enter/Space on interactive elements)
+- Screen-reader-only class (`.sr-only`)
+- Color contrast fixes for state badges (all >= 4.5:1)
+
+**PWA/Offline:**
+- Service worker with cache-first strategy for all static assets
+- IndexedDB with three object stores: in-progress responses, completed results, Bayesian posteriors
+- Auto-save on each answer, resume on page reload
+- Offline indicator badge
 
 ---
 
 ## 11. Mobile-Responsive Design
 
-### 11.1 Current State
+### 11.1 Current State (Updated 2026-04-11)
 
-The existing dashboard (`outputs/site/index.html`) is a single HTML file (~285KB) with Chart.js visualizations. It has a basic responsive breakpoint at 768px that collapses the sidebar and stacks grid layouts. However, the mobile experience has significant gaps:
+The dashboard (`outputs/site/index.html`, ~300KB) has been rebuilt with the personalization engine, ARIA accessibility, and PWA offline support. Implemented features:
 
-- Assessment form is desktop-optimized (small touch targets, no swipe navigation)
-- Chart.js canvases do not adapt legend/label sizing for small screens
-- Narrative text (new in this plan) has no mobile typography system
-- No touch gesture support for chart interaction
-- Tab navigation requires precise taps on small text
-- No offline/PWA capability for athletes taking assessments in low-connectivity environments (gyms, fields)
+- Narrative-first results view with audience toggle (athlete/coach)
+- Bayesian posterior probabilities and archetype probability bars
+- Confidence badges on domain state classifications
+- Onboarding tier with suppressed labels and probability distributions
+- Measurement disclosure text scaled to measurement count
+- Frustration signature narratives with effort-cost framing
+- Transition narratives for archetype changes
+- ARIA landmarks, live regions, keyboard navigation, focus management
+- PWA with service worker and IndexedDB offline persistence
+- Mobile-responsive CSS (48px touch targets, grid collapse, narrative typography)
+
+**Remaining gaps:**
+- Swipe navigation between assessment questions (requires touch event handlers)
+- Sparkline charts for trajectory inline display
+- Coach dashboard as a separate view (currently shares athlete view with toggle)
 
 ### 11.2 Design Principles
 
