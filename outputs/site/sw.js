@@ -3,7 +3,7 @@
  * Cache-first strategy for static assets; network fallback with dynamic caching.
  */
 
-var CACHE_NAME = 'abc-assessment-v1';
+var CACHE_NAME = 'abc-assessment-v2';
 
 var PRECACHE_URLS = [
     './',
