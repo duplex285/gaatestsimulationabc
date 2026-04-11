@@ -67,6 +67,17 @@ class TestTransmissionSignal:
         assert result["affected_count"] == 3
         assert "narrative" in result
 
+    def test_all_athletes_below_threshold(self):
+        result = detect_transmission_signal(
+            [
+                {"athlete_id": "a1", "scores": [3.0, 3.0]},
+                {"athlete_id": "a2", "scores": [3.0, 3.0]},
+                {"athlete_id": "a3", "scores": [3.0, 3.0]},
+            ],
+            min_affected=3,
+        )
+        assert result is None
+
     def test_short_history_skipped(self):
         result = detect_transmission_signal(
             [
@@ -108,6 +119,10 @@ class TestCrossSportPatterns:
         )
         assert result["sports"]["basketball"]["athlete_count"] == 2
         assert result["comparisons"]["total_athletes"] == 2
+
+    def test_sport_with_empty_athlete_list(self):
+        result = compute_cross_sport_patterns({"basketball": []})
+        assert result["sports"]["basketball"]["athlete_count"] == 0
 
     def test_multiple_sports(self):
         result = compute_cross_sport_patterns(
@@ -158,3 +173,28 @@ class TestCoachProfile:
         summary = coach.get_summary()
         assert summary["total_athletes"] == 2
         assert summary["coach_id"] == "c1"
+
+
+class TestCoachProfileEdgeCases:
+    def test_empty_coach_summary(self):
+        coach = CoachProfile("c_empty")
+        summary = coach.get_summary()
+        assert isinstance(summary, dict)
+        assert summary["total_athletes"] == 0
+        assert summary["archetype_distribution"]["total"] == 0
+
+    def test_single_athlete(self):
+        coach = CoachProfile("c_single")
+        coach.add_athlete("a1", "Pioneer", {"ambition": "Thriving"}, sport="tennis")
+        summary = coach.get_summary()
+        assert summary["total_athletes"] == 1
+
+    def test_multiple_incomplete_interventions(self):
+        coach = CoachProfile("c_incomplete")
+        coach.log_intervention("a1", "ambition", "goal setting", 7.0)
+        coach.log_intervention("a2", "belonging", "team activity", 6.5)
+        coach.log_intervention("a3", "craft", "drill session", 5.0)
+        summary = coach.get_intervention_summary()
+        assert summary["total_interventions"] == 3
+        assert summary["completed"] == 0
+        assert summary["mean_improvement"] is None
