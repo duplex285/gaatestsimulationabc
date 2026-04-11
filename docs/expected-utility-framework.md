@@ -141,58 +141,183 @@ The type is stable (changes slowly, requires high confidence). The profile code 
 
 ---
 
-## 7. Implementation Approach
+## 7. The Four Sections
+
+Drawing on Kegan and Lahey's Deliberately Developmental Organizations (DDO) framework, the participant narrative has four sections. Each is generated dynamically from the score distribution, personality descriptors, and team role behaviors. No trait names, scale names, or technical labels are shown to the athlete.
+
+### 7.1 Overview
+
+One paragraph that names who the athlete is in plain language. It draws from the archetype, the personality descriptors (translated from Big Five percentiles into behavioral language), and the team role behaviors (translated from Belbin roles into what the person actually does). It names what is working and what is not, without using any psychometric vocabulary.
+
+### 7.2 Strengths (DDO: Edge, Developmental Aspirations)
+
+These are the athlete's natural patterns described as behaviors, not traits. Each strength is something the athlete does, not something they score. The strengths are drawn from:
+
+- The highest-satisfaction domain (what energizes them)
+- The personality descriptors (how they show up)
+- The team role behaviors (what they contribute to others)
+
+The language is specific and personal. "You create safety for others without needing to be asked" is a strength. "High agreeableness" is not.
+
+### 7.3 What to Watch For (DDO: Groove, Developmental Practices)
+
+These are the patterns that could undermine the athlete if left unattended. They are drawn from:
+
+- Frustration scores (where effort feels costly)
+- The gap between satisfaction and frustration within a domain (the Vulnerable pattern)
+- The proximity of key scores to classification thresholds
+
+The language reframes frustration as information, not failure. "You are not avoiding your craft because you do not care. You are avoiding it because the feedback you are getting feels like judgment" is a watch-for. "Craft frustration is high (6.11)" is not.
+
+### 7.4 Growth Opportunities (DDO: Home, Developmental Communities)
+
+These are specific, actionable invitations for vulnerability and depth. They are drawn from:
+
+- The lowest-satisfaction domain that is not already frustrated (where investment has the highest return)
+- The relationship between the athlete's relational strength and their other domains (can Belonging carry Ambition or Craft development?)
+- The personality descriptors (how this athlete learns best)
+
+The language is concrete and relational. "Use one of those relationships to say out loud what you are struggling with in your sport" is an opportunity. "Invest in Belonging" is not.
+
+### 7.5 Resonance Check
+
+After the athlete reads their narrative:
+
+> **Does this sound like you?** Your response helps us learn. If something feels off, that is useful.
+> [ Yes, this resonates ] [ Some of it ] [ Not really ]
+
+If the athlete selects "Some of it" or "Not really," the system flags which section did not land. This feedback enters the trajectory: the inference is off for this person, and the next reassessment should probe the flagged domain more carefully. The model learns from disagreement, not just from scores.
+
+---
+
+## 8. Narrative Examples
+
+### 8.1 Anchor (B-Sat 5.83, B-Frust 3.33, A-Sat 3.33, A-Frust 5.83, C-Sat 4.17, C-Frust 6.11)
+
+**Overview:**
+You are someone people turn to. You are naturally warm, cooperative, and genuinely interested in others. Your team roles reflect this: you anchor the group, you connect people who would not otherwise talk, and you bring structure without making it feel rigid. That is your foundation. Right now, your relationships are the one area where you feel more satisfied than frustrated. Goal pursuit and skill development both feel heavier than they should.
+
+**Strengths:**
+- You create safety for others without needing to be asked. This is not something you perform. It is how you operate.
+- You are curious about people. You ask questions and remember the answers. That builds loyalty that most people have to work much harder to earn.
+- You organize without controlling. People follow your lead because you make things clearer, not because you demand compliance.
+- You are emotionally steady. When things get tense around you, you do not amplify it. That is rarer than you think.
+
+**What to Watch For:**
+- Goal pursuit feels like obligation right now, not choice. When you set goals, ask whether they are yours or someone else's. If you cannot tell the difference, that is the problem.
+- Skill development feels evaluative. You are not avoiding your craft because you do not care. You are avoiding it because the feedback you are getting feels like judgment. Pay attention to who is giving the feedback and how.
+- Your relationships are the one thing holding steady, but they are closer to the edge than they look. Do not sacrifice what is working to perform in areas that feel punishing.
+
+**Growth Opportunities:**
+- You already have people who trust you. Use one of those relationships to say out loud what you are struggling with in your sport. Not the physical part. The motivation part. That conversation is where direction starts.
+- You may not naturally build structure for yourself, even though you do it well for others. Make a small plan for yourself the way you would for a teammate. Not a big one. A small one.
+- Pick one skill you are curious about, not one you are supposed to improve. Curiosity is how you learn best. Obligation shuts it down for someone like you.
+
+> **Does this sound like you?** [ Yes, this resonates ] [ Some of it ] [ Not really ]
+
+### 8.2 Pioneer A (A-Sat 9.0, A-Frust 2.0, B-Sat 3.0, B-Frust 2.5, C-Sat 4.0, C-Frust 3.0)
+
+**Overview:**
+You know where you are going. You set direction and move toward it with conviction. You are independent, assertive, and energized by challenge. Right now, goal pursuit is the engine that drives everything. Relationships and skill development are quieter parts of your life, not because they do not matter, but because your attention flows to what challenges you most.
+
+**Strengths:**
+- You set goals that are yours, not someone else's. That independence is the foundation of sustained motivation.
+- You bring energy to the room. People notice your drive, and it raises the standard around you.
+- You are not easily knocked off course. When things go wrong, you recalibrate and keep moving.
+- You are comfortable with discomfort. Competition sharpens you rather than draining you.
+
+**What to Watch For:**
+- Your motivation depends almost entirely on goal pursuit. If that is disrupted, whether by injury, a coaching change, or losing a starting role, the impact will hit harder than you expect. You do not have a backup source of motivation right now.
+- You may be so focused on the next objective that you miss what the people around you are offering. Relationships are not a distraction from your goals. They are the infrastructure that supports them when things get hard.
+
+**Growth Opportunities:**
+- Belonging is not something you are frustrated about. It is just something you have not invested in. One genuine connection with a teammate, not a strategic alliance, would change the shape of your experience without costing you any of your drive.
+- You bring structure to your goals naturally. Try bringing that same clarity to one relationship. What would it look like to pursue a friendship with the same intention you bring to your training?
+
+> **Does this sound like you?** [ Yes, this resonates ] [ Some of it ] [ Not really ]
+
+### 8.3 Pioneer B (A-Sat 7.0, A-Frust 3.0, B-Sat 5.5, B-Frust 2.0, C-Sat 2.0, C-Frust 6.0)
+
+**Overview:**
+You have direction and you are building connections alongside it. That combination is stronger than most. But skill development feels like a wall right now. You care about getting better, but something about the process feels punishing rather than productive.
+
+**Strengths:**
+- You pursue goals with genuine autonomy. Your drive comes from inside, not from pressure.
+- You are developing relationships alongside your ambition. Most people with your drive neglect that. You are not.
+- You are emotionally present. You show up for your teammates, not just for your performance.
+
+**What to Watch For:**
+- Working on your craft feels like being judged rather than learning. That is not about your ability. It is about the environment around skill development. Pay attention to whether the feedback you receive is designed to help you or to evaluate you.
+- The gap between how much you care about your craft (the frustration tells you that you care) and how little satisfaction it gives you is unsustainable. Something needs to change in how you are developing, not whether you are developing.
+
+**Growth Opportunities:**
+- Tell your coach what kind of feedback helps you and what kind shuts you down. That is not weakness. It is self-knowledge.
+- Find one aspect of your craft where you feel curious, not obligated. Start there. Curiosity survives failure. Obligation does not.
+- Your Belonging is nearly activated. One more step, being honest with a teammate about what you are struggling with, would give you a second foundation to stand on.
+
+> **Does this sound like you?** [ Yes, this resonates ] [ Some of it ] [ Not really ]
+
+---
+
+## 9. Layout
+
+The dynamic narrative occupies the left panel of the participant detail view. The raw scores, subscale bars, classification confidence, and team role assignments stay on the right panel. The left tells the story. The right shows the evidence.
+
+```
+┌─────────────────────────┬──────────────────────────┐
+│                         │                          │
+│  OVERVIEW               │  SUBSCALE SCORES (0-10)  │
+│  [paragraph]            │  [bars]                  │
+│                         │                          │
+│  STRENGTHS              │  MOTIVATIONAL PROFILE    │
+│  [bullets]              │  [domain states]         │
+│                         │                          │
+│  WHAT TO WATCH FOR      │  CLASSIFICATION          │
+│  [bullets]              │  CONFIDENCE              │
+│                         │  [stability metrics]     │
+│  GROWTH OPPORTUNITIES   │                          │
+│  [bullets]              │  TEAM ROLES              │
+│                         │  [badges]                │
+│  ─────────────────────  │                          │
+│  Does this sound like   │  FRUSTRATION SIGNATURES  │
+│  you? [Yes] [Some] [No] │  [badges]                │
+│                         │                          │
+└─────────────────────────┴──────────────────────────┘
+```
+
+The raw item responses (AS1: 1, AS2: 1, etc.) move to a collapsible detail section below, available for inspection but not prominent.
+
+---
+
+## 10. Implementation Approach
 
 ### Phase 1: Dynamic narrative rules
 
-Replace static archetype narratives with a rule-based generator that takes the profile code and frustration scores as input. No utility math visible. The rules encode the principles:
-
-- Strengths: name the highest-satisfaction domain and describe how it shapes the archetype
-- Watch-for: identify the highest-investment domain and describe the cost of losing it
-- Growth edge: point toward the lowest-satisfaction, lowest-frustration domain (underdeveloped, not blocked). If lowest-satisfaction has high frustration, flag it as an active concern instead
+Replace static archetype narratives with a rule-based generator. Inputs: archetype, 125-profile code, 6 frustration scores, Big Five percentiles (as behavioral descriptors), Belbin roles (as behavioral descriptors). No psychometric vocabulary in the output.
 
 ### Phase 2: Frustration weighting
 
-Apply the 1.5x frustration multiplier when computing which domain to highlight. This changes the growth edge for Vulnerable athletes: a domain with sat 7.0 and frust 6.0 has lower net value than the raw satisfaction score suggests.
+Apply the 1.5x frustration multiplier when selecting which domain to highlight in Watch For and Growth Opportunities. Low satisfaction + low frustration = growth opportunity (underdeveloped, not blocked). Low satisfaction + high frustration = urgent concern (the environment needs to change, not the athlete).
 
-### Phase 3: Check-in integration
+### Phase 3: Resonance feedback loop
 
-Update the dynamic narrative after each check-in based on trajectory. The growth edge shifts as the athlete develops. The watch-for becomes predictive when the cascade pattern is detected.
+Add the "Does this sound like you?" prompt after the narrative. Track responses in the trajectory. Disagreement flags the inference for review at the next reassessment.
 
-### Phase 4: Coach team-level view
+### Phase 4: Check-in integration
 
-Aggregate individual utility profiles into a team distribution. Show the coach where the highest-return team-level intervention is.
+Update the dynamic narrative after each check-in. Growth opportunities shift as the athlete develops. Watch-fors become predictive when the cascade pattern is detected.
 
----
+### Phase 5: Coach team-level view
 
-## 8. What the Athlete Sees
-
-**Before (static):**
-> Type: Pioneer
-> Strengths: Autonomy, goal clarity, competitive drive, forward momentum
-> Watch for: May neglect relationships or skill depth in pursuit of goals
-> Growth edge: Pick one relationship or one skill to invest in alongside your goals
-
-**After (dynamic, Pioneer A with A:9.0, B:3.0, C:4.0):**
-> Type: Pioneer
-> Strengths: Your Ambition is exceptionally strong. You set direction and pursue it with conviction. This is rare and valuable.
-> Watch for: Your motivation depends almost entirely on goal pursuit. If that is disrupted (injury, coaching change, role loss), you have little to fall back on. Belonging and Craft are not yet providing support.
-> Growth edge: Belonging is your biggest opportunity right now. You are not frustrated here, just uninvested. One genuine connection would diversify your motivational foundation.
-
-**After (dynamic, Pioneer B with A:7.0, B:5.5, C:2.0, C-frust:6.0):**
-> Type: Pioneer
-> Strengths: Your Ambition is activated and your Belonging is developing alongside it. You are building a broader base than most Pioneers.
-> Watch for: Craft frustration is high (6.0) with low satisfaction (2.0). You feel blocked in skill development. This combination predicts disengagement from training if not addressed.
-> Growth edge: Craft is not a growth opportunity right now, it is an active concern. The frustration needs to be addressed before investment can take hold. Talk to your coach about what is making skill development feel evaluative rather than developmental.
-
-Same type. Different guidance. Driven by the scores, explained in plain language.
+Aggregate individual narratives into a team distribution. Show the coach where the highest-return team-level investment is, using the same plain language.
 
 ---
 
-## 9. What This Does Not Do
+## 11. What This Does Not Do
 
-- It does not require the athlete to understand utility theory, SDT, or statistics
+- It does not require the athlete to understand utility theory, SDT, Big Five, Belbin, or any psychometric framework
 - It does not replace the archetype system. The 8 types remain. The narratives within them become personalized
 - It does not add new survey questions. The input is the same 36 items plus check-ins
 - It does not create 125 separate narrative templates. It creates rules that generate narratives from score distributions
-- It does not expose numbers to the athlete beyond what is already shown (subscale scores, domain states)
+- It does not expose trait names, scale names, or technical labels to the athlete
+- It does not present disagreement as error. If the athlete says "not really," the system learns from that
