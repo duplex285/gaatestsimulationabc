@@ -3893,6 +3893,14 @@
             html += '</div>';
         }
 
+        // Reassessment action button (appears for sustained shift or repeated alerts)
+        if (alertWeeks >= 2 || (alertWeeks >= 3 && maxDeltaFromAvg < 1.0)) {
+            html += '<div style="margin-top:0.75rem;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">';
+            html += '<button class="sim-run-btn" style="width:auto;margin:0;background:#E8563A;" onclick="triggerReassessment()">Reassess Now (36 items)</button>';
+            html += '<span style="font-size:0.78rem;color:var(--muted);">Takes a new full assessment and updates the baseline. Check-ins continue from the new starting point.</span>';
+            html += '</div>';
+        }
+
         // Add diagnostic summary
         html += '<div style="font-size:0.78rem;color:var(--muted);margin-top:0.4rem;display:flex;gap:1.5rem;flex-wrap:wrap;">';
         html += '<span>Regression-to-mean: ' + Math.round(regressionRatio * 100) + '%</span>';
@@ -3902,6 +3910,116 @@
         html += '</div>';
 
         el.innerHTML = html;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       REASSESSMENT FROM TRAJECTORY
+       ═══════════════════════════════════════════════════ */
+
+    // Store trajectory state so reassessment can update it
+    window._trajReassessmentPending = false;
+    window._trajCheckinHistoryBeforeReassess = [];
+
+    function triggerReassessment() {
+        // Save current trajectory state
+        window._trajReassessmentPending = true;
+        window._trajCheckinHistoryBeforeReassess = [];
+        for (var i = 0; i < trajWeeksShown; i++) {
+            window._trajCheckinHistoryBeforeReassess.push(trajCheckins[i]);
+        }
+        window._trajReassessWeekNumber = trajWeeksShown > 0 ? trajCheckins[trajWeeksShown - 1].week : 0;
+        window._trajOldBaseline = Object.assign({}, trajBaseline);
+
+        // Switch to assessment tab with full tier pre-selected
+        switchTab('assessment');
+        selectTier('full');
+
+        // Show reassessment context banner
+        var container = document.getElementById('assess-items-container');
+        if (container) {
+            var banner = document.createElement('div');
+            banner.style.cssText = 'background:#FFF5F5;border:1px solid #FEB2B2;border-left:4px solid #E8563A;border-radius:0 6px 6px 0;padding:0.75rem 1rem;font-size:0.85rem;color:#742A2A;margin-bottom:1rem;';
+            banner.innerHTML = '<strong>Reassessment triggered.</strong> Your check-in variance exceeded the threshold. This full assessment will update your baseline. The trajectory will continue from the new starting point.';
+            container.insertBefore(banner, container.firstChild);
+        }
+    }
+
+    // Called after assessment submission to update trajectory with new baseline
+    function completeReassessment(result) {
+        if (!window._trajReassessmentPending) return;
+        window._trajReassessmentPending = false;
+
+        var weekNum = window._trajReassessWeekNumber || 0;
+        var oldBaseline = window._trajOldBaseline || {};
+        var preHistory = window._trajCheckinHistoryBeforeReassess || [];
+
+        // Update baseline to new assessment scores
+        trajBaseline = {
+            a_sat: round2(result.subscales.a_sat),
+            a_frust: round2(result.subscales.a_frust),
+            b_sat: round2(result.subscales.b_sat),
+            b_frust: round2(result.subscales.b_frust),
+            c_sat: round2(result.subscales.c_sat),
+            c_frust: round2(result.subscales.c_frust)
+        };
+
+        // Create synthetic participant for new check-in generation
+        var newP = {
+            id: trajParticipant ? trajParticipant.id : 'self',
+            type: result.typeName,
+            domain: result.domDomain.charAt(0).toUpperCase() + result.domDomain.slice(1),
+            domDomain: result.domDomain,
+            domainStates: result.domainStates,
+            a_sat: trajBaseline.a_sat, a_frust: trajBaseline.a_frust,
+            b_sat: trajBaseline.b_sat, b_frust: trajBaseline.b_frust,
+            c_sat: trajBaseline.c_sat, c_frust: trajBaseline.c_frust
+        };
+        trajParticipant = newP;
+
+        // Generate new check-ins from the updated baseline
+        var newCheckins = generateTrajCheckins(newP);
+
+        // Renumber: continue week numbering from where we left off
+        var startWeek = weekNum + 1;
+        newCheckins.forEach(function(ci, i) { ci.week = startWeek + i; });
+
+        // Build combined timeline: pre-reassessment history + reassessment marker + new check-ins
+        trajCheckins = [];
+
+        // Add pre-reassessment check-ins (recalculated as deltas from NEW baseline)
+        preHistory.forEach(function(ci) {
+            trajCheckins.push(ci);
+        });
+
+        // Add reassessment point (zero delta since it IS the new baseline)
+        var reassessPoint = { week: 'R', isReassessment: true };
+        TRAJ_KEYS.forEach(function(k) { reassessPoint[k] = trajBaseline[k]; });
+        trajCheckins.push(reassessPoint);
+
+        // Add new check-ins
+        newCheckins.forEach(function(ci) { trajCheckins.push(ci); });
+
+        // Reset chart
+        if (trajChartInstance) { trajChartInstance.destroy(); trajChartInstance = null; }
+        trajWeeksShown = 0;
+
+        // Update UI
+        document.getElementById('traj-p-type').textContent = newP.type;
+        document.getElementById('traj-p-domain').textContent = newP.domain;
+        document.getElementById('traj-p-asat').textContent = trajBaseline.a_sat.toFixed(2);
+        document.getElementById('traj-p-afrust').textContent = trajBaseline.a_frust.toFixed(2);
+        document.getElementById('traj-p-bsat').textContent = trajBaseline.b_sat.toFixed(2);
+        document.getElementById('traj-p-bfrust').textContent = trajBaseline.b_frust.toFixed(2);
+        document.getElementById('traj-p-csat').textContent = trajBaseline.c_sat.toFixed(2);
+        document.getElementById('traj-p-cfrust').textContent = trajBaseline.c_frust.toFixed(2);
+
+        document.getElementById('traj-week-label').textContent = 'Reassessed. New baseline established.';
+        document.getElementById('traj-alert').innerHTML = '<div class="traj-stable-box"><strong>Baseline updated.</strong> The trajectory now tracks variance from the reassessment scores. Previous check-ins are shown for context. Add check-ins to continue tracking.</div>';
+        document.getElementById('traj-coaching').innerHTML = '';
+        computeBaselineQuality();
+
+        // Switch back to trajectory
+        switchTab('trajectory');
     }
 
     /* ═══════════════════════════════════════════════════

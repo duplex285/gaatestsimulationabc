@@ -317,4 +317,10 @@ function submitAssessmentEnhanced() {
             ABCOfflineStorage.saveFrustrationHistory(window._frustrationHistory);
         }
     }
+
+    // If this was a reassessment triggered from the trajectory tab,
+    // update the trajectory baseline and switch back
+    if (window._trajReassessmentPending && typeof completeReassessment === 'function') {
+        completeReassessment(result);
+    }
 }
