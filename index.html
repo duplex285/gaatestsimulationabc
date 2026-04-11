@@ -9,6 +9,12 @@
     <title>ABC Assessment — Simulation Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <meta name="theme-color" content="#3A8FE8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <script src="personalization.js"></script>
+    <script src="offline-storage.js"></script>
+    <script src="submit-assessment-enhanced.js"></script>
     <style>
         :root {
             --bg: #f8f9fa; --card: #ffffff; --text: #1a1a2e; --muted: #6c757d;
@@ -257,6 +263,160 @@
         .chart-wrap { position: relative; width: 100%; }
         .chart-wrap canvas { width: 100% !important; }
 
+        /* ─── Mobile-first enhancements (improvement-plan Section 11) ─── */
+
+        /* Touch targets: minimum 44x44px per WCAG 2.2 */
+        @media (max-width: 768px) {
+            .assess-likert .likert-btn {
+                min-height: 48px;
+                min-width: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.05rem;
+            }
+            .assess-likert {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.5rem;
+            }
+            .assess-likert label:nth-child(n+5) {
+                grid-row: 2;
+            }
+            .assess-question {
+                padding: 1.2rem 1rem;
+            }
+            .assess-question .q-text {
+                font-size: 1.05rem;
+                line-height: 1.6;
+            }
+            .assess-tier-picker {
+                flex-direction: column;
+            }
+            .assess-tier-card {
+                min-width: unset;
+            }
+            .nav-item {
+                padding: 0.75rem 0.9rem;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+            .stats-bar {
+                gap: 1rem;
+                padding: 1rem;
+            }
+            .stat-value {
+                font-size: 1.4rem;
+            }
+        }
+
+        /* Small phone (< 375px) */
+        @media (max-width: 375px) {
+            .assess-likert {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.3rem;
+            }
+            .assess-likert .likert-btn {
+                font-size: 0.9rem;
+                padding: 0.4rem 0;
+            }
+            .tab-inner {
+                padding: 3.5rem 0.6rem 1rem;
+            }
+            .tab-header h1 {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* Narrative display (new for personalization engine) */
+        .narrative-body {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #2d3748;
+            max-width: 65ch;
+        }
+        .narrative-highlight {
+            font-weight: 600;
+            color: #1a202c;
+        }
+        .reflection-prompt {
+            font-style: italic;
+            border-left: 3px solid var(--belonging);
+            padding: 0.75rem 1rem;
+            margin: 1.25rem 0;
+            background: #f7faff;
+            border-radius: 0 8px 8px 0;
+        }
+        .measurement-disclosure {
+            font-size: 0.85rem;
+            color: var(--muted);
+            padding: 0.75rem 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            line-height: 1.5;
+        }
+        .confidence-badge {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .confidence-high { background: #e6ffed; color: #1f7a35; }
+        .confidence-moderate { background: #fff8e1; color: #8a6d00; }
+        .confidence-low { background: #fee; color: #a33825; }
+        .archetype-prob-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+        }
+        .archetype-prob-label { width: 90px; text-align: right; font-weight: 500; }
+        .archetype-prob-track { flex: 1; height: 16px; background: #eee; border-radius: 8px; overflow: hidden; }
+        .archetype-prob-fill { height: 100%; border-radius: 8px; background: var(--accent); transition: width 0.3s ease; }
+        .archetype-prob-val { width: 40px; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+        /* Tablet+ narrative layout */
+        @media (min-width: 769px) {
+            .narrative-body {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Results narrative-first layout on mobile */
+        @media (max-width: 768px) {
+            .assess-results .result-body {
+                padding: 1rem;
+            }
+            .assess-results .result-type-header {
+                padding: 1.2rem 1rem;
+            }
+            .assess-results .result-strengths ul {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Accessibility: reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .tab-content, .ds-detail, .bg-detail, .assess-results {
+                animation: none;
+            }
+            .assess-progress-fill, .archetype-prob-fill {
+                transition: none;
+            }
+        }
+
+        /* Accessibility: text scaling */
+        @media (min-resolution: 2dppx) {
+            .assess-likert .likert-btn {
+                font-size: 1rem;
+            }
+        }
+
         /* Assessment questionnaire */
         .assess-tier-picker { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
         .assess-tier-card { flex: 1; min-width: 220px; padding: 1.5rem; background: var(--card); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
@@ -328,6 +488,7 @@
         .traj-coach-select-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 0.75rem; }
         .traj-coach-select-row label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
         .traj-coach-select-row select { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; min-width: 200px; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
     </style>
 </head>
 <body>
@@ -335,7 +496,7 @@
     <button class="hamburger" id="hamburger" aria-label="Toggle navigation">&#9776;</button>
     <div class="nav-overlay" id="nav-overlay"></div>
 
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
         <div class="sidebar-title">ABC Assessment</div>
         <div class="sidebar-subtitle">Simulation Dashboard</div>
 
@@ -389,31 +550,31 @@
             <button style="width:100%;padding:0.35rem;margin-top:0.3rem;background:transparent;color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.2);border-radius:6px;font-size:0.75rem;cursor:pointer;" onclick="resetThresholds()">Reset Defaults</button>
         </div>
 
-        <nav>
-            <a class="nav-item active" data-tab="overview">Overview</a>
-            <a class="nav-item" data-tab="participants">Participants</a>
-            <a class="nav-item" data-tab="types">Archetypes</a>
-            <a class="nav-item" data-tab="states">Domain States</a>
-            <a class="nav-item" data-tab="risk">Risk Signals</a>
-            <a class="nav-item" data-tab="belbin">Belbin Roles</a>
-            <a class="nav-item" data-tab="trajectory">Trajectory</a>
-            <a class="nav-item" data-tab="assessment">Assessment</a>
-            <a class="nav-item" data-tab="stability">Stability</a>
-            <a class="nav-item" data-tab="methodology">Methodology</a>
+        <nav role="tablist" aria-label="Dashboard sections">
+            <a class="nav-item active" id="nav-overview" data-tab="overview" role="tab" aria-selected="true" aria-controls="tab-overview" tabindex="0">Overview</a>
+            <a class="nav-item" id="nav-participants" data-tab="participants" role="tab" aria-selected="false" aria-controls="tab-participants" tabindex="0">Participants</a>
+            <a class="nav-item" id="nav-types" data-tab="types" role="tab" aria-selected="false" aria-controls="tab-types" tabindex="0">Archetypes</a>
+            <a class="nav-item" id="nav-states" data-tab="states" role="tab" aria-selected="false" aria-controls="tab-states" tabindex="0">Domain States</a>
+            <a class="nav-item" id="nav-risk" data-tab="risk" role="tab" aria-selected="false" aria-controls="tab-risk" tabindex="0">Risk Signals</a>
+            <a class="nav-item" id="nav-belbin" data-tab="belbin" role="tab" aria-selected="false" aria-controls="tab-belbin" tabindex="0">Belbin Roles</a>
+            <a class="nav-item" id="nav-trajectory" data-tab="trajectory" role="tab" aria-selected="false" aria-controls="tab-trajectory" tabindex="0">Trajectory</a>
+            <a class="nav-item" id="nav-assessment" data-tab="assessment" role="tab" aria-selected="false" aria-controls="tab-assessment" tabindex="0">Assessment</a>
+            <a class="nav-item" id="nav-stability" data-tab="stability" role="tab" aria-selected="false" aria-controls="tab-stability" tabindex="0">Stability</a>
+            <a class="nav-item" id="nav-methodology" data-tab="methodology" role="tab" aria-selected="false" aria-controls="tab-methodology" tabindex="0">Methodology</a>
         </nav>
         <div class="sidebar-footer" id="sidebar-footer">Ready</div>
     </aside>
 
-    <div class="main">
+    <main class="main" role="main">
 
         <!-- TAB: Overview -->
-        <div class="tab-content active" id="tab-overview">
+        <div class="tab-content active" id="tab-overview" role="tabpanel" aria-labelledby="nav-overview">
             <div class="tab-inner">
                 <div class="tab-header">
                     <h1>Overview</h1>
                     <p>The 6-factor model measures satisfaction and frustration across three domains: Ambition, Belonging, and Craft.</p>
                 </div>
-                <div class="stats-bar" id="overview-stats">
+                <div class="stats-bar" id="overview-stats" aria-live="polite">
                     <div class="stat"><div class="stat-value" id="ov-n">&mdash;</div><div class="stat-label">Participants</div></div>
                     <div class="stat"><div class="stat-value" id="ov-types">&mdash;</div><div class="stat-label">Archetypes Observed</div></div>
                     <div class="stat"><div class="stat-value" id="ov-vuln">&mdash;</div><div class="stat-label">Vulnerable %</div></div>
@@ -436,7 +597,7 @@
                 <div class="section">
                     <h2>Subscale Summary</h2>
                     <p class="desc">Mean scores on the 0-10 normalised scale. Error bars show &pm;1 SD.</p>
-                    <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-ov-subscales"></canvas></div></div>
+                    <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-ov-subscales" role="img" aria-label="Bar chart showing mean scores for each ABC subscale"></canvas></div></div>
                 </div>
 
                 <!-- Run Computation Log (tabbed) -->
@@ -476,7 +637,7 @@
         </div>
 
         <!-- TAB: Archetypes -->
-        <div class="tab-content" id="tab-types">
+        <div class="tab-content" id="tab-types" role="tabpanel" aria-labelledby="nav-types">
             <div class="tab-inner">
                 <div class="tab-header">
                     <h1>Archetypes</h1>
@@ -485,7 +646,7 @@
                 <div class="section">
                     <h2>Type Distribution</h2>
                     <p class="desc">Each type has a fixed colour matching its strong-domain pattern. Colours are consistent with the Type Guide below.</p>
-                    <div class="card" style="padding:1rem;"><div class="chart-wrap" style="height:480px;"><canvas id="chart-types"></canvas></div></div>
+                    <div class="card" style="padding:1rem;"><div class="chart-wrap" style="height:480px;"><canvas id="chart-types" role="img" aria-label="Bar chart showing distribution of motivational archetypes"></canvas></div></div>
                 </div>
                 <div class="section">
                     <h2>Type Guide</h2>
@@ -497,7 +658,7 @@
         </div>
 
         <!-- TAB: Domain States -->
-        <div class="tab-content" id="tab-states">
+        <div class="tab-content" id="tab-states" role="tabpanel" aria-labelledby="nav-states">
             <div class="tab-inner">
                 <div class="tab-header">
                     <h1>Domain States</h1>
@@ -506,7 +667,7 @@
                 <div class="section">
                     <h2>State Distribution</h2>
                     <div class="grid-2" style="align-items:start;">
-                        <div class="card" style="padding:1rem;"><div style="position:relative; height:400px;"><canvas id="chart-states"></canvas></div></div>
+                        <div class="card" style="padding:1rem;"><div style="position:relative; height:400px;"><canvas id="chart-states" role="img" aria-label="Chart showing domain state distribution across participants"></canvas></div></div>
                         <div class="card" style="padding:0; max-height:400px; overflow-y:auto;"><table><thead><tr><th>Domain</th><th>State</th><th>Count</th><th>%</th></tr></thead><tbody id="states-table-body"></tbody></table></div>
                     </div>
                 </div>
@@ -514,9 +675,9 @@
                     <h2>Satisfaction vs Frustration</h2>
                     <p class="desc">Each dot represents one participant. Dashed lines at 5.5 divide the four state quadrants.</p>
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
-                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-scatter-ambition"></canvas></div></div>
-                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-scatter-belonging"></canvas></div></div>
-                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-scatter-craft"></canvas></div></div>
+                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-scatter-ambition" role="img" aria-label="Scatter plot of ambition satisfaction versus frustration scores"></canvas></div></div>
+                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-scatter-belonging" role="img" aria-label="Scatter plot of belonging satisfaction versus frustration scores"></canvas></div></div>
+                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-scatter-craft" role="img" aria-label="Scatter plot of craft satisfaction versus frustration scores"></canvas></div></div>
                     </div>
                 </div>
                 <div class="section">
@@ -538,7 +699,7 @@
         </div>
 
         <!-- TAB: Belbin Roles -->
-        <div class="tab-content" id="tab-belbin">
+        <div class="tab-content" id="tab-belbin" role="tabpanel" aria-labelledby="nav-belbin">
             <div class="tab-inner">
                 <div class="tab-header">
                     <h1>Belbin Roles</h1>
@@ -548,7 +709,7 @@
                     <h2>Role Distribution</h2>
                     <p class="desc">One participant can hold several roles. Percentages sum to more than 100%.</p>
                     <div class="grid-2" style="align-items:start;">
-                        <div class="card" style="padding:1rem;"><div style="position:relative; height:580px;"><canvas id="chart-belbin"></canvas></div></div>
+                        <div class="card" style="padding:1rem;"><div style="position:relative; height:580px;"><canvas id="chart-belbin" role="img" aria-label="Chart showing Belbin team role distribution"></canvas></div></div>
                         <div class="card" style="padding:0; max-height:580px; overflow-y:auto;"><table><thead><tr><th>Role (Qualifier)</th><th>Count</th><th>% of Participants</th></tr></thead><tbody id="belbin-table-body"></tbody></table></div>
                     </div>
                 </div>
@@ -562,7 +723,7 @@
         </div>
 
         <!-- TAB: Risk Signals -->
-        <div class="tab-content" id="tab-risk">
+        <div class="tab-content" id="tab-risk" role="tabpanel" aria-labelledby="nav-risk">
             <div class="tab-inner">
                 <div class="tab-header">
                     <h1>Risk Signals</h1>
@@ -577,8 +738,8 @@
                     <h2>Score Distributions</h2>
                     <p class="desc">How subscale scores (0-10) and Big Five percentiles spread across the population.</p>
                     <div class="grid-2">
-                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-subscales"></canvas></div></div>
-                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-bigfive"></canvas></div></div>
+                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-subscales" role="img" aria-label="Chart showing risk signal subscale scores"></canvas></div></div>
+                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-bigfive" role="img" aria-label="Chart showing Big Five personality trait distributions"></canvas></div></div>
                     </div>
                 </div>
                 <div class="section">
@@ -589,7 +750,7 @@
         </div>
 
         <!-- TAB: Participants -->
-        <div class="tab-content" id="tab-participants">
+        <div class="tab-content" id="tab-participants" role="tabpanel" aria-labelledby="nav-participants">
             <div class="tab-inner">
                 <div class="tab-header">
                     <h1>Individual Participants</h1>
@@ -627,7 +788,7 @@
         </div>
 
         <!-- TAB: Assessment -->
-        <div class="tab-content" id="tab-assessment">
+        <div class="tab-content" id="tab-assessment" role="tabpanel" aria-labelledby="nav-assessment">
             <div class="tab-inner">
                 <div class="tab-header">
                     <h1>Take an Assessment</h1>
@@ -659,22 +820,22 @@
                 <div id="assess-questions" style="display:none;">
                     <div class="assess-progress">
                         <button class="assess-back" onclick="backToTierPicker()">Back</button>
-                        <div class="assess-progress-bar"><div class="assess-progress-fill" id="assess-progress-fill"></div></div>
-                        <span class="assess-progress-text" id="assess-progress-text">0 / 6</span>
+                        <div class="assess-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Assessment progress" id="assess-progress-bar"><div class="assess-progress-fill" id="assess-progress-fill"></div></div>
+                        <span class="assess-progress-text" id="assess-progress-text" aria-live="polite">0 / 6</span>
                     </div>
                     <div id="assess-items-container"></div>
                     <div style="text-align:center;margin-top:1.5rem;">
-                        <button class="assess-submit" id="assess-submit-btn" onclick="submitAssessment()" disabled>See Your Results</button>
+                        <button class="assess-submit" id="assess-submit-btn" onclick="submitAssessmentEnhanced()" disabled aria-disabled="true">See Your Results</button>
                     </div>
                 </div>
 
                 <!-- Results area -->
-                <div id="assess-results" class="assess-results" style="display:none;"></div>
+                <div id="assess-results" class="assess-results" style="display:none;" aria-live="polite"></div>
             </div>
         </div>
 
         <!-- TAB: Trajectory -->
-        <div class="tab-content" id="tab-trajectory">
+        <div class="tab-content" id="tab-trajectory" role="tabpanel" aria-labelledby="nav-trajectory">
             <div class="tab-inner">
                 <div class="tab-header">
                     <h1>Trajectory: Variance from Baseline</h1>
@@ -732,7 +893,7 @@
 
                         <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
                             <h2 style="font-size: 1rem; margin-bottom: 0.75rem;">Variance from Baseline: All Subscales</h2>
-                            <canvas id="trajChart" style="max-height: 400px;"></canvas>
+                            <canvas id="trajChart" style="max-height: 400px;" role="img" aria-label="Line chart showing trajectory variance from baseline over time"></canvas>
                         </div>
 
                         <div class="card" style="padding: 1.5rem; margin-bottom: 1rem;">
@@ -748,13 +909,13 @@
         </div>
 
         <!-- TAB: Stability -->
-        <div class="tab-content" id="tab-stability">
+        <div class="tab-content" id="tab-stability" role="tabpanel" aria-labelledby="nav-stability">
             <div class="tab-inner">
                 <div class="tab-header">
                     <h1>Classification Stability</h1>
                     <p>Each participant is re-measured 100 times with realistic noise (&#177;1 Likert point per item). Stability = % of trials where the same classification is assigned.</p>
                 </div>
-                <div class="stats-bar" id="stability-stats">
+                <div class="stats-bar" id="stability-stats" aria-live="polite">
                     <div class="stat"><div class="stat-value" id="stab-type">&mdash;</div><div class="stat-label">Type Stability</div></div>
                     <div class="stat"><div class="stat-value" id="stab-state">&mdash;</div><div class="stat-label">State Stability</div></div>
                     <div class="stat"><div class="stat-value" id="stab-sig">&mdash;</div><div class="stat-label">Signature Stability</div></div>
@@ -764,14 +925,14 @@
                     <h2>Test-Retest Distribution</h2>
                     <p class="desc">Distribution of per-participant type stability scores. Higher is more reliable.</p>
                     <div class="grid-2">
-                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-stability-hist"></canvas></div></div>
-                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-stability-state"></canvas></div></div>
+                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-stability-hist" role="img" aria-label="Histogram showing distribution of type stability scores"></canvas></div></div>
+                        <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-stability-state" role="img" aria-label="Chart showing domain state stability distribution"></canvas></div></div>
                     </div>
                 </div>
                 <div class="section">
                     <h2>Big Five Round-Trip Validation</h2>
                     <p class="desc">Ground-truth Big Five scores are generated, mapped to ABC responses via reverse weights, then inferred back. Correlation measures recovery fidelity.</p>
-                    <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-b5-roundtrip"></canvas></div></div>
+                    <div class="card" style="padding:1rem;"><div class="chart-wrap"><canvas id="chart-b5-roundtrip" role="img" aria-label="Chart showing Big Five round-trip validation correlation"></canvas></div></div>
                     <div id="b5-roundtrip-stats" style="margin-top:0.75rem;font-size:0.85rem;color:var(--muted);"></div>
                 </div>
                 <div class="section">
@@ -783,7 +944,7 @@
         </div>
 
         <!-- TAB: Methodology -->
-        <div class="tab-content" id="tab-methodology">
+        <div class="tab-content" id="tab-methodology" role="tabpanel" aria-labelledby="nav-methodology">
             <div class="tab-inner" style="max-width:1100px;">
                 <div class="tab-header"><h1>Methodology</h1><p>This section documents the complete scoring pipeline, all mathematical formulas, weight matrices, classification thresholds, and psychometric evidence for auditor review. All evidence is from synthetic simulation; empirical validation is pending.</p></div>
 
@@ -1079,7 +1240,7 @@
             </div>
         </div>
 
-    </div>
+    </main>
 
     <script>
     /* ═══════════════════════════════════════════════════
@@ -1099,7 +1260,7 @@
     const STATE_DESCS = {"Thriving": {"label": "Thriving", "condition": "Satisfaction >= 6.46, Frustration < 4.38", "summary": "This need is met with minimal obstruction.", "science": "When a basic psychological need is satisfied without significant frustration, people experience vitality, intrinsic motivation, and psychological growth (Deci & Ryan, 2000). Low frustration distinguishes genuine thriving from the brittle high performance of the Vulnerable state. Sustained need satisfaction predicts lower burnout, higher engagement, and greater persistence (Lonsdale & Hodge, 2011).", "fatigue": "Low fatigue risk. Satisfaction replenishes cognitive resources while low frustration avoids the rumination that drains them.", "implication": "No intervention needed. Protect the conditions enabling this state. Monitor for early signs of rising frustration.", "colour": "#3ABF5E"}, "Vulnerable": {"label": "Vulnerable", "condition": "Satisfaction >= 6.46, Frustration >= 4.38", "summary": "This need is met, but at a cost. High frustration signals strain.", "science": "Need frustration harms wellbeing even when need satisfaction is high (Vansteenkiste & Ryan, 2013). This is the 'successful but suffering' pattern. High satisfaction and high frustration together create unsustainable tension. Without intervention, frustration erodes satisfaction and the trajectory shifts toward Distressed.", "fatigue": "High fatigue risk. The person spends cognitive resources on two fronts: performing the task and suppressing the frustration that accompanies it.", "implication": "Highest priority for intervention. The person is still engaged \u2014 the window to act is now.", "colour": "#F5A623"}, "Mild": {"label": "Mild", "condition": "Satisfaction < 6.46, Frustration < 4.38", "summary": "This need is neither fulfilled nor actively blocked. It sits idle.", "science": "Low satisfaction without frustration suggests the need goes unengaged rather than thwarted. In SDT terms this resembles amotivation (Deci & Ryan, 2000). Prolonged dormancy in a core need predicts gradual disengagement and reduced wellbeing (Bartholomew et al., 2011).", "fatigue": "Moderate fatigue risk from understimulation. Without engagement, the mind lacks the intrinsic reward that sustains attention.", "implication": "Lower urgency. Explore whether the environment offers opportunities to engage this need.", "colour": "#A0A0A0"}, "Distressed": {"label": "Distressed", "condition": "Satisfaction < 6.46, Frustration >= 4.38", "summary": "This need is unmet and actively blocked.", "science": "Low satisfaction and high frustration together constitute need thwarting \u2014 the most damaging state in SDT (Bartholomew et al., 2011). Sustained thwarting predicts burnout, depressive symptoms, and dropout (Lonsdale & Hodge, 2011).", "fatigue": "Severe fatigue risk. Chronic frustration without satisfaction triggers stress circuits that degrade executive function.", "implication": "Urgent intervention. Address the frustration source first \u2014 removing blockers beats adding positive experiences.", "colour": "#E8563A"}};
 
     const DOMAIN_COLOURS = {Ambition:"#E8563A",Belonging:"#3A8FE8",Craft:"#3ABF5E",ambition:"#E8563A",belonging:"#3A8FE8",craft:"#3ABF5E"};
-    const STATE_COLOURS = {Thriving:"#3ABF5E",Vulnerable:"#F5A623",Mild:"#A0A0A0",Distressed:"#E8563A"};
+    const STATE_COLOURS = {Thriving:"#1E8C3E",Vulnerable:"#B37400",Mild:"#636363",Distressed:"#C0392B"};
     const ITEM_ORDER = ["AS1","AS2","AS3","AS4","AS5","AS6","AF1","AF2","AF3","AF4","AF5","AF6","BS1","BS2","BS3","BS4","BS5","BS6","BF1","BF2","BF3","BF4","BF5","BF6","CS1","CS2","CS3","CS4","CS5","CS6","CF1","CF2","CF3","CF4","CF5","CF6"];
     const SUB_KEYS = ["a_sat","a_frust","b_sat","b_frust","c_sat","c_frust"];
     const SUB_LABELS = ["A-Sat","A-Frust","B-Sat","B-Frust","C-Sat","C-Frust"];
@@ -2458,12 +2619,13 @@
         items.forEach((itemId, idx) => {
             const item = ASSESS_ITEMS[itemId];
             const domColour = DOMAIN_COLOURS[item.domain];
-            let html = `<div class="assess-question" id="q-${itemId}">`;
+            const qTextId = `q-text-${itemId}`;
+            let html = `<div class="assess-question" id="q-${itemId}" role="radiogroup" aria-labelledby="${qTextId}">`;
             html += `<div class="q-domain" style="color:${domColour}">${item.domainLabel} &mdash; ${item.subscale.includes('sat') ? 'Satisfaction' : 'Frustration'}</div>`;
-            html += `<div class="q-text">${idx + 1}. ${item.text}</div>`;
+            html += `<div class="q-text" id="${qTextId}">${idx + 1}. ${item.text}</div>`;
             html += `<div class="assess-likert">`;
             for (let v = 1; v <= 7; v++) {
-                html += `<label><input type="radio" name="q_${itemId}" value="${v}" onchange="recordAnswer('${itemId}', ${v})"><span class="likert-btn">${v}</span></label>`;
+                html += `<label><input type="radio" name="q_${itemId}" value="${v}" role="radio" aria-checked="false" onchange="recordAnswer('${itemId}', ${v})"><span class="likert-btn" tabindex="-1">${v}</span></label>`;
             }
             html += `</div>`;
             html += `<div class="assess-likert-labels"><span>Strongly disagree</span><span>Strongly agree</span></div>`;
@@ -2480,7 +2642,14 @@
     function recordAnswer(itemId, value) {
         assessResponses[itemId] = parseInt(value);
         document.getElementById('q-' + itemId).classList.add('answered');
+        // Update aria-checked on all radios in this question group
+        const group = document.getElementById('q-' + itemId);
+        group.querySelectorAll('input[type="radio"]').forEach(r => {
+            r.setAttribute('aria-checked', r.value == value ? 'true' : 'false');
+        });
         updateAssessProgress();
+        // Auto-save to IndexedDB for offline resilience
+        if (window.ABCOfflineStorage) ABCOfflineStorage.saveInProgress(currentTier, assessResponses);
     }
 
     function updateAssessProgress() {
@@ -2490,7 +2659,12 @@
         const pct = total > 0 ? (answered / total * 100) : 0;
         document.getElementById('assess-progress-fill').style.width = pct + '%';
         document.getElementById('assess-progress-text').textContent = answered + ' / ' + total;
-        document.getElementById('assess-submit-btn').disabled = answered < total;
+        const progressBar = document.getElementById('assess-progress-bar');
+        if (progressBar) progressBar.setAttribute('aria-valuenow', Math.round(pct));
+        const submitBtn = document.getElementById('assess-submit-btn');
+        const isDisabled = answered < total;
+        submitBtn.disabled = isDisabled;
+        submitBtn.setAttribute('aria-disabled', isDisabled ? 'true' : 'false');
     }
 
     function backToTierPicker() {
@@ -2696,6 +2870,10 @@
         document.getElementById('assess-questions').style.display = 'none';
         document.getElementById('assess-results').style.display = 'block';
         document.getElementById('assess-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Focus management: move focus to the results container for screen readers
+        const resultsEl = document.getElementById('assess-results');
+        resultsEl.setAttribute('tabindex', '-1');
+        resultsEl.focus();
     }
 
     /* ═══════════════════════════════════════════════════
@@ -2710,10 +2888,15 @@
 
     function switchTab(tabId) {
         tabContents.forEach(tc => tc.classList.remove('active'));
-        navItems.forEach(ni => ni.classList.remove('active'));
+        navItems.forEach(ni => { ni.classList.remove('active'); ni.setAttribute('aria-selected', 'false'); });
         const target = document.getElementById('tab-' + tabId);
         if (target) target.classList.add('active');
-        navItems.forEach(ni => { if (ni.dataset.tab === tabId) ni.classList.add('active'); });
+        navItems.forEach(ni => { if (ni.dataset.tab === tabId) { ni.classList.add('active'); ni.setAttribute('aria-selected', 'true'); } });
+        // Focus management: move focus to the first heading in the new panel
+        if (target) {
+            const heading = target.querySelector('h1, h2');
+            if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus(); }
+        }
         history.replaceState(null, '', '#' + tabId);
         if (tabId === 'trajectory' && trajBaseline) initTrajChart();
         if (tabId === 'participants' && !participantsInitialised) {
@@ -2744,9 +2927,36 @@
         }, 50);
     }
 
-    navItems.forEach(ni => { ni.addEventListener('click', () => switchTab(ni.dataset.tab)); });
+    navItems.forEach(ni => {
+        ni.addEventListener('click', () => switchTab(ni.dataset.tab));
+        ni.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); switchTab(ni.dataset.tab); }
+        });
+    });
     hamburger.addEventListener('click', () => { sidebar.classList.toggle('open'); navOverlay.classList.toggle('open'); });
+    hamburger.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sidebar.classList.toggle('open'); navOverlay.classList.toggle('open'); }
+    });
     navOverlay.addEventListener('click', () => { sidebar.classList.remove('open'); navOverlay.classList.remove('open'); });
+
+    /* Keyboard navigation for Likert radiogroups: arrow keys move within group, Tab moves between groups */
+    document.addEventListener('keydown', function(e) {
+        const radio = e.target.closest('input[type="radio"]');
+        if (!radio) return;
+        const group = radio.closest('[role="radiogroup"]');
+        if (!group) return;
+        const radios = Array.from(group.querySelectorAll('input[type="radio"]'));
+        const idx = radios.indexOf(radio);
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const next = radios[(idx + 1) % radios.length];
+            next.focus(); next.checked = true; next.dispatchEvent(new Event('change'));
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prev = radios[(idx - 1 + radios.length) % radios.length];
+            prev.focus(); prev.checked = true; prev.dispatchEvent(new Event('change'));
+        }
+    });
 
     /* ═══════════════════════════════════════════════════
        THRESHOLD SENSITIVITY ENGINE
@@ -3912,6 +4122,49 @@
         html += '</div>';
 
         el.innerHTML = html;
+    }
+
+    // Service worker registration for offline support
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(function(e) { console.warn('SW registration failed:', e); });
+    }
+
+    // Offline indicator
+    function updateOfflineIndicator() {
+        var badge = document.getElementById('offline-badge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = 'offline-badge';
+            badge.style.cssText = 'position:fixed;bottom:1rem;right:1rem;background:#E8563A;color:white;padding:0.4rem 0.8rem;border-radius:6px;font-size:0.8rem;font-weight:600;z-index:9999;display:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
+            badge.textContent = 'Offline mode';
+            document.body.appendChild(badge);
+        }
+        badge.style.display = navigator.onLine ? 'none' : 'block';
+    }
+    window.addEventListener('online', updateOfflineIndicator);
+    window.addEventListener('offline', updateOfflineIndicator);
+    updateOfflineIndicator();
+
+    // Restore in-progress assessment on page load
+    if (window.ABCOfflineStorage) {
+        ABCOfflineStorage.loadInProgress().then(function(saved) {
+            if (saved && saved.tier && saved.responses && Object.keys(saved.responses).length > 0) {
+                var resume = confirm('You have an in-progress ' + saved.tier + ' assessment (' + Object.keys(saved.responses).length + ' answers). Resume?');
+                if (resume) {
+                    selectTier(saved.tier);
+                    Object.keys(saved.responses).forEach(function(itemId) {
+                        var value = saved.responses[itemId];
+                        var radio = document.querySelector('input[name="q_' + itemId + '"][value="' + value + '"]');
+                        if (radio) {
+                            radio.checked = true;
+                            recordAnswer(itemId, value);
+                        }
+                    });
+                } else {
+                    ABCOfflineStorage.clearInProgress();
+                }
+            }
+        }).catch(function(e) { console.warn('Failed to load in-progress assessment:', e); });
     }
 
     </script>
