@@ -29,12 +29,19 @@ from src.python_scoring.bayesian_scorer import (
 )
 from src.python_scoring.belbin_inference import infer_belbin_roles
 from src.python_scoring.big_five_inference import compute_big_five
+from src.python_scoring.causality_orientations import score_causality_orientations
 from src.python_scoring.context_gap import compute_context_gaps
 from src.python_scoring.context_manager import DomainContextManager
 from src.python_scoring.domain_classification import classify_all_domains
 from src.python_scoring.frustration_signatures import detect_signatures
+from src.python_scoring.group_conscious import score_group_conscious
 from src.python_scoring.narrative_engine import NarrativeEngine
+from src.python_scoring.overinvestment_trigger import DailySignals, evaluate_overinvestment
+from src.python_scoring.passion_quality import score_passion_quality
+from src.python_scoring.regulatory_style import score_regulatory_style
 from src.python_scoring.reverse_scoring import apply_reverse_scoring
+from src.python_scoring.self_concordance import score_self_concordance
+from src.python_scoring.self_concordance_trajectory import GoalTrajectoryTracker
 from src.python_scoring.subscale_computation import compute_all_subscales
 from src.python_scoring.transition_engine import (
     TransitionTracker,
@@ -216,6 +223,7 @@ class EnhancedABCScorer:
         self._core_scorer = ABCScorer()
         self._narrative = NarrativeEngine()
         self._tracker = TransitionTracker()
+        self._goal_trajectory_tracker = GoalTrajectoryTracker()
 
         self._base_rate_engine = BaseRateEngine(base_rate_config_path)
         self._demographics = demographics or {}
@@ -246,24 +254,71 @@ class EnhancedABCScorer:
         team_scores: dict[str, float] | None = None,
         audience: str = "athlete",
         weeks_since_last: int = 2,
+        passion_responses: dict[str, int] | None = None,
+        regulatory_responses: dict[str, int] | None = None,
+        daily_signals: DailySignals | None = None,
+        group_conscious_responses: dict[str, int] | None = None,
+        causality_responses: dict[str, int] | None = None,
+        self_concordance_responses: dict[str, int] | None = None,
+        self_concordance_goal_text: str | None = None,
+        self_concordance_goal_id: str | None = None,
     ) -> dict:
         """Score responses with full personalization layer.
 
         Reference: abc-assessment-spec Section 4
+        Reference: improvement-plan-personalization-engine.md Sections 16.1, 16.2
 
         Args:
-            responses: Dict mapping item codes to 1-7 responses.
+            responses: Dict mapping core item codes (36 items) to 1-7 responses.
             team_scores: Optional team-level subscale scores (0-10).
             audience: "athlete" or "coach" for narrative framing.
             weeks_since_last: Weeks since previous measurement.
+            passion_responses: Optional dict of passion-quality items
+                (HP1-HP3, OP1-OP3). Quarterly cadence. When provided,
+                passion leaning and the overinvestment trigger are
+                attached to the result.
+            regulatory_responses: Optional dict of regulatory-style
+                items (AR1-AR2, BR1-BR2, CR1-CR2). Biweekly cadence.
+                When provided, per-domain regulation results and any
+                erosion events are attached to the result and fed into
+                `TransitionTracker` for cross-measurement detection.
+            daily_signals: Optional DailySignals from the cognitive
+                signal engine. Refines overinvestment routing.
+            group_conscious_responses: Optional dict of group-conscious
+                items (AG1, BG1, CG1, TI1, TI2). Biweekly cadence.
+                When provided, per-domain perceived collective
+                satisfaction, team identification, and any empathic-
+                risk flags are attached to the result.
+            causality_responses: Optional dict of causality-orientation
+                items (AO1-AO4, CO1-CO4, IO1-IO4). Annual cadence.
+                When provided, three orientation scores and the
+                dominant-orientation classification are attached to
+                the result along with the orientation narrative.
+            self_concordance_responses: Optional dict of self-concordance
+                items (SC1-SC4) for one current goal. Biweekly cadence.
+                When provided, the autonomous and controlled composites,
+                signed self-concordance score, and three-band leaning
+                are attached to the result along with the narrative.
+            self_concordance_goal_text: Optional free-text goal the
+                athlete rated. Stored on the result for product display
+                but does not affect scoring or narrative selection.
+            self_concordance_goal_id: Optional stable goal identifier.
+                When supplied alongside self_concordance_responses, the
+                scorer records the point into a per-goal trajectory
+                tracker and surfaces the current trajectory on the
+                result dict once three or more computable points exist
+                for the goal.
 
         Returns:
             Dict with all core scoring outputs plus:
             - bayesian: posterior distributions per subscale
             - narratives: personalized text for athlete or coach
-            - transition: archetype change classification
+            - transition: archetype change classification plus erosion
             - base_rate: demographic prior information
             - measurement_disclosure: confidence framing text
+            - passion: passion-quality result when provided
+            - regulatory: per-domain regulatory result when provided
+            - overinvestment: trigger routing when passion provided
         """
         # Core pipeline (unchanged)
         core = self._core_scorer.score(responses, team_scores)
@@ -278,11 +333,17 @@ class EnhancedABCScorer:
         # Get posterior confidence for the classified type
         type_confidence = archetype_probs.get(core["type_name"], 0.0)
 
-        # Transition tracking
+        # Optional regulatory-style scoring (Section 16.1)
+        regulatory_profile = None
+        if regulatory_responses is not None:
+            regulatory_profile = score_regulatory_style(regulatory_responses)
+
+        # Transition tracking, now fed the regulatory profile for erosion
         transition = self._tracker.record(
             type_name=core["type_name"],
             posterior_confidence=type_confidence,
             weeks_since_last=weeks_since_last,
+            regulatory_profile=regulatory_profile,
         )
 
         # Task 1: Personalized thresholds (after 6+ measurements)
@@ -367,6 +428,113 @@ class EnhancedABCScorer:
             self._measurement_count, audience
         )
 
+        # Optional passion quality (Section 16.2)
+        passion_result = None
+        overinvestment_result = None
+        passion_narrative = None
+        overinvestment_narrative = None
+        if passion_responses is not None:
+            passion_result = score_passion_quality(passion_responses)
+            passion_narrative = self._narrative.generate_passion_narrative(
+                passion_result.leaning, audience
+            )
+            overinvestment_result = evaluate_overinvestment(
+                core["subscales"], passion_result, daily_signals
+            )
+            overinvestment_narrative = self._narrative.generate_overinvestment_narrative(
+                overinvestment_result.path, audience
+            )
+
+        # Optional regulatory narratives (Section 16.1)
+        regulatory_narratives: dict[str, str] = {}
+        if regulatory_profile is not None:
+            for domain_name, dom_reg in regulatory_profile.domains.items():
+                regulatory_narratives[domain_name] = self._narrative.generate_regulatory_narrative(
+                    domain_name, dom_reg.style, audience
+                )
+
+        # Erosion narratives from the transition entry (if any)
+        erosion_narratives: dict[str, str] = {}
+        for domain_name in transition.get("regulation_erosion_events", []):
+            erosion_narratives[domain_name] = self._narrative.generate_erosion_narrative(
+                domain_name, audience
+            )
+
+        # Optional group-conscious layer (Section 16.5)
+        group_conscious_profile = None
+        group_conscious_narratives: dict[str, object] = {}
+        if group_conscious_responses is not None:
+            group_conscious_profile = score_group_conscious(group_conscious_responses)
+
+            collective_narratives: dict[str, str] = {}
+            for domain_name, cs in group_conscious_profile.collective.items():
+                collective_narratives[domain_name] = (
+                    self._narrative.generate_collective_satisfaction_narrative(
+                        domain_name, cs.level, audience
+                    )
+                )
+            group_conscious_narratives["collective"] = collective_narratives
+
+            group_conscious_narratives["team_identification"] = (
+                self._narrative.generate_team_identification_narrative(
+                    group_conscious_profile.team_identification.level, audience
+                )
+            )
+
+            if group_conscious_profile.empathic_risk_domains:
+                group_conscious_narratives["empathic_risk"] = (
+                    self._narrative.generate_empathic_risk_narrative(audience)
+                )
+                group_conscious_narratives["empathic_risk_domains"] = list(
+                    group_conscious_profile.empathic_risk_domains
+                )
+
+        # Optional causality orientations layer (Section 16.6)
+        causality_profile = None
+        causality_narrative = None
+        if causality_responses is not None:
+            causality_profile = score_causality_orientations(causality_responses)
+            causality_narrative = self._narrative.generate_causality_narrative(
+                causality_profile.dominant, audience
+            )
+
+        # Optional self-concordance layer (Section 16.7)
+        self_concordance_profile = None
+        self_concordance_narrative = None
+        self_concordance_trajectory = None
+        self_concordance_trajectory_narrative = None
+        if self_concordance_responses is not None:
+            self_concordance_profile = score_self_concordance(
+                self_concordance_responses,
+                goal_text=self_concordance_goal_text,
+            )
+            self_concordance_narrative = self._narrative.generate_self_concordance_narrative(
+                self_concordance_profile.leaning, audience
+            )
+
+            # When the caller supplies a stable goal_id, record the point
+            # into the per-goal trajectory tracker and surface the current
+            # trajectory (plus narrative) for that goal. The cycle_index
+            # uses the measurement_count as a stable monotonic axis.
+            if self_concordance_goal_id is not None:
+                self._goal_trajectory_tracker.record(
+                    goal_id=self_concordance_goal_id,
+                    cycle_index=self._measurement_count,
+                    profile=self_concordance_profile,
+                )
+                self_concordance_trajectory = self._goal_trajectory_tracker.get_trajectory(
+                    self_concordance_goal_id
+                )
+                if (
+                    self_concordance_trajectory is not None
+                    and self_concordance_trajectory.label != "insufficient_data"
+                ):
+                    self_concordance_trajectory_narrative = (
+                        self._narrative.generate_self_concordance_trajectory_narrative(
+                            self_concordance_trajectory.label, audience
+                        )
+                    )
+
         # Assemble result
         result = dict(core)
         result.update(
@@ -384,7 +552,22 @@ class EnhancedABCScorer:
                     "signatures": signature_narratives,
                     "transition": transition_narrative,
                     "measurement_disclosure": disclosure,
+                    "passion": passion_narrative,
+                    "overinvestment": overinvestment_narrative,
+                    "regulatory": regulatory_narratives,
+                    "erosion": erosion_narratives,
+                    "group_conscious": group_conscious_narratives,
+                    "causality": causality_narrative,
+                    "self_concordance": self_concordance_narrative,
+                    "self_concordance_trajectory": self_concordance_trajectory_narrative,
                 },
+                "passion": passion_result,
+                "regulatory": regulatory_profile,
+                "overinvestment": overinvestment_result,
+                "group_conscious": group_conscious_profile,
+                "causality": causality_profile,
+                "self_concordance": self_concordance_profile,
+                "self_concordance_trajectory": self_concordance_trajectory,
                 "transition": transition,
                 "base_rate": self._prior,
                 "trajectory": self._tracker.get_summary(),

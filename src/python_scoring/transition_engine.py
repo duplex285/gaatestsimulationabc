@@ -24,6 +24,10 @@ References:
 """
 
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.python_scoring.regulatory_style import RegulatoryProfile
 
 
 class TransitionType(Enum):
@@ -34,6 +38,7 @@ class TransitionType(Enum):
     REGRESSION = "regression"
     FLUCTUATION = "fluctuation"
     SUSTAINED = "sustained"
+    REGULATION_EROSION = "regulation_erosion"
 
 
 class FatigueTimescale(Enum):
@@ -289,6 +294,9 @@ class TransitionTracker:
         Reference: abc-assessment-spec Section 5
         """
         self.history: list[dict] = []
+        # Aligned with history[]: one entry per recorded measurement.
+        # None when no regulatory profile was supplied for that record.
+        self.regulatory_profiles: list[RegulatoryProfile | None] = []
 
     def record(
         self,
@@ -296,11 +304,13 @@ class TransitionTracker:
         posterior_confidence: float = 1.0,
         weeks_since_last: int = 2,
         frustration_scores: dict[str, float] | None = None,  # noqa: ARG002 (reserved for fatigue timescale)
+        regulatory_profile: "RegulatoryProfile | None" = None,
     ) -> dict:
         """
         Record a new measurement and classify the transition.
 
         Reference: abc-assessment-spec Section 5
+        Reference: improvement-plan-personalization-engine.md Section 16.1
 
         Args:
             type_name: Current archetype name.
@@ -308,11 +318,16 @@ class TransitionTracker:
             weeks_since_last: Weeks since the previous measurement.
             frustration_scores: Optional dict with domain frustration
                 scores for fatigue timescale classification.
+            regulatory_profile: Optional RegulatoryProfile for this
+                measurement. Enables regulation-erosion detection across
+                the accumulating history.
 
         Returns:
-            Dict with transition classification and metadata.
+            Dict with transition classification and metadata. When
+            regulatory profiles are supplied, the entry also carries
+            `regulation_erosion_events`, a list of affected domains.
         """
-        entry = {
+        entry: dict = {
             "type_name": type_name,
             "posterior_confidence": posterior_confidence,
             "measurement_number": len(self.history) + 1,
@@ -337,6 +352,20 @@ class TransitionTracker:
                 "domains_lost": sorted(get_domains_lost(previous["type_name"], type_name)),
             }
             entry["transition_type"] = transition.value
+
+        self.regulatory_profiles.append(regulatory_profile)
+
+        # Regulation erosion runs across the full regulatory history.
+        # Imported lazily so the module has no hard dependency when
+        # regulatory profiles are never supplied.
+        erosion_domains: list[str] = []
+        computable = [p for p in self.regulatory_profiles if p is not None]
+        if len(computable) >= 2:
+            from src.python_scoring.regulation_erosion import detect_regulation_erosion
+
+            events = detect_regulation_erosion(computable)
+            erosion_domains = [e.domain for e in events]
+        entry["regulation_erosion_events"] = erosion_domains
 
         self.history.append(entry)
         return entry
@@ -432,6 +461,7 @@ class TransitionTracker:
             }
 
         trajectory = self.get_growth_trajectory()
+        latest_erosion = self.history[-1].get("regulation_erosion_events", [])
         return {
             "current_type": self.get_current_type(),
             "most_common_type": self.get_most_common_type(),
@@ -441,4 +471,5 @@ class TransitionTracker:
             "transition_counts": self.get_transition_counts(),
             "current_level": trajectory[-1],
             "highest_level_reached": max(trajectory),
+            "latest_regulation_erosion_domains": latest_erosion,
         }
