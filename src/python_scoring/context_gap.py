@@ -5,6 +5,18 @@ Reference: abc-assessment-spec Section 2.7
 Formula: gap = team_score - personal_score (per subscale)
 A gap below -1.5 on any SATISFACTION subscale flags a team context concern.
 Frustration gaps are computed but never flagged.
+
+DEPRECATED. Difference scores conflate level and discrepancy and impose
+implausible constraints on the criterion model (Edwards 2001). Use
+`src/psychometric/response_surface.py` for new analyses; that module fits
+the unconstrained polynomial Outcome ~ b0 + b1*P + b2*T + b3*P^2 + b4*P*T
++ b5*T^2 and computes a calibrated concern probability via
+`calibrated_concern_probability`. This function is retained for backward
+compatibility with `narrative_engine.py` and the coach dashboard pending
+their migration in WI-9 follow-ups.
+
+Reference: Edwards (2001) Ten Difference Score Myths
+Reference: howard-2024-implementation-plan.md V2-B WI-9
 """
 
 GAP_THRESHOLD = -1.5

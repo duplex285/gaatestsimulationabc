@@ -1740,3 +1740,69 @@ Consistent with Section 0.1, no new narrative template reaches production withou
 This section hardens the boundary between inference and expression. It does not soften the math. Every estimator, every invariance test, every cross-lagged analysis in Sections 12, 13, and 16 remains. Statistical rigor is not a presentation concern. Accessibility is not an inference concern. The two live on opposite sides of `narrative_engine.py`, and both get their own quality gates.
 
 The athlete's profile is never finished. It is always updating. This is what makes it a personalization engine rather than a test.
+
+---
+
+## 18. Literature Review v2 Reconciliation (added 2026-04-25)
+
+This section reconciles this personalization plan with `docs/howard-2024-implementation-plan.md` Literature Review v2, which was generated from a 49-paper review of SDT psychometric methods. Seven discrepancies (D-7 through D-13) were identified. Each is documented and resolved here.
+
+### 18.1 D-7: Section 16.4 ESEM "Done" status was incorrect
+
+**Original status (Section 16.4 status row):** "ESEM already exists in `factor_models.py`."
+**Corrected status:** ESEM was referenced in a docstring only, never implemented. The implementation (WI-2 in the literature review plan) is now in progress.
+**What changed.** The implementation uses the three-step middle path: EFA via `factor_analyzer` + Procrustes target rotation + ESEM-within-CFA respecification in semopy (per Marsh et al. 2014). This is NOT full-information ML ESEM. Phase B will migrate to `rpy2` + `lavaan` for true ESEM.
+
+### 18.2 D-8: Section 16.4 bifactor S-1 anchor candidate was inadequate
+
+**Original (Section 16.4 line 1527):** "candidate: overall satisfaction across the three domains as a proxy for autonomous functioning."
+**Corrected.** Per Burns (2019), the S-1 anchor must be theoretically primary, the most outstanding facet, OR developmentally upstream. "Overall satisfaction across three domains" satisfies none of these. Two replacement candidates: (a) anchor on Belonging satisfaction (per the Sanchez-Oliva 2017 pattern of autonomy collapse and relatedness stability), or (b) follow Zhang (2020) and add 3 to 6 general-content items rather than picking a reference facet. WI-8 (1-G vs 2-G B-ESEM) will inform the final choice.
+
+### 18.3 D-9: Section 12.7 confidence threshold was based on misread of Fernet 2020
+
+**Original (Section 12.7):** "Fernet et al. (2020) found motivation profiles were highly stable over 4 months."
+**Corrected.** Fernet was 24 months, not 4. They found 30 to 40% transition rate. The "rapid changes are noise" inference is overstated. ABC's ~31% biweekly retest agreement is closer to Fernet's 24-month rate, suggesting biweekly cadence is detecting real developmental change. The 0.75 confidence threshold for short windows may be too strict.
+**Action.** Revisit the confidence-threshold-by-window function in Section 12.7. Phase A data will inform the final calibration.
+
+### 18.4 D-10: Section 12 narrative engine assumed archetypes are stable categorical states
+
+**Original (Sections 3, 4, 5):** Transition tracking and Bayesian scoring assume the eight archetypes are the analytic unit.
+**Corrected.** Archetypes encode shape (per Morin & Marsh 2015); LPA on raw subscales returns mostly level-ordered profiles. If WI-8 1-G wins, archetypes redefine as S-factor residuals around the G-factor mean.
+**Action.** The narrative engine and growth hierarchy in Section 5 may need to accommodate a level-plus-shape representation rather than purely categorical archetype states. Pending WI-8 result.
+
+### 18.5 D-11: Section 16.9 lock on eight-archetype system is qualified
+
+**Original (Section 16.9):** "the 8-pattern archetype system and frustration-signature detection remain unchanged."
+**Qualification (added 2026-04-25):** The eight-archetype LOCK applies to the *theoretical taxonomy* used in athlete-facing reports. The empirical analysis layer uses LPA-derived classes (literature cap k = 3 to 5) reported alongside in technical documentation. Empirical class structure does not override the theoretical taxonomy; LPA serves as discriminant evidence per Decision-2 in `literature-review-activity-log.md`.
+
+### 18.6 D-12: Section 13.1 Phase A target N >= 100 conflicts with bifactor-ESEM literature
+
+**Original (Section 13.1):** "N >= 100 athletes, one competitive season."
+**Corrected per Decision-4.** Phase A is reframed as a *feasibility pilot* with N >= 100 (acceptable for descriptive validation, ROC analysis, item-level diagnostics). All bifactor-ESEM analyses (WI-2, WI-3, WI-8), full LPA with k > 3, and measurement invariance tests are deferred to Phase B with N >= 500. This avoids underpowered factor analysis without blocking the recruitment timeline.
+
+### 18.7 D-13: Section 12.6 ESEM citation of Grugan 2024 needs the alignment method
+
+**Original (Section 12.6):** Cites Grugan 2024 ABQ for ESEM promotion.
+**Addition.** Grugan 2024 also used the alignment method (Asparouhov & Muthen 2014) for measurement invariance with small subgroups. ABC adopts alignment as the fallback when subgroup n < 100 in Phase A or B. Implementation deferred to the rpy2 + Mplus or `sirt::invariance.alignment` migration in Phase B.
+
+### 18.8 New cross-references
+
+Several new work items in the literature review plan extend or qualify sections of this plan:
+
+| WI in lit review | Extends / qualifies | Section |
+|---|---|---|
+| WI-1 (reframe bifactor methodological) | Adds clarity to Section 16.4 framing | 16.4 |
+| WI-2 (ESEM middle path) | Implements what Section 16.4 mistakenly claimed done | 16.4 |
+| WI-7 (Kam 2021 reverse item rewrite) | Not previously in this plan; affects Section 17.3 banned-term governance | 17.3 |
+| WI-8 (1-G vs 2-G B-ESEM) | Tests what Section 16.4 only described as a future analysis | 16.4 |
+| WI-9 (response surface for context gap) | Replaces the Section 2.7 difference score in `abc-assessment-spec.md` | n/a (cross-doc) |
+| WI-10 (cascade reframing) | Affects Section 5 transition tracking and Section 12.7 | 5, 12.7 |
+| WI-12 (frustration item revision) | Item-level changes; not previously in this plan | n/a (cross-doc) |
+| WI-13 (forward/reverse keying diagnostic) | Augments Section 17.3 governance | 17.3 |
+| WI-14 (preregistration with effect-size benchmarks) | Adds rigor to Section 13 validation roadmap | 13 |
+| WI-15 (Aspiration Index supplement) | Extends Ambition subscale; not previously in this plan | 1, 2 |
+| WI-16 (LPA criteria) | Implements Section 12.7 person-centered ambition with literature-aligned criteria | 12.7 |
+
+### 18.9 Audit package
+
+The audit-ready package generated from this work is in `docs/index.md` and serves as the GitHub Pages landing for external review. See `docs/literature-review-activity-log.md` for chronological record.

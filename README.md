@@ -6,7 +6,9 @@ Psychometric validation and simulation of the ABC assessment, a 36-item instrume
 
 A purpose-built psychometric instrument developed through AI-assisted research and iterative simulation. The simulation validates the scoring infrastructure on synthetic data before empirical deployment with real athletes. Every threshold, weight, and classification is documented for auditor review.
 
-**Status:** All simulation phases complete. 493 tests passing, 0 failures. Empirical validation pending.
+**Status:** All simulation phases complete. 493+ tests passing, 0 failures. Empirical validation pending.
+
+**External audit package.** A GitHub Pages site at `docs/index.md` contains the full audit package for external review by psychometricians and sport psychologists. Browse [docs/index.md](docs/index.md), [docs/audit-checklist.md](docs/audit-checklist.md), [docs/external-review-package.md](docs/external-review-package.md), [docs/methods-audit.md](docs/methods-audit.md), [docs/howard-2024-implementation-plan.md](docs/howard-2024-implementation-plan.md). Once enabled, the site will be live at https://duplex285.github.io/gaatestsimulationabc/.
 
 ## Instrument
 

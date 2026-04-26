@@ -13,6 +13,7 @@ from src.psychometric.factor_models import (
     compare_models,
     fit_bifactor_model,
     fit_cfa_model,
+    fit_esem_model,
     fit_method_factor_model,
 )
 
@@ -116,6 +117,40 @@ def reverse_coded_indices():
     """Indices of negatively-keyed (frustration) items."""
     # Frustration items: indices 4-7, 12-15, 20-23
     return list(range(4, 8)) + list(range(12, 16)) + list(range(20, 24))
+
+
+@pytest.fixture
+def cross_loaded_six_factor_data():
+    """Six-factor data with intentionally injected cross-loadings of ~0.2.
+
+    Each item primarily loads on its target factor (~0.6) but also
+    has a 0.2 cross-loading on the next factor (mod 6). Used to test
+    whether ESEM reduces inflated interfactor correlations relative to
+    a strict CFA on the same data.
+
+    Reference: Asparouhov & Muthen (2009)
+    """
+    rng = np.random.default_rng(42)
+    n = 500
+    n_factors = 6
+    items_per_factor = 4
+    n_items = n_factors * items_per_factor
+
+    factors = rng.standard_normal((n, n_factors))
+    data = np.zeros((n, n_items))
+    primary = 0.6
+    cross = 0.2
+    for f in range(n_factors):
+        f_cross = (f + 1) % n_factors
+        for i in range(items_per_factor):
+            item_idx = f * items_per_factor + i
+            noise_var = max(1 - primary**2 - cross**2, 0.05)
+            data[:, item_idx] = (
+                primary * factors[:, f]
+                + cross * factors[:, f_cross]
+                + np.sqrt(noise_var) * rng.standard_normal(n)
+            )
+    return data
 
 
 class TestFitCFAModel:
@@ -247,3 +282,79 @@ class TestCompareModels:
         cfa = fit_cfa_model(clean_six_factor_data, item_names, factor_map)
         result = compare_models({"cfa": cfa})
         assert result["cfa"]["delta_aic"] == 0.0
+
+
+class TestFitESEMModel:
+    """Tests for ESEM-within-CFA approximation.
+
+    Reference: howard-2024-implementation-plan.md V2-B WI-2
+    Reference: Marsh et al. (2014), ESEM-within-CFA
+    """
+
+    def test_esem_fits_clean_data(self, clean_six_factor_data, item_names, factor_map):
+        """ESEM returns required keys and acceptable fit on clean data."""
+        result = fit_esem_model(clean_six_factor_data, item_names, factor_map)
+        for key in (
+            "chi2",
+            "df",
+            "cfi",
+            "rmsea",
+            "tli",
+            "aic",
+            "bic",
+            "loadings",
+            "cross_loadings",
+            "interfactor_correlations",
+        ):
+            assert key in result, f"missing key {key}"
+        assert result["cfi"] is not None and result["cfi"] > 0.9, f"CFI = {result['cfi']}"
+
+    def test_esem_reduces_interfactor_correlation(
+        self, cross_loaded_six_factor_data, item_names, factor_map
+    ):
+        """ESEM should yield smaller mean |interfactor r| than strict CFA."""
+        # Run CFA to confirm it converges on this data (used as a regression check;
+        # CFA interfactor correlations are extracted separately below).
+        fit_cfa_model(cross_loaded_six_factor_data, item_names, factor_map)
+        esem = fit_esem_model(cross_loaded_six_factor_data, item_names, factor_map)
+
+        # Mean absolute interfactor correlation from ESEM
+        esem_r = [abs(v) for v in esem["interfactor_correlations"].values()]
+        # CFA interfactor correlations are not returned in result by default;
+        # extract them via the CFA fit's stored model output.
+        from src.psychometric.factor_models import (
+            _extract_interfactor_correlations_cfa,
+        )
+
+        cfa_r = _extract_interfactor_correlations_cfa(
+            cross_loaded_six_factor_data, item_names, factor_map
+        )
+        cfa_r_vals = [abs(v) for v in cfa_r.values()]
+
+        assert np.mean(esem_r) < np.mean(cfa_r_vals), (
+            f"ESEM mean |r| = {np.mean(esem_r):.3f}, CFA mean |r| = {np.mean(cfa_r_vals):.3f}"
+        )
+
+    def test_esem_recovers_target_pattern(self, clean_six_factor_data, item_names, factor_map):
+        """For each item, primary loading > sum of |cross-loadings|."""
+        result = fit_esem_model(clean_six_factor_data, item_names, factor_map)
+        for item in item_names:
+            primary = abs(result["loadings"][item])
+            cross_sum = sum(abs(v) for v in result["cross_loadings"].get(item, {}).values())
+            assert primary > cross_sum, (
+                f"item {item}: primary {primary:.3f} <= sum |cross| {cross_sum:.3f}"
+            )
+
+    def test_esem_cross_loadings_small_when_clean(
+        self, clean_six_factor_data, item_names, factor_map
+    ):
+        """95th percentile of |cross-loadings| should be small on clean data."""
+        result = fit_esem_model(clean_six_factor_data, item_names, factor_map)
+        all_cross = []
+        for item in item_names:
+            for v in result["cross_loadings"].get(item, {}).values():
+                all_cross.append(abs(v))
+        if not all_cross:
+            return  # no cross-loadings freed: trivially satisfied
+        p95 = float(np.percentile(all_cross, 95))
+        assert p95 < 0.20, f"95th pct |cross| = {p95:.3f}"
