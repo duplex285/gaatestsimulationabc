@@ -1,0 +1,39 @@
+title: ABC Assessment - Audit Package
+description: Psychometric and theoretical documentation for the Athlete Mental Performance Assessment (Ambition, Belonging, Craft). For audit by psychometricians and sport psychologists.
+theme: jekyll-theme-cayman
+show_downloads: false
+markdown: kramdown
+kramdown:
+  syntax_highlighter: rouge
+  input: GFM
+  hard_wrap: false
+  math_engine: mathjax
+
+plugins:
+  - jekyll-relative-links
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-default-layout
+  - jekyll-titles-from-headings
+
+relative_links:
+  enabled: true
+  collections: false
+
+include:
+  - README.md
+  - howard-2024-implementation-plan.md
+  - new-items-draft.md
+  - new-items-draft-v2.md
+  - validity-argument.md
+  - abc-assessment-spec.md
+  - aspiration-index-supplement.md
+  - improvement-plan-personalization-engine.md
+  - literature-review-activity-log.md
+
+exclude:
+  - vendor
+  - .bundle
+  - Gemfile
+  - Gemfile.lock
+  - node_modules

@@ -80,6 +80,19 @@ Each interpretation requires separate validation evidence. The Standards prohibi
 
 **What the simulation proved:** The analytic pipeline works end-to-end. If the 6-factor structure holds in empirical data, the infrastructure will detect it. If the structure collapses (e.g., Murphy et al. 2023 keying artifact), the method-factor model will flag it.
 
+**Reframe (Howard 2024 Ch. 22; Toth-Kiraly et al. 2018; Sanchez-Oliva et al. 2017):** The ABC bifactor analysis is a *methodological* test of multidimensionality, not a *theoretical* claim of a general need-fulfillment factor. SDT does not predict a general factor across the three needs the way it predicts a continuum across motivation regulations. Omega-h = 0.246 and ECV = 0.061 on synthetic data are therefore consistent with the SDT-aligned interpretation that the six subscales carry independent need-specific variance.
+
+A separate question is whether ABC's six subscales reflect six unipolar constructs (sat and frust as distinct dimensions) or three bipolar dimensions (one fulfillment continuum per need). Toth-Kiraly et al. (2018) ran exactly this test on the BPNSFS and found a single bipolar fulfillment continuum (1-G B-ESEM) plus six specific factors fit best. ABC must run the same test on empirical data (work item WI-8 in `howard-2024-implementation-plan.md`). The result determines whether the descriptive interpretation of "satisfaction" and "frustration" as separable constructs holds.
+
+**Pending empirical work for internal structure (Phase A):**
+
+- [ ] WI-2: ESEM with target rotation. Compare interfactor correlations to CFA. If they drop materially under ESEM, ESEM becomes the primary measurement model.
+- [ ] WI-3: Per-domain bipolar-vs-unipolar bifactor. Tests whether sat and frust within a domain are two unipolar dimensions or one bipolar dimension.
+- [ ] WI-8: Global 1-G vs 2-G B-ESEM (Toth-Kiraly et al. 2018 specification). The single most consequential measurement test for ABC.
+- [ ] WI-13: Forward-only vs reverse-only subscale correlation diagnostic (Kam et al. 2021). Detects logical-response artifacts in reverse items.
+- [ ] WI-17: IRT-based DIF analysis across gender, sport type, age, competitive level.
+- [ ] WI-18: Ideal-point misfit check (GGUM vs GRM) for the new bipolar items.
+
 ### (d) Evidence based on relations to other variables (Standards 1.16, 1.17)
 
 **Requirement:** When validity evidence includes empirical analyses of test responses together with data on other variables, the rationale for selecting the additional variables should be provided.
@@ -95,21 +108,52 @@ Each interpretation requires separate validation evidence. The Standards prohibi
 | AUC for satisfaction predicting wellbeing | 0.900 (synthetic criterion) | Phase 2 |
 | Bootstrap CI method | 2,000 resamples, 95% percentile CI | Phase 2 |
 
-**Planned criterion variables for empirical validation:**
+**Pre-registered effect-size benchmarks (Phase A; literature-derived).**
 
-| Criterion | Expected relationship | Rationale |
-|---|---|---|
-| Athlete Burnout Questionnaire (ABQ) | ABC frustration correlates r > 0.50 | Both measure burnout-related constructs |
-| Basic Psychological Need Satisfaction Scale (BPNSFS) | ABC satisfaction correlates r > 0.50 with BPNSFS satisfaction | Both operationalize SDT need satisfaction |
-| Coach-rated wellbeing | ABC Thriving state associated with higher coach ratings | External criterion independent of self-report |
-| Cortisol/HPA biomarkers | ABC frustration trajectories precede cortisol dysregulation | Bridges psychometric to physiological |
+Each pair has a target range, an anomaly flag threshold, and a citation. Targets reflect meta-analytic estimates from the SDT and need-thwarting literature reviewed in `howard-2024-implementation-plan.md` Section V2-E.
+
+| Criterion pair | Target range | Anomaly flag | Source |
+|---|---|---|---|
+| ABC frust composite x ABQ total burnout | r = .50 to .65 | r < .40 | Bartholomew 2011 (r = .46 with exhaustion); Vasconcellos 2020 (r = .53 with maladaptive) |
+| ABC sat composite x Subjective Vitality Scale | r = .45 to .55 | r < .30 | Bartholomew 2011 (r = .47) |
+| Within-domain ABC sat-frust correlation | r = -.20 to -.40 | r < -.55 (bipolar collapse) or > -.10 (unrelated) | Bartholomew 2011 (r = -.21 to -.27) |
+| ABC sat composite x BPNSFS sat composite | r = .55 to .75 | r < .50 | Construct overlap |
+| ABC frust composite x BPNSFS frust composite | r = .55 to .75 | r < .50 | Construct overlap |
+| Coach-rated IBQ support x ABC sat | r = .35 to .55 | r < .25 | Vasconcellos 2020 r = .57 teacher AS; cross-rater discount ~.15 |
+| ABC frust unique β on burnout (controlling for sat) | β = .30 to .50 | β < .20 | Bartholomew 2011 SEM |
+| ABC sat unique β on vitality (controlling for frust) | β = .30 to .50 | β < .20 | Bartholomew 2011 SEM |
+| B_frust unique effect on team turnover (controlling for B_sat) | β > 0.20 | β < 0.10 | Burton 2006 analogue |
+| C_frust unique effect on burnout (controlling for C_sat) | β > 0.20 | β < 0.10 | Howard 2021 analogue |
+| ESEM cross-loadings of sat items on matched frust factor | -0.20 to -0.40 magnitude | abs > 0.50 | Toth-Kiraly 2018 |
+
+**Planned criterion variables for Phase A.** Beyond the original four (ABQ, BPNSFS, coach-rated wellbeing, cortisol), add:
+
+| Criterion | Purpose |
+|---|---|
+| Athlete Burnout Questionnaire (ABQ) | Primary frustration criterion |
+| Basic Psychological Need Satisfaction Scale (BPNSFS) | Convergent validity; Toth-Kiraly 2018 reference |
+| Subjective Vitality Scale (Ryan & Frederick 1997) | Primary satisfaction criterion (Bartholomew 2011 used this) |
+| Athletic Identity Measurement Scale (AIMS, 7 items) | Identity foreclosure as moderator |
+| Sport Motivation Scale 2 (SMS-2) | Behavioral regulation type (ABC measures need sat/frust but not whether resulting motivation is intrinsic, identified, or introjected) |
+| Aspiration Index (12-item short form) | Goal content (intrinsic vs extrinsic) discriminant validity for Ambition (WI-15) |
+| Coach-rated Interpersonal Behaviours Questionnaire (IBQ; Rocchi 2017) | Need support as external rater criterion (Decision-7) |
+| Coach-rated training engagement | Big Five incremental validity test |
+
+**Pre-registration of unique-effects analyses (WI-14).** Each subscale's unique predictive contribution will be tested via hierarchical regression and relative weight analysis (WI-6) per Howard et al. (2020) recommendation. Pre-registered hypotheses:
+
+- B_frust will predict ABQ devaluation subscale uniquely (β > 0.20) controlling for B_sat
+- C_frust will predict ABQ reduced sense of accomplishment uniquely (β > 0.20) controlling for C_sat
+- A_sat will predict goal-pursuit persistence uniquely (β > 0.20) controlling for A_frust
+- A_sat × intrinsic-relative-to-extrinsic Aspiration Index will interact to predict burnout (athletes with high A_sat plus extrinsic-dominant aspirations show steeper cascades)
 
 **Gaps requiring empirical work:**
 
-- [ ] Convergent validity: ABC satisfaction vs BPNSFS satisfaction (expected r > 0.50)
+- [ ] Convergent validity: ABC satisfaction vs BPNSFS satisfaction (target r = .55 to .75)
 - [ ] Discriminant validity: ABC domains more distinct than BPNSFS domains
 - [ ] Criterion validity: domain states predict coach-rated wellbeing
 - [ ] Incremental validity: ABC predicts burnout beyond Big Five personality alone
+- [ ] Asymmetric paths: replicate Bartholomew 2011 SEM (frust → burnout, sat → vitality) on ABC data
+- [ ] Goal content moderation: A_sat × Aspiration Index interaction (WI-15)
 
 ### (e) Evidence based on consequences of testing (Standards 1.5, 1.25)
 
@@ -122,7 +166,8 @@ Each interpretation requires separate validation evidence. The Standards prohibi
 | Per-domain classification agreement | ~67% on readministration | 1 in 3 athletes receives a different domain state label on retesting |
 | Joint classification agreement | ~30% across all 3 domains | Only 30% get the same full profile on retesting |
 | Type agreement | ~31% | 24-type assignment is unstable; types should be treated as provisional |
-| Difference score reliability | 0.70-0.90 (depends on alpha and sat-frust correlation) | Adequate for domain-level interpretation, marginal for individual classification |
+| Difference score reliability | 0.70-0.90 (depends on alpha and sat-frust correlation) | Adequate for domain-level interpretation, marginal for individual classification. **Note (2026-04-25):** Per Edwards (2001) Myth 1, difference score reliability falls below the average component reliability when components are correlated. ABC's sat-frust components correlate moderately negatively (target r = -.20 to -.40); the difference score in `context_gap.py` will have lower reliability than each subscale and is being replaced with polynomial regression and response surface analysis (WI-9). |
+| Domain-state classification (2x2) | Hard categorization | **Note (2026-04-25):** Per Edwards (2001) Myth 4, trichotomizing a continuous comparison loses approximately 26% of explained variance. The 2x2 classifier is now positioned as a *display layer*, not the analytic unit. Reports always show the (sat, frust) coordinates alongside the categorical label. Hard classification only when LPA posterior class probability >= 0.75; otherwise label "uncertain". |
 
 **Identified consequence risks:**
 
@@ -187,12 +232,24 @@ Same as Interpretation A. The items are the same; the interpretation differs.
 
 **Critical caveat:** All predictive evidence is from synthetic trajectories. The cascade model was designed to produce the SDT-predicted pattern. Empirical validation must demonstrate that real athlete frustration trajectories actually precede real burnout events.
 
+**Cascade hypothesis reframed (WI-10).** The 1.5-timepoint frustration-leads-satisfaction lag in `leading_indicator_model.py` is now positioned as a *falsifiable hypothesis*, not an asserted parameter. The SDT need-thwarting literature reviewed (Bartholomew 2011; Howard 2020 work motivation LTA; Fernet 2020 24-month nurse LTA; Vasconcellos 2020 PE meta-analysis) does not establish a specific cascade lag for need frustration leading satisfaction. Bartholomew's SEM shows parallel pathways (need support to satisfaction to vitality; need thwarting to frustration to exhaustion). Phase A will test five competing hypotheses:
+
+1. Parallel and simultaneous (Bartholomew 2011 default): satisfaction and frustration respond to different antecedents at the same time.
+2. Frustration-leads (ABC's current claim): thwarting events trigger frustration immediately; satisfaction erodes only after sustained thwarting depletes resources.
+3. Satisfaction-leads: low satisfaction creates vulnerability; frustration arises later.
+4. Reciprocal feedback: each predicts the other across timepoints with no clean leader.
+5. Asymmetric transition (Fernet 2020 directional pattern): some transitions are accessible (e.g., satisfied to frustrated) while others are not (e.g., self-determined to amotivated).
+
+The leading indicator model code is unchanged; the *interpretation* and *publication framing* must declare the lag as estimated from data, not assumed.
+
 **Gaps requiring empirical work:**
 
 - [ ] Prospective prediction study: administer ABC repeatedly to N >= 200 athletes over a season; correlate trajectory patterns with independently measured burnout outcomes (ABQ, cortisol)
-- [ ] Predictive lead time: does the 1.5 timepoint detection window hold in real data, or is it an artifact of the simulation's cascade model?
+- [ ] Predictive lead time: estimate empirically; do not assume 1.5 timepoints
+- [ ] Cascade hypothesis selection: fit the five competing models to longitudinal data and report which best fits
 - [ ] Incremental predictive validity: does ABC trajectory analysis predict burnout beyond what a single-timepoint burnout screener (e.g., ABQ alone) can predict?
 - [ ] Cross-validation: train alert thresholds on one sample, validate on a held-out sample
+- [ ] LTA confirmation (WI-5): person-centered transition matrices as complement to continuous-trajectory cascade
 
 ### (e) Evidence based on consequences
 

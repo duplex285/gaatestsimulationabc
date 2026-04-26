@@ -44,11 +44,13 @@ All items use a temporal anchor: "In the past two weeks..." or "Since your last 
 | Subscale | Code | Items | What it captures |
 |----------|------|-------|-----------------|
 | Ambition Satisfaction | `A-sat` | AS1, AS2, AS3, AS4 (rev) | Goal pursuit feels autonomous and meaningful |
-| Ambition Frustration | `A-frust` | AF1, AF2, AF3, AF4 (rev) | Goal pursuit feels controlled, blocked, or pointless |
+| Ambition Frustration | `A-frust` | AF1, AF2, AF3, AF4 (rev) | Goal pursuit is *actively obstructed* by coaches, selectors, or organizational constraints (Bartholomew 2011 PNTS framework; revised 2026-04-25, WI-12) |
 | Belonging Satisfaction | `B-sat` | BS1, BS2, BS3, BS4 (rev) | Relationships feel authentic and supportive |
-| Belonging Frustration | `B-frust` | BF1, BF2, BF3, BF4 (rev) | Relationships feel conditional or performative |
+| Belonging Frustration | `B-frust` | BF1, BF2, BF3, BF4 (rev) | Belonging is *actively thwarted* by exclusion, conditional acceptance, or rejection from teammates and coaches (Bartholomew 2011 PNTS framework; revised 2026-04-25, WI-12) |
 | Craft Satisfaction | `C-sat` | CS1, CS2, CS3, CS4 (rev) | Skill development feels engaging and autonomous |
-| Craft Frustration | `C-frust` | CF1, CF2, CF3, CF4 (rev) | Skill development feels stalled or evaluated |
+| Craft Frustration | `C-frust` | CF1, CF2, CF3, CF4 (rev) | Skill development is *actively impeded* by evaluative climate, denied opportunities, or punishment for mistakes (Bartholomew 2011 PNTS framework; revised 2026-04-25, WI-12) |
+
+**Note (2026-04-25):** Active-thwarting framing for the three frustration subscales follows Bartholomew et al. (2011), who demonstrated that need thwarting is conceptually and empirically distinct from low need satisfaction. In Bartholomew's Study 3 SEM, need thwarting uniquely predicted exhaustion; need satisfaction uniquely predicted vitality; cross-paths were small. ABC's frustration items must describe ACTIVE THWARTING by named agents, not internal dissatisfaction. The expanded items (AF5, BF5, CF5 in `new-items-draft.md`) and revised items (AF1, AF2, BF1, CF3 in `new-items-draft-v2.md`) follow this constraint.
 
 ### 1.3 Example Items
 
@@ -97,6 +99,8 @@ Threshold: 5.5 on the 0-10 normalized scale.
 | >= 5.5 | >= 5.5 | **Vulnerable** | Medium — appears fine but environment is eroding |
 | < 5.5 | < 5.5 | **Mild** | Low-medium — disengaged, low salience |
 | < 5.5 | >= 5.5 | **Distressed** | High — need actively frustrated |
+
+**Note (2026-04-25, WI-9):** Per Edwards (2001) Myth 4, trichotomizing a continuous comparison loses approximately 26% of explained variance. The 2x2 categorization is a *display layer*, not the primary analytic unit. All ABC reports must show the continuous (sat, frust) coordinates alongside the categorical label. Hard classification is supportable only when LPA posterior class probability >= 0.75 (per WI-16); otherwise the label "uncertain" is reported. The 2x2 thresholds are kept for backward compatibility with existing dashboards and narrative templates.
 
 **The Overinvestment Pattern.** Research shows that highly self-determined individuals can overinvest effort under chronic demands, leading to resource depletion even when their needs appear well-met (Towair et al., 2025; Mobarak et al., 2024). In ABC terms: an athlete who shows sustained high satisfaction across two or more domains (Thriving on both Ambition and Craft, for example) while daily cognitive signals show declining Recovery Slope or rising Cognitive Load may be in an overinvestment state. Their needs are satisfied — so satisfied they cannot stop pushing — but their recovery capacity is eroding.
 
@@ -172,6 +176,8 @@ gap = team_score - personal_score  (per subscale)
 
 A gap below -1.5 on any satisfaction subscale flags a **team context concern**: the team environment significantly undermines a need the person meets elsewhere.
 
+**DEPRECATED (2026-04-25, WI-9).** This difference-score formulation fails the Johns (1981) and Edwards (2001) reliability and interpretability tests. Replacement: polynomial regression with response surface analysis in `src/psychometric/response_surface.py`. Per Edwards 2001 the model is `Outcome = b0 + b1*Personal + b2*Team + b3*Personal^2 + b4*Personal*Team + b5*Team^2 + e`, with the difference-score constraints (b1 = -b2; b3 = b4 = b5 = 0) tested as nested model comparisons. The hard -1.5 threshold has no empirical foundation and is replaced with a calibrated probability of concern based on the fitted surface. The legacy difference-score code in `context_gap.py` remains for backward compatibility with narrative_engine.py and the coach dashboard but is marked deprecated in its docstring.
+
 ### 2.8 Trajectory & Volatility (3+ measurements)
 
 **Trajectory (slope)**: OLS regression of subscale scores over most recent 3-5 measurement points.
@@ -200,7 +206,17 @@ Initial weights equal. Recalibrate as outcome data accumulates.
 
 ### 2.9 Reciprocal Effects and Causal Interpretation
 
-The trajectory model treats declining satisfaction and rising frustration as leading indicators of burnout. This is supported by Lonsdale & Hodge (2011), who established through longitudinal design that declining self-determination preceded increases in burnout. However, the same study found evidence for reciprocal effects: chronic exhaustion also undermines subsequent motivation and need satisfaction.
+**Updated 2026-04-25 (WI-10).** The trajectory model treats declining satisfaction and rising frustration as candidate leading indicators of burnout. This was supported by Lonsdale & Hodge (2011) longitudinal design, but the SDT need-thwarting literature reviewed in `howard-2024-implementation-plan.md` Literature Review v2 does not establish a specific cascade direction or lag. Bartholomew et al. (2011) SEM finds parallel pathways (need support to satisfaction to vitality; need thwarting to frustration to exhaustion). Howard, Morin, Gagne (2020) work motivation LTA shows extreme stability over 4 months; Fernet et al. (2020) 24-month nurse LTA shows directional asymmetry (Self-Determined never transitions to Poorly Motivated; reverse open) but does not estimate a lag.
+
+Phase A will compare five competing hypotheses for the relationship between ABC sat and frust over time:
+
+1. **Parallel and simultaneous (Bartholomew 2011 default):** satisfaction and frustration respond to different antecedents at the same time.
+2. **Frustration leads (this model's previous implicit assumption):** thwarting events trigger frustration immediately; satisfaction erodes only after sustained thwarting depletes resources.
+3. **Satisfaction leads:** low satisfaction creates vulnerability; frustration arises later.
+4. **Reciprocal feedback:** each predicts the other across timepoints with no clean leader (Van den Berghe et al. 2016 found bidirectional dynamics in PE).
+5. **Asymmetric transition (Fernet 2020):** some transitions are accessible; others are not.
+
+The trajectory and risk-score code in `leading_indicator_model.py` continues to compute slopes; the *interpretation* of which slope leads which is now treated as an empirical question, not a model assumption.
 
 This means a declining ABC trajectory could be either:
 1. **A leading indicator** — the need environment is deteriorating, and burnout will follow if nothing changes.
