@@ -139,7 +139,7 @@ These weights are theoretical priors. The simulation validation (Section 11) tes
 3. **Direction** = High if percentile >= 50, Low otherwise
 4. **Lookup** = `typeMap[domain][direction + trait]`
 
-Produces a named type (e.g., "Mentor", "Forge", "Flow State") with tagline, description, strengths, contribution, and growth edge. The full 36-type catalog already exists in `apps/web/src/lib/data/abc-typology.ts`.
+Produces a named type (e.g., "Mentor", "Pioneer", "Artisan") with tagline, description, strengths, contribution, and growth edge. The full archetype catalog already exists in `apps/web/src/lib/data/abc-typology.ts`.
 
 ### 2.5 Frustration Signatures
 
@@ -239,7 +239,7 @@ The system handles this ambiguity in two ways:
 | team_c_frust | float | Team context C-frust |
 | domain_states | JSONB | `{ambition: "thriving", belonging: "vulnerable", craft: "mild"}` |
 | big_five | JSONB | `{openness: 62, conscientiousness: 74, ...}` |
-| type_name | varchar(50) | 36-type name ("Mentor", "Forge", etc.) |
+| type_name | varchar(50) | Archetype name ("Mentor", "Pioneer", etc.) |
 | type_domain | varchar(20) | Dominant domain |
 | frustration_signatures | JSONB | `["blocked_drive", "conditional_belonging"]` |
 | belbin_roles | JSONB | `[{role: "Shaper", qualifier: "Inspiring"}]` |
@@ -322,7 +322,7 @@ The relationship: `abc_profiles` = fast daily signal. `abc_assessments` = deep b
 **Top card — Your Type**
 - Type name large (e.g., "Mentor"), tagline below ("Grows others' skill").
 - Domain badge: colour-coded Ambition / Belonging / Craft pill.
-- If the type changed since last assessment, a subtle "Previously: Forge" note.
+- If the type changed since last assessment, a subtle "Previously: Pioneer" note.
 
 **Middle section — Domain States**
 Three horizontal bars, one per domain. Each bar shows:

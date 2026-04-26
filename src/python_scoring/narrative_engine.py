@@ -819,6 +819,1015 @@ def _confidence_qualifier(posterior_confidence: float | None) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Passion quality narratives
+# ---------------------------------------------------------------------------
+#
+# Reference: abc-assessment-spec Section 16.2
+# Reference: abc-assessment-spec Section 17.4
+#
+# Language is drawn from the Section 17 translation table. No banned terms.
+# Athlete-facing aims for Grade 8 or below; coach-facing aims for Grade 10
+# or below. Every leaning has matched athlete and coach content.
+
+_PASSION_NARRATIVES = {
+    "harmonious": {
+        "athlete": {
+            "summary": (
+                "Your drive stays in balance with the rest of your life. "
+                "You can step back when you need to, and come back when "
+                "you want to. That is a strong foundation."
+            ),
+            "reflection_prompt": (
+                "When was the last time you took a full day off without "
+                "feeling like you were losing something?"
+            ),
+        },
+        "coach": {
+            "summary": (
+                "The athlete can step away from sport without losing their "
+                "sense of self. Drive is high and healthy. Protect recovery; "
+                "do not restrict engagement."
+            ),
+            "conversation_starter": (
+                "Ask what the athlete wants the training week to give them. "
+                "A clear answer is a sign of flexible commitment."
+            ),
+        },
+    },
+    "obsessive": {
+        "athlete": {
+            "summary": (
+                "You find it hard to step away from sport, even when you "
+                "need a break. The drive is real. It is also carrying a "
+                "cost. That is worth a conversation."
+            ),
+            "reflection_prompt": (
+                "What does a day without training feel like for you right "
+                "now? What do you notice in yourself?"
+            ),
+        },
+        "coach": {
+            "summary": (
+                "The athlete has trouble stepping away from sport. Drive is "
+                "high but it carries cost to other parts of life. An "
+                "identity-level conversation is warranted, not a training "
+                "adjustment."
+            ),
+            "conversation_starter": (
+                "Ask what a week off would cost the athlete. Listen for "
+                "whether the answer is about performance or about self."
+            ),
+        },
+    },
+    "mixed": {
+        "athlete": {
+            "summary": (
+                "You bring intense commitment. Some of it lifts you. Some "
+                "of it weighs on you. Both are real."
+            ),
+            "reflection_prompt": (
+                "Which parts of your training week give you energy, and which parts take it?"
+            ),
+        },
+        "coach": {
+            "summary": (
+                "Both the healthy and the costly forms of commitment are "
+                "elevated. Intensity is real. Check for underlying conflict "
+                "before acting on the signal."
+            ),
+            "conversation_starter": (
+                "Ask what the training week gives the athlete, and what it "
+                "takes from them. Both answers matter."
+            ),
+        },
+    },
+    "uninvested": {
+        "athlete": {
+            "summary": (
+                "Sport is not a strong source of energy right now. That is "
+                "not a problem to solve. It is a signal about where your "
+                "drive sits today."
+            ),
+            "reflection_prompt": ("What does pull on you right now, if not sport?"),
+        },
+        "coach": {
+            "summary": (
+                "Sport is not carrying strong positive or negative charge "
+                "for this athlete. Investigate other drivers before "
+                "reading this as burnout."
+            ),
+            "conversation_starter": (
+                "Ask what the athlete is looking forward to outside of "
+                "sport. A flat answer here points to something broader."
+            ),
+        },
+    },
+    "insufficient_signal": {
+        "athlete": {
+            "summary": (
+                "Too early to say which way this is leaning. A few more "
+                "check-ins will sharpen the picture."
+            ),
+            "reflection_prompt": ("No action needed yet. Keep checking in."),
+        },
+        "coach": {
+            "summary": ("Signal too weak to act on. Hold for another cycle."),
+            "conversation_starter": ("No action needed. Revisit after the next check-in."),
+        },
+    },
+    "not_computed": {
+        "athlete": {
+            "summary": ("Not enough check-in answers yet to say how this is sitting for you."),
+            "reflection_prompt": ("Complete the full check-in next time for a clearer read."),
+        },
+        "coach": {
+            "summary": ("Not enough answers yet. Hold for another cycle."),
+            "conversation_starter": (
+                "No action needed. Make sure the athlete completes the full check-in next cycle."
+            ),
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Overinvestment trigger narratives (passion-aware routing)
+# ---------------------------------------------------------------------------
+#
+# Reference: abc-assessment-spec Section 16.2
+# Reference: abc-assessment-spec Section 17.7
+#
+# One entry per routing path from overinvestment_trigger.py. The trigger
+# fires when two or more domains are thriving and daily cross-signals
+# either confirm recovery strain or are absent. Passion leaning selects
+# which template runs.
+
+_OVERINVESTMENT_NARRATIVES = {
+    "harmonious": {
+        "athlete": (
+            "Your drive in training is strong right now. A rest day "
+            "this week is part of the plan, not a setback."
+        ),
+        "coach": (
+            "This athlete is pushing hard from a healthy place. Protect "
+            "recovery without restricting engagement. A light week is "
+            "maintenance, not demotion."
+        ),
+    },
+    "obsessive": {
+        "athlete": (
+            "Your drive is high, and you are finding it hard to step "
+            "back. That tension is worth a conversation, not a harder "
+            "week."
+        ),
+        "coach": (
+            "This athlete is pushing hard from a place of tension. A "
+            "one-to-one that is not about performance is the action. "
+            "Check whether they feel they can step back without losing "
+            "standing on the team."
+        ),
+    },
+    "mixed": {
+        "athlete": (
+            "You are pushing hard. Some of that is lifting you, some of "
+            "it is costing you. Worth pausing to notice which is which."
+        ),
+        "coach": (
+            "The athlete shows both healthy and costly commitment at "
+            "once. Ask what the training week gives them, and what it "
+            "takes from them."
+        ),
+    },
+    "insufficient_evidence": {
+        "athlete": ("We do not have enough to say yet. Keep checking in."),
+        "coach": (
+            "Thriving pattern is present but passion leaning is not "
+            "clear yet. Watch for another cycle before acting."
+        ),
+    },
+    "not_triggered": {
+        "athlete": ("Nothing flagged on the overinvestment side right now."),
+        "coach": ("No overinvestment trigger for this athlete in this cycle."),
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Regulatory-style narratives
+# ---------------------------------------------------------------------------
+#
+# Reference: abc-assessment-spec Section 16.1
+# Reference: abc-assessment-spec Section 17.4
+#
+# Per-domain templates for the four regulatory styles. Language is plain
+# per Section 17.3: no banned terms, no OIT vocabulary. The internal
+# labels (identified, conflicted, introjected, amotivated) are never
+# shown to athletes or coaches.
+
+_DOMAIN_PLAIN = {
+    "ambition": {
+        "athlete_target": "your goals",
+        "athlete_verb": "chase",
+        "coach_target": "goal pursuit",
+    },
+    "belonging": {
+        "athlete_target": "your teammates",
+        "athlete_verb": "invest in",
+        "coach_target": "team relationships",
+    },
+    "craft": {
+        "athlete_target": "your skills",
+        "athlete_verb": "work on",
+        "coach_target": "skill development",
+    },
+}
+
+_REGULATORY_NARRATIVES = {
+    "identified": {
+        "athlete": (
+            "You {verb} {target} because they genuinely matter to you. "
+            "That is the strongest kind of drive. It holds up when "
+            "things get hard."
+        ),
+        "coach": (
+            "In {target}, the athlete's drive is values-based. It tends "
+            "to hold up when things get hard. Keep offering reasons and "
+            "choices. Avoid pressure tactics; they weaken ownership."
+        ),
+    },
+    "conflicted": {
+        "athlete": (
+            "You {verb} {target} for real reasons, and also because you "
+            "feel you have to. Both are true at the same time. That mix "
+            "is workable, but the pressure side is worth naming."
+        ),
+        "coach": (
+            "The athlete values {target} and also feels pressure here. "
+            "The source of the pressure is worth naming in a one-to-one. "
+            "When things get hard, the pressure side tends to break the "
+            "engagement."
+        ),
+    },
+    "introjected": {
+        "athlete": (
+            "You {verb} {target} more out of pressure than out of want. "
+            "That can still produce effort, but it tends to wear down. "
+            "Worth a look at where the pressure is coming from."
+        ),
+        "coach": (
+            "In {target}, the athlete's drive runs on obligation or "
+            "image, not on real value. That is a thin foundation. A "
+            "conversation about what the athlete actually wants from "
+            "this part of their life is the action."
+        ),
+    },
+    "amotivated": {
+        "athlete": (
+            "You are not feeling much pull toward {target} right now, "
+            "either from inside or from outside. That is worth noticing. "
+            "It does not have to be a problem, but it is a signal."
+        ),
+        "coach": (
+            "The athlete is disengaged in {target}: neither values nor "
+            "pressure is active. Investigate what changed. This is often "
+            "an earlier warning than low satisfaction on its own."
+        ),
+    },
+    "not_computed": {
+        "athlete": (
+            "Not enough check-in answers yet for {target}. Complete both "
+            "items next time for a clearer read."
+        ),
+        "coach": (
+            "Not enough answers to read {target} motivation this cycle. "
+            "Ensure the athlete completes both items next time."
+        ),
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Regulation-erosion narratives
+# ---------------------------------------------------------------------------
+#
+# Reference: abc-assessment-spec Section 16.1 (new
+# leading indicator)
+#
+# Fires when the detector sees sustained downward movement in regulatory
+# style across measurements for one or more domains. The narrative names
+# the domain and the direction of the shift in plain language.
+
+_EROSION_NARRATIVES = {
+    "athlete": (
+        "Something about {target} has shifted over the last few "
+        "check-ins. The pull that was value-based is moving toward "
+        "pressure-based. Worth a quiet look at what has changed "
+        "around this part of your life."
+    ),
+    "coach": (
+        "Motivation in {target} is moving from values-based to "
+        "pressure-based. This has shown up over the last two or three "
+        "check-ins. The usual scores may still look healthy; this "
+        "signal often moves first. A conversation that is not about "
+        "performance is the action."
+    ),
+}
+
+
+# ---------------------------------------------------------------------------
+# Self-Concordance trajectory narratives
+# ---------------------------------------------------------------------------
+#
+# Reference: abc-assessment-spec Section 16.7
+# Reference: src/python_scoring/self_concordance_trajectory.py
+#
+# Five labels (becoming_more_autonomous, becoming_more_controlled, stable,
+# oscillating, insufficient_data) for both audiences. All coach-facing
+# under Grade 10, all athlete-facing under Grade 8. Internal labels
+# never appear in the text.
+
+_SELF_CONCORDANCE_TRAJECTORY_NARRATIVES = {
+    "becoming_more_autonomous": {
+        "athlete": (
+            "Your reasons for this goal are moving in a healthy "
+            "direction over the last few check-ins. The goal is "
+            "becoming more yours. Keep noticing what is drawing you in."
+        ),
+        "coach": (
+            "The athlete's reasons for this goal are shifting from "
+            "pressure-based to values-based across recent cycles. "
+            "Internalization is happening. Protect the conditions that "
+            "are letting it happen; do not add external rewards or "
+            "pressure now."
+        ),
+    },
+    "becoming_more_controlled": {
+        "athlete": (
+            "Your reasons for this goal are shifting toward pressure "
+            "over the last few check-ins. Worth a quiet look at what "
+            "changed. Sometimes the goal is right and the context is "
+            "off."
+        ),
+        "coach": (
+            "The athlete's reasons for this goal are drifting from "
+            "values-based to pressure-based across recent cycles. "
+            "This is an early signal that often shows up before "
+            "engagement drops. A non-performance conversation about "
+            "the goal itself is the action."
+        ),
+    },
+    "stable": {
+        "athlete": (
+            "Your reasons for this goal are holding steady across the "
+            "last few check-ins. That is the most common pattern and "
+            "tells you the goal is settled, for now."
+        ),
+        "coach": (
+            "The athlete's reasons for this goal are stable across "
+            "recent cycles. No movement to act on. Revisit when a new "
+            "goal is set or context changes."
+        ),
+    },
+    "oscillating": {
+        "athlete": (
+            "Your reasons for this goal swing from cycle to cycle. "
+            "That can mean the goal is contested for you, or that the "
+            "context around it keeps changing. Worth a closer look at "
+            "what is driving the swings."
+        ),
+        "coach": (
+            "The athlete's reasons for this goal swing across recent "
+            "cycles without a clear direction. The goal may be "
+            "contested or the context around it unstable. Ask what "
+            "changes between weeks where the goal feels theirs and "
+            "weeks where it does not."
+        ),
+    },
+    "insufficient_data": {
+        "athlete": (
+            "Not enough check-ins on this goal yet to read a trend. "
+            "Two more cycles will give a useful picture."
+        ),
+        "coach": (
+            "Not enough cycles on this goal to compute a trajectory. "
+            "Revisit after at least three completed check-ins on the "
+            "same goal."
+        ),
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Self-Concordance narratives
+# ---------------------------------------------------------------------------
+#
+# Reference: abc-assessment-spec Section 16.7
+# Reference: docs/self-concordance-items-draft.md
+#
+# Four leanings (autonomous, controlled, mixed, not_computed) for both
+# audiences. Internal labels (PLOC, identified, intrinsic, introjected,
+# external) never appear in the text. The narrative refers to "this
+# goal" rather than the specific goal text the athlete supplied.
+
+_SELF_CONCORDANCE_NARRATIVES = {
+    "autonomous": {
+        "athlete": (
+            "This goal is yours. You are pursuing it because it matters "
+            "to you and because the work itself draws you in. That kind "
+            "of goal tends to hold up across setbacks and tends to lift "
+            "well-being as you make progress on it."
+        ),
+        "coach": (
+            "The athlete's reasons for this goal are values-based and "
+            "interest-based. Goals like this hold up under setback and "
+            "tend to drive both performance and well-being. Protect the "
+            "conditions that allow this; do not tie it to external "
+            "rewards or pressure."
+        ),
+    },
+    "controlled": {
+        "athlete": (
+            "You are pursuing this goal more because of pressure than "
+            "because it fits you. Pressure goals can produce real effort, "
+            "but progress on them does not lift well-being the way "
+            "self-chosen goals do. Worth a look at whether to keep, "
+            "reframe, or release this one."
+        ),
+        "coach": (
+            "The athlete's reasons here are pressure-based or "
+            "obligation-based. Even if the athlete makes progress, the "
+            "well-being lift will be smaller than for a self-chosen "
+            "goal. A conversation about whether to keep, reshape, or "
+            "step away from the goal is the action."
+        ),
+    },
+    "mixed": {
+        "athlete": (
+            "You hold both kinds of reasons for this goal. Some of them "
+            "fit you, some are pressure. That is workable. The pressure "
+            "side is worth naming because it tends to grow under stress."
+        ),
+        "coach": (
+            "The athlete's reasons for this goal mix self-chosen and "
+            "pressure-based. Watch under stress; the pressure side "
+            "tends to take over. Help the athlete name the source of "
+            "the pressure so it can be addressed directly."
+        ),
+    },
+    "not_computed": {
+        "athlete": (
+            "Not enough answers yet to read how this goal is sitting "
+            "with you. Complete all four reasons next cycle for a "
+            "clearer read."
+        ),
+        "coach": (
+            "Not enough data on the athlete's reasons for this goal. "
+            "Ensure all four reasons are completed next cycle."
+        ),
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Causality Orientations narratives
+# ---------------------------------------------------------------------------
+#
+# Reference: abc-assessment-spec Section 16.6
+# Reference: docs/causality-orientations-items-draft.md
+#
+# One narrative per dominant orientation (autonomy, controlled, impersonal)
+# plus mixed, emergent, and not_computed. Athlete and coach audiences.
+# The internal orientation labels never appear in the text.
+
+_CAUSALITY_NARRATIVES = {
+    "autonomy": {
+        "athlete": (
+            "You tend to move through situations from your own sense "
+            "of what you want. When something does not fit, you adjust. "
+            "That is a resilient way to operate. It does not make every "
+            "situation easy, but it tends to hold up under pressure."
+        ),
+        "coach": (
+            "This athlete reads situations as opportunities for choice. "
+            "They tolerate coaching-style variation well and respond to "
+            "reasons and options. Pressure tactics will not help them "
+            "more than with other athletes, and may cost more."
+        ),
+    },
+    "controlled": {
+        "athlete": (
+            "You tend to read situations through what others expect "
+            "from you. That can get a lot done. It also wears on you "
+            "over time. Worth noticing when a choice is yours, not "
+            "theirs."
+        ),
+        "coach": (
+            "This athlete reads situations as demands. They do well "
+            "with clear expectations. They are also more exposed than "
+            "other athletes to pressure tactics. Reasons, choice, and "
+            "voice pay off more here than elsewhere."
+        ),
+    },
+    "impersonal": {
+        "athlete": (
+            "Situations often feel like they happen to you rather "
+            "than through you. That is a read, not a fact. It shifts "
+            "when one small thing in your week starts going to plan. "
+            "Start with one controllable piece and build from there."
+        ),
+        "coach": (
+            "This athlete reads situations as beyond their own "
+            "influence. They are at higher risk of checking out. They "
+            "also respond less to pressure or choice alone. Start with "
+            "structure and small, steady wins. Build choice in later."
+        ),
+    },
+    "mixed": {
+        "athlete": (
+            "You do not lean clearly one way. Sometimes you read "
+            "situations as yours to shape, sometimes as something "
+            "pushing on you. That is normal and tells you less than a "
+            "clearer pattern would. Worth watching which one shows up "
+            "when things get hard."
+        ),
+        "coach": (
+            "The athlete does not show one clear pattern. How you "
+            "coach them will depend on which lens is active in the "
+            "moment. Watch under pressure. That is when the dominant "
+            "lens usually shows up."
+        ),
+    },
+    "emergent": {
+        "athlete": (
+            "No clear pattern is showing up yet. That is not a "
+            "problem. A year or two of check-ins will sharpen the "
+            "picture."
+        ),
+        "coach": (
+            "No clear orientation is reading from the data. This is "
+            "common at first administration. Revisit at the next "
+            "annual cycle."
+        ),
+    },
+    "not_computed": {
+        "athlete": (
+            "Not enough answers yet to read how you tend to approach "
+            "situations. Complete the full screen at the next annual "
+            "check-in."
+        ),
+        "coach": (
+            "Not enough data to score orientation. Ensure the full "
+            "screen is completed at the next annual administration."
+        ),
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Group-conscious narratives
+# ---------------------------------------------------------------------------
+#
+# Reference: abc-assessment-spec Section 16.5
+# Reference: docs/group-conscious-items-draft.md
+#
+# Per-domain collective satisfaction levels (high/moderate/low) for both
+# athlete and coach, team identification levels for both audiences, an
+# empathic-risk narrative for both audiences, and a team-dispersion
+# narrative shown only on the coach surface.
+
+_COLLECTIVE_SATISFACTION_NARRATIVES = {
+    "ambition": {
+        "high": {
+            "athlete": (
+                "You see your teammates chasing their own goals with "
+                "meaning. That reads as a healthy team climate for drive."
+            ),
+            "coach": (
+                "The athlete perceives their teammates' goals as "
+                "meaningful to them. The team climate for drive is "
+                "reading as healthy."
+            ),
+        },
+        "moderate": {
+            "athlete": (
+                "Your teammates' goals land as meaningful to them some of the time. Mixed picture."
+            ),
+            "coach": (
+                "The athlete's read of teammates' goal-meaning is "
+                "mixed. Watch for which athletes carry the signal."
+            ),
+        },
+        "low": {
+            "athlete": (
+                "You are not seeing your teammates' goals as meaningful "
+                "to them right now. That is worth noticing, even if "
+                "your own drive is strong."
+            ),
+            "coach": (
+                "The athlete perceives teammates as disengaged from "
+                "their own goals. Team climate for drive is a concern."
+            ),
+        },
+        "not_computed": {
+            "athlete": "Not enough check-in data on the team climate for this.",
+            "coach": "Insufficient data for this team climate signal.",
+        },
+    },
+    "belonging": {
+        "high": {
+            "athlete": (
+                "You notice your teammates feeling connected to each "
+                "other. That is a strong team climate for belonging."
+            ),
+            "coach": (
+                "The athlete perceives teammates as connected to each "
+                "other. The team climate for belonging reads as healthy."
+            ),
+        },
+        "moderate": {
+            "athlete": (
+                "Your teammates seem connected to each other some of "
+                "the time. Not a full picture yet."
+            ),
+            "coach": (
+                "The athlete's read of team connection is mixed. Could "
+                "be fault lines inside the group."
+            ),
+        },
+        "low": {
+            "athlete": (
+                "You are not seeing strong connection among your "
+                "teammates right now. That matters even if your own "
+                "relationships are fine."
+            ),
+            "coach": (
+                "The athlete perceives teammates as disconnected from "
+                "each other. Team climate for belonging is a concern."
+            ),
+        },
+        "not_computed": {
+            "athlete": "Not enough check-in data on the team climate for this.",
+            "coach": "Insufficient data for this team climate signal.",
+        },
+    },
+    "craft": {
+        "high": {
+            "athlete": (
+                "You see your teammates growing in their skills. That "
+                "reads as a healthy team climate for craft."
+            ),
+            "coach": (
+                "The athlete perceives teammates as developing. The "
+                "team climate for skill growth reads as healthy."
+            ),
+        },
+        "moderate": {
+            "athlete": (
+                "Some of your teammates seem to be growing, others less "
+                "so. Mixed picture on skill development."
+            ),
+            "coach": (
+                "The athlete's read of team skill development is mixed. "
+                "Worth looking at which athletes feel stuck."
+            ),
+        },
+        "low": {
+            "athlete": (
+                "You are not seeing your teammates growing right now. "
+                "Team climate for skill development is worth naming."
+            ),
+            "coach": (
+                "The athlete perceives teammates as stuck on skill "
+                "development. Team climate for craft is a concern."
+            ),
+        },
+        "not_computed": {
+            "athlete": "Not enough check-in data on the team climate for this.",
+            "coach": "Insufficient data for this team climate signal.",
+        },
+    },
+}
+
+_TEAM_IDENTIFICATION_NARRATIVES = {
+    "high": {
+        "athlete": (
+            "This team feels like your team. Wins and losses land "
+            "personally, and you see yourself as a real member."
+        ),
+        "coach": (
+            "The athlete identifies strongly with the team. That is a "
+            "strength and also a pressure point: group events land "
+            "harder when identification is this high."
+        ),
+    },
+    "moderate": {
+        "athlete": (
+            "You feel like part of this team some of the time. The "
+            "connection is there, but not deep."
+        ),
+        "coach": (
+            "The athlete's bond with the team is in the middle range. "
+            "Group events land, but not as hard as they do for "
+            "someone who feels fully part of the team."
+        ),
+    },
+    "low": {
+        "athlete": (
+            "You are not feeling like a real member of this team right "
+            "now. That is data, not a problem."
+        ),
+        "coach": (
+            "The athlete's team identification is low. Group events "
+            "are unlikely to hit them as personal. Investigate "
+            "whether this is by choice or by exclusion."
+        ),
+    },
+    "not_computed": {
+        "athlete": ("Not enough check-in data yet on how you are feeling about the team overall."),
+        "coach": ("Not enough data on how the athlete feels about the team yet."),
+    },
+}
+
+_EMPATHIC_RISK_NARRATIVES = {
+    "athlete": (
+        "You care about this team, and you are seeing your teammates "
+        "struggle in one or more areas. That carries a weight even when "
+        "your own check-in looks okay. Worth naming with your coach."
+    ),
+    "coach": (
+        "This athlete identifies strongly with the team and perceives "
+        "teammates as struggling. They are exposed to a kind of carry-"
+        "load that their personal scores may not show. Check in on "
+        "what they are absorbing for the group."
+    ),
+}
+
+_TEAM_DISPERSION_NARRATIVES = {
+    "coach": {
+        "tight": (
+            "Athletes on this team are experiencing things similarly. "
+            "The team mean is the team. No hidden splits."
+        ),
+        "moderate": (
+            "Some spread across athletes on this team. Worth noticing "
+            "which subscales show the spread; they are the places where "
+            "the team mean hides a split."
+        ),
+        "high": (
+            "High spread across athletes on one or more subscales. The "
+            "team mean is not the team: some athletes are thriving, "
+            "some are struggling. The split itself is the story."
+        ),
+    }
+}
+
+
+# ---------------------------------------------------------------------------
+# Coach Circumplex narratives
+# ---------------------------------------------------------------------------
+#
+# Reference: abc-assessment-spec Section 16.3
+# Reference: docs/coach-circumplex-items-draft.md
+#
+# Audience is the coach reading their own profile. Athletes do not see
+# these templates directly. Each facet has three level-specific entries
+# (high, moderate, low) plus a not_computed fallback. Supportive facets
+# frame "high" as a strength to refine; thwarting facets frame "high" as
+# a pattern to address.
+
+_CIRCUMPLEX_FACET_NARRATIVES = {
+    "autonomy_support": {
+        "high": (
+            "Your athletes see you offering real choice, hearing them "
+            "out, and explaining why. Keep watching for the moments "
+            "when you move fast under pressure. That is where this "
+            "slips."
+        ),
+        "moderate": (
+            "You give athletes some room to choose and some of the "
+            "reasoning behind your calls, but not consistently. Pick "
+            "one situation this week where you will name the reason "
+            "out loud before you make the call."
+        ),
+        "low": (
+            "Your athletes are not experiencing much room for choice or "
+            "input. The drills and decisions may still be right; the "
+            "way they land is the issue. Start by asking one athlete "
+            "for their read before a decision this week."
+        ),
+        "not_computed": (
+            "Not enough responses to read autonomy-support. Come back "
+            "once the circumplex has more data."
+        ),
+    },
+    "structure": {
+        "high": (
+            "Your athletes know what to expect from you. Expectations "
+            "are clear, feedback is specific, and you follow through. "
+            "The next edge is noticing when you push through a plan "
+            "that is not working instead of adjusting it."
+        ),
+        "moderate": (
+            "Your structure is present but not consistent. One lever "
+            "that usually moves this: make the goal of each session "
+            "explicit in the first two minutes, every session, for a "
+            "month."
+        ),
+        "low": (
+            "Your athletes are not getting clear expectations or "
+            "specific feedback from you. Two habits usually fix this. "
+            "State the goal of the session at the start. Name one "
+            "specific thing in feedback, not a general judgment."
+        ),
+        "not_computed": (
+            "Not enough responses to read structure. Come back once the circumplex has more data."
+        ),
+    },
+    "relatedness_support": {
+        "high": (
+            "Your athletes feel you care about them as people, not just "
+            "as performers. That matters more than most coaches think. "
+            "Protect it by guarding against days when you cut short "
+            "the non-sport conversations."
+        ),
+        "moderate": (
+            "You show warmth sometimes and other times you stay on "
+            "sport-only mode. Pick two athletes this week and ask each "
+            "one something specific about their life outside sport."
+        ),
+        "low": (
+            "Your athletes are not experiencing you as someone who "
+            "notices them beyond their performance. The fix is small "
+            "and concrete: one non-sport question per athlete, one "
+            "time per week, consistently."
+        ),
+        "not_computed": (
+            "Not enough responses to read relatedness-support. Come "
+            "back once the circumplex has more data."
+        ),
+    },
+    "controlling": {
+        "high": (
+            "Your athletes report pressure tactics from you: guilt, "
+            "warmth withdrawal after a bad performance, or unfavorable "
+            "comparisons. These tactics often work short-term and cost "
+            "trust long-term. Pick one to catch yourself on this week."
+        ),
+        "moderate": (
+            "Controlling moments are showing up in your coaching. Not "
+            "your whole style, more like episodes. Notice the trigger. "
+            "Is it one athlete, one moment in the week, or one kind "
+            "of pressure you are under?"
+        ),
+        "low": (
+            "You are not showing much controlling behavior. Keep it "
+            "that way when the season gets harder; this is the place "
+            "pressure tactics tend to show up first."
+        ),
+        "not_computed": (
+            "Not enough responses to read controlling behavior. Come "
+            "back once the circumplex has more data."
+        ),
+    },
+    "chaos": {
+        "high": (
+            "Your athletes report inconsistency: changing plans "
+            "without warning, dropped commitments, or reactions that "
+            "shift day to day. This wears trust down quickly. Write "
+            "down the next three commitments you make to an athlete "
+            "and check you kept them."
+        ),
+        "moderate": (
+            "Chaos is showing up in patches. Often the source is one "
+            "context: late-week practices, post-travel, high-stress "
+            "weeks. Identify the pattern before trying to solve it."
+        ),
+        "low": (
+            "Your athletes experience you as consistent. That is a "
+            "real strength that many coaches underestimate. Keep it."
+        ),
+        "not_computed": (
+            "Not enough responses to read consistency. Come back once the circumplex has more data."
+        ),
+    },
+}
+
+
+# Gap-direction narratives. Fire only when a FacetGap is flagged (|gap|
+# > GAP_FLAG_THRESHOLD). Coach-facing only.
+#
+# For supportive facets (autonomy_support, structure, relatedness_support):
+#   coach_higher  = coach overrates self; athletes see less support
+#   athlete_higher = coach underrates self; athletes see more support
+# For thwarting facets (controlling, chaos):
+#   coach_higher  = coach reports more pressure/chaos than athletes; rare
+#   athlete_higher = coach underrates own controlling/chaotic behavior;
+#     the most common and highest-leverage blind spot
+_CIRCUMPLEX_GAP_NARRATIVES = {
+    "autonomy_support": {
+        "coach_higher": (
+            "You see yourself as giving more choice and explanation "
+            "than your athletes are reading. That gap is common and it "
+            "is the place where one specific change (name the rationale "
+            "out loud, or ask before deciding) tends to close it fast."
+        ),
+        "athlete_higher": (
+            "Your athletes read more choice and explanation from you "
+            "than you give yourself credit for. That is a hidden "
+            "strength. Protect the habits that are producing it."
+        ),
+    },
+    "structure": {
+        "coach_higher": (
+            "You see your expectations and feedback as clearer than "
+            "they are landing for athletes. The fix is usually "
+            "repetition: state the goal at the start, name one specific "
+            "piece of feedback each time."
+        ),
+        "athlete_higher": (
+            "Your athletes experience more clarity and follow-through "
+            "from you than you are giving yourself credit for. Keep it."
+        ),
+    },
+    "relatedness_support": {
+        "coach_higher": (
+            "You believe you are showing more care and interest in "
+            "your athletes as people than they are feeling from you. "
+            "This often closes with small signals: one non-sport "
+            "question per athlete per week, consistently."
+        ),
+        "athlete_higher": (
+            "Your athletes feel you care about them as people more "
+            "than you realize. That is real trust. Keep investing in "
+            "the small signals that are building it."
+        ),
+    },
+    "controlling": {
+        "coach_higher": (
+            "You report using more pressure than athletes report "
+            "feeling. That is unusual. Either you are self-critical, "
+            "or athletes are not naming what they experience. Worth "
+            "a conversation that makes it safer for them to say so."
+        ),
+        "athlete_higher": (
+            "Your athletes experience more pressure from you than you "
+            "realize. That is the most common blind spot in coaching. "
+            "Pick one of the items your athletes rated high and watch "
+            "yourself around it this week."
+        ),
+    },
+    "chaos": {
+        "coach_higher": (
+            "You report more inconsistency in your coaching than your "
+            "athletes experience. Unusual. Possibly they do not feel "
+            "safe reporting, or you hold yourself to an exacting "
+            "standard. Worth naming in a team conversation."
+        ),
+        "athlete_higher": (
+            "Your athletes experience more inconsistency from you "
+            "than you are aware of. This is often context-specific: "
+            "late-week, post-travel, or high-stress moments. Identify "
+            "the trigger before you try to solve it."
+        ),
+    },
+}
+
+
+# Dominant-approach summaries written to the coach.
+_CIRCUMPLEX_APPROACH_NARRATIVES = {
+    "supportive": (
+        "Your profile sits in the need-supportive space. Athletes "
+        "experience you as offering choice, structure, and warmth, with "
+        "little pressure or chaos. The question for growth is not what "
+        "to change, but which facet to deepen."
+    ),
+    "mixed": (
+        "Your profile is mixed: strong on support, and also showing "
+        "meaningful pressure or chaos. Many coaches sit here. The work "
+        "is to keep the support while naming the source of the "
+        "controlling or inconsistent moments, one at a time."
+    ),
+    "under-structured": (
+        "Your profile shows neither strong support nor strong pressure. "
+        "Athletes experience you as present but neutral. The fastest "
+        "move is to add one facet of support: rationales, specific "
+        "feedback, or a non-sport question per athlete each week."
+    ),
+    "thwarting": (
+        "Your profile currently sits in the need-thwarting space. "
+        "Athletes experience more pressure or chaos than support. This "
+        "is worth taking seriously as a coaching-development priority, "
+        "not as a judgment. The fix is usually one behavior at a time, "
+        "starting with whichever facet is highest."
+    ),
+    "not_computed": (
+        "Not enough of the circumplex is filled in to give a profile "
+        "summary yet. Once more responses are in, this will surface."
+    ),
+}
+
+
+# ---------------------------------------------------------------------------
 # NarrativeEngine
 # ---------------------------------------------------------------------------
 
@@ -855,6 +1864,66 @@ class NarrativeEngine:
         "Controlled Motivation",
         "Active Exclusion",
         "Competence Threat",
+    )
+    VALID_PASSION_LEANINGS = (
+        "harmonious",
+        "obsessive",
+        "mixed",
+        "uninvested",
+        "insufficient_signal",
+        "not_computed",
+    )
+    VALID_OVERINVESTMENT_PATHS = (
+        "harmonious",
+        "obsessive",
+        "mixed",
+        "insufficient_evidence",
+        "not_triggered",
+    )
+    VALID_REGULATORY_STYLES = (
+        "identified",
+        "conflicted",
+        "introjected",
+        "amotivated",
+        "not_computed",
+    )
+    VALID_CIRCUMPLEX_FACETS = (
+        "autonomy_support",
+        "structure",
+        "relatedness_support",
+        "controlling",
+        "chaos",
+    )
+    VALID_FACET_LEVELS = ("high", "moderate", "low", "not_computed")
+    VALID_DOMINANT_APPROACHES = (
+        "supportive",
+        "mixed",
+        "under-structured",
+        "thwarting",
+        "not_computed",
+    )
+    VALID_DISPERSION_BANDS = ("tight", "moderate", "high")
+    VALID_GAP_DIRECTIONS = ("coach_higher", "athlete_higher")
+    VALID_CAUSALITY_ORIENTATIONS = (
+        "autonomy",
+        "controlled",
+        "impersonal",
+        "mixed",
+        "emergent",
+        "not_computed",
+    )
+    VALID_SELF_CONCORDANCE_LEANINGS = (
+        "autonomous",
+        "controlled",
+        "mixed",
+        "not_computed",
+    )
+    VALID_TRAJECTORY_LABELS = (
+        "becoming_more_autonomous",
+        "becoming_more_controlled",
+        "stable",
+        "oscillating",
+        "insufficient_data",
     )
     VALID_TRANSITIONS = (
         "growth",
@@ -1071,3 +2140,359 @@ class NarrativeEngine:
         template = _MEASUREMENT_DISCLOSURES[tier][audience]
         s = "" if measurement_count == 1 else "s"
         return template.format(count=measurement_count, s=s)
+
+    def generate_passion_narrative(self, leaning: str, audience: str) -> dict:
+        """Generate narrative text for a passion-quality leaning.
+
+        Reference: abc-assessment-spec Section 16.2
+        Reference: abc-assessment-spec Section 17.4
+
+        The leaning comes from passion_quality.score_passion_quality. When
+        the display gate fails the leaning is "not_computed" and the text
+        says so plainly. When only the display gate passes, the text is
+        hedged. When the recommendation gate passes, the text points at
+        action.
+
+        Args:
+            leaning: One of harmonious, obsessive, mixed, uninvested,
+                insufficient_signal, or not_computed.
+            audience: "athlete" or "coach".
+
+        Returns:
+            Dict with keys:
+                summary (str): One-paragraph plain-language description.
+                reflection_prompt (str): Only for athlete audience.
+                conversation_starter (str): Only for coach audience.
+
+        Raises:
+            ValueError: If leaning or audience is invalid.
+        """
+        self._validate_audience(audience)
+        if leaning not in self.VALID_PASSION_LEANINGS:
+            raise ValueError(
+                f"leaning must be one of {self.VALID_PASSION_LEANINGS}, got '{leaning}'"
+            )
+
+        content = _PASSION_NARRATIVES[leaning][audience]
+        result = {"summary": content["summary"]}
+        if audience == "athlete":
+            result["reflection_prompt"] = content["reflection_prompt"]
+        else:
+            result["conversation_starter"] = content["conversation_starter"]
+        return result
+
+    def generate_regulatory_narrative(
+        self,
+        domain: str,
+        style: str,
+        audience: str,
+    ) -> str:
+        """Generate narrative text for a regulatory style on one domain.
+
+        Reference: abc-assessment-spec Section 16.1
+        Reference: abc-assessment-spec Section 17.4
+
+        Args:
+            domain: One of ambition, belonging, or craft.
+            style: One of identified, conflicted, introjected, amotivated,
+                or not_computed.
+            audience: "athlete" or "coach".
+
+        Returns:
+            Plain-language narrative string. Domain-specific wording is
+            substituted; no internal labels appear.
+
+        Raises:
+            ValueError: If domain, style, or audience is invalid.
+        """
+        self._validate_audience(audience)
+        if domain not in self.VALID_DOMAINS:
+            raise ValueError(f"domain must be one of {self.VALID_DOMAINS}, got '{domain}'")
+        if style not in self.VALID_REGULATORY_STYLES:
+            raise ValueError(f"style must be one of {self.VALID_REGULATORY_STYLES}, got '{style}'")
+
+        plain = _DOMAIN_PLAIN[domain]
+        template = _REGULATORY_NARRATIVES[style][audience]
+        if audience == "athlete":
+            return template.format(
+                target=plain["athlete_target"],
+                verb=plain["athlete_verb"],
+            )
+        return template.format(target=plain["coach_target"])
+
+    def generate_erosion_narrative(self, domain: str, audience: str) -> str:
+        """Generate narrative text for a regulation-erosion event.
+
+        Reference: abc-assessment-spec Section 16.1
+
+        Args:
+            domain: One of ambition, belonging, or craft.
+            audience: "athlete" or "coach".
+
+        Returns:
+            Plain-language narrative naming the affected area and the
+            direction of the shift, without exposing technical labels.
+
+        Raises:
+            ValueError: If domain or audience is invalid.
+        """
+        self._validate_audience(audience)
+        if domain not in self.VALID_DOMAINS:
+            raise ValueError(f"domain must be one of {self.VALID_DOMAINS}, got '{domain}'")
+        plain = _DOMAIN_PLAIN[domain]
+        template = _EROSION_NARRATIVES[audience]
+        target_key = "athlete_target" if audience == "athlete" else "coach_target"
+        return template.format(target=plain[target_key])
+
+    def generate_self_concordance_trajectory_narrative(
+        self,
+        label: str,
+        audience: str,
+    ) -> str:
+        """Generate a coach- or athlete-facing narrative for a goal trajectory.
+
+        Reference: abc-assessment-spec Section 16.7
+        Reference: src/python_scoring/self_concordance_trajectory.py
+
+        Args:
+            label: One of becoming_more_autonomous, becoming_more_controlled,
+                stable, oscillating, insufficient_data.
+            audience: athlete or coach.
+
+        Returns:
+            Plain-language narrative string.
+
+        Raises:
+            ValueError: For invalid label or audience.
+        """
+        self._validate_audience(audience)
+        if label not in self.VALID_TRAJECTORY_LABELS:
+            raise ValueError(f"label must be one of {self.VALID_TRAJECTORY_LABELS}, got '{label}'")
+        return _SELF_CONCORDANCE_TRAJECTORY_NARRATIVES[label][audience]
+
+    def generate_self_concordance_narrative(
+        self,
+        leaning: str,
+        audience: str,
+    ) -> str:
+        """Generate a narrative for a self-concordance leaning on one goal.
+
+        Reference: abc-assessment-spec Section 16.7
+
+        Args:
+            leaning: One of autonomous, controlled, mixed, not_computed.
+            audience: athlete or coach.
+
+        Returns:
+            Plain-language narrative string.
+
+        Raises:
+            ValueError: For invalid leaning or audience.
+        """
+        self._validate_audience(audience)
+        if leaning not in self.VALID_SELF_CONCORDANCE_LEANINGS:
+            raise ValueError(
+                f"leaning must be one of {self.VALID_SELF_CONCORDANCE_LEANINGS}, got '{leaning}'"
+            )
+        return _SELF_CONCORDANCE_NARRATIVES[leaning][audience]
+
+    def generate_causality_narrative(
+        self,
+        orientation: str,
+        audience: str,
+    ) -> str:
+        """Generate a narrative describing a causality orientation.
+
+        Reference: abc-assessment-spec Section 16.6
+
+        Args:
+            orientation: One of autonomy, controlled, impersonal, mixed,
+                emergent, not_computed.
+            audience: athlete or coach.
+
+        Returns:
+            Plain-language narrative string.
+
+        Raises:
+            ValueError: For invalid orientation or audience.
+        """
+        self._validate_audience(audience)
+        if orientation not in self.VALID_CAUSALITY_ORIENTATIONS:
+            raise ValueError(
+                f"orientation must be one of "
+                f"{self.VALID_CAUSALITY_ORIENTATIONS}, got '{orientation}'"
+            )
+        return _CAUSALITY_NARRATIVES[orientation][audience]
+
+    def generate_collective_satisfaction_narrative(
+        self,
+        domain: str,
+        level: str,
+        audience: str,
+    ) -> str:
+        """Generate narrative for perceived collective satisfaction on a domain.
+
+        Reference: abc-assessment-spec Section 16.5
+
+        Args:
+            domain: One of ambition, belonging, craft.
+            level: One of high, moderate, low, not_computed.
+            audience: athlete or coach.
+
+        Returns:
+            Plain-language narrative string.
+
+        Raises:
+            ValueError: For invalid domain, level, or audience.
+        """
+        self._validate_audience(audience)
+        if domain not in self.VALID_DOMAINS:
+            raise ValueError(f"domain must be one of {self.VALID_DOMAINS}, got '{domain}'")
+        if level not in self.VALID_FACET_LEVELS:
+            raise ValueError(f"level must be one of {self.VALID_FACET_LEVELS}, got '{level}'")
+        return _COLLECTIVE_SATISFACTION_NARRATIVES[domain][level][audience]
+
+    def generate_team_identification_narrative(
+        self,
+        level: str,
+        audience: str,
+    ) -> str:
+        """Generate narrative for team-identification level.
+
+        Reference: abc-assessment-spec Section 16.5
+
+        Args:
+            level: One of high, moderate, low, not_computed.
+            audience: athlete or coach.
+        """
+        self._validate_audience(audience)
+        if level not in self.VALID_FACET_LEVELS:
+            raise ValueError(f"level must be one of {self.VALID_FACET_LEVELS}, got '{level}'")
+        return _TEAM_IDENTIFICATION_NARRATIVES[level][audience]
+
+    def generate_empathic_risk_narrative(self, audience: str) -> str:
+        """Generate narrative for the empathic-risk flag.
+
+        Reference: abc-assessment-spec Section 16.5
+        """
+        self._validate_audience(audience)
+        return _EMPATHIC_RISK_NARRATIVES[audience]
+
+    def generate_team_dispersion_narrative(self, band: str) -> str:
+        """Generate coach-facing narrative for a team's dispersion band.
+
+        Reference: abc-assessment-spec Section 16.5
+
+        Args:
+            band: One of tight, moderate, high.
+
+        Returns:
+            Coach-facing string. This narrative has no athlete surface
+            because dispersion is a team-level view meant for the coach.
+        """
+        if band not in self.VALID_DISPERSION_BANDS:
+            raise ValueError(f"band must be one of {self.VALID_DISPERSION_BANDS}, got '{band}'")
+        return _TEAM_DISPERSION_NARRATIVES["coach"][band]
+
+    def generate_circumplex_facet_narrative(
+        self,
+        facet: str,
+        level: str,
+    ) -> str:
+        """Generate a coach-facing narrative for one circumplex facet.
+
+        Reference: abc-assessment-spec Section 16.3
+
+        Args:
+            facet: One of autonomy_support, structure, relatedness_support,
+                controlling, or chaos.
+            level: One of high, moderate, low, or not_computed.
+
+        Returns:
+            Plain-language coach-facing narrative string. Does not name
+            the internal facet label; uses the behavior content directly.
+
+        Raises:
+            ValueError: If facet or level is invalid.
+        """
+        if facet not in self.VALID_CIRCUMPLEX_FACETS:
+            raise ValueError(f"facet must be one of {self.VALID_CIRCUMPLEX_FACETS}, got '{facet}'")
+        if level not in self.VALID_FACET_LEVELS:
+            raise ValueError(f"level must be one of {self.VALID_FACET_LEVELS}, got '{level}'")
+        return _CIRCUMPLEX_FACET_NARRATIVES[facet][level]
+
+    def generate_circumplex_gap_narrative(
+        self,
+        facet: str,
+        direction: str,
+    ) -> str:
+        """Generate a coach-facing narrative for a flagged circumplex gap.
+
+        Reference: abc-assessment-spec Section 16.3
+
+        Fires only for flagged gaps (absolute gap > GAP_FLAG_THRESHOLD).
+        The "aligned" direction has no narrative because the no-gap case
+        does not need coaching feedback.
+
+        Args:
+            facet: One of autonomy_support, structure, relatedness_support,
+                controlling, or chaos.
+            direction: One of coach_higher, athlete_higher.
+
+        Returns:
+            Plain-language coach-facing narrative string.
+
+        Raises:
+            ValueError: If facet or direction is invalid.
+        """
+        if facet not in self.VALID_CIRCUMPLEX_FACETS:
+            raise ValueError(f"facet must be one of {self.VALID_CIRCUMPLEX_FACETS}, got '{facet}'")
+        if direction not in self.VALID_GAP_DIRECTIONS:
+            raise ValueError(
+                f"direction must be one of {self.VALID_GAP_DIRECTIONS}, got '{direction}'"
+            )
+        return _CIRCUMPLEX_GAP_NARRATIVES[facet][direction]
+
+    def generate_circumplex_approach_narrative(self, approach: str) -> str:
+        """Generate a coach-facing summary narrative for the dominant approach.
+
+        Reference: abc-assessment-spec Section 16.3
+
+        Args:
+            approach: One of supportive, mixed, under-structured,
+                thwarting, or not_computed.
+
+        Returns:
+            Plain-language coach-facing narrative string.
+
+        Raises:
+            ValueError: If approach is invalid.
+        """
+        if approach not in self.VALID_DOMINANT_APPROACHES:
+            raise ValueError(
+                f"approach must be one of {self.VALID_DOMINANT_APPROACHES}, got '{approach}'"
+            )
+        return _CIRCUMPLEX_APPROACH_NARRATIVES[approach]
+
+    def generate_overinvestment_narrative(self, path: str, audience: str) -> str:
+        """Generate narrative text for an overinvestment trigger path.
+
+        Reference: abc-assessment-spec Section 16.2
+        Reference: abc-assessment-spec Section 17.7
+
+        Args:
+            path: One of harmonious, obsessive, mixed, insufficient_evidence,
+                or not_triggered. Comes from overinvestment_trigger.path.
+            audience: "athlete" or "coach".
+
+        Returns:
+            Plain-language narrative string. Names a specific action or
+            next step; never exposes the underlying construct.
+
+        Raises:
+            ValueError: If path or audience is invalid.
+        """
+        self._validate_audience(audience)
+        if path not in self.VALID_OVERINVESTMENT_PATHS:
+            raise ValueError(f"path must be one of {self.VALID_OVERINVESTMENT_PATHS}, got '{path}'")
+        return _OVERINVESTMENT_NARRATIVES[path][audience]

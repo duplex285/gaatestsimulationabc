@@ -1395,4 +1395,348 @@ Every improvement follows the same Bayesian logic:
 4. **Generate narrative from the posterior.** Not from the raw score. The narrative reflects what we know, what we do not know, and how confidence has changed.
 5. **Repeat.** The posterior from this measurement becomes the prior for the next.
 
+---
+
+## 16. SDT Mini-Theory Extensions
+
+**Date added:** 2026-04-20
+**Source:** Oxford Handbook of Self-Determination Theory (Ryan & Deci, eds., 2023), chapters 3, 5, 11, 17, 18, 19, 22, 25, 34, 45, 53.
+
+### Status snapshot (last updated 2026-04-22)
+
+**Session summary:** Six measurement slices delivered (16.1, 16.2, 16.3, 16.5, 16.6, 16.7 per-cycle plus trajectory engine), full Section 17 output infrastructure stood up, six cross-cutting integrations completed including the stateful `GoalTrajectoryTracker` wired into `EnhancedABCScorer`. Ten new production modules, six session retrospectives, one SME review packet covering 102 rendered templates across ten template families. Full Python test suite at 741 passing, 4 pre-existing xfailed, zero failing. One hundred percent line and branch coverage on every new module.
+
+#### Section 16 measurement extensions
+
+| Section | Extension | Status | Artifacts |
+|---------|-----------|--------|-----------|
+| 16.1 | Regulatory-style layer (OIT) | **Done** | `regulatory_style.py` (217 lines), `regulation_erosion.py` (133 lines), items draft, retro, 43 tests at 100% branch coverage |
+| 16.2 | Passion quality replacing overinvestment rule | **Done** | `passion_quality.py` (217 lines), `overinvestment_trigger.py` (230 lines), items draft, retro, 44 tests at 100% branch coverage |
+| 16.3 | Coach-facing circumplex instrument | **Done** | `coach_circumplex.py` (370 lines), 24 items, dual-rater, gap analysis, gap-direction narratives (10 templates), items draft, retro, 38 tests at 100% branch coverage |
+| 16.4 | Bifactor S-1 plus ESEM promotion | **Open (deferred, analytic)** | ESEM already exists in `factor_models.py`; S-1 spec and cohort analysis produce value only against Phase A data |
+| 16.5 | Group-conscious team measurement | **Done** | `group_conscious.py` (308 lines), 5 items, empathic-risk flag, team dispersion metric, items draft, retro, 43 tests at 100% branch coverage |
+| 16.6 | Causality Orientations stratifier | **Done (measurement layer; stratification deferred)** | `causality_orientations.py`, 12 items, annual cadence, dominant + mixed + emergent classification, retro, 29 tests at 100% branch coverage. Stratification of other signals by orientation deferred to Phase A. |
+| 16.7 (goal self-concordance) | Biweekly self-concordance prompt + per-goal trajectory engine | **Done** | `self_concordance.py` (per-cycle scoring), `self_concordance_trajectory.py` (OLS slope, magnitude, SD, five-band classifier), 18 templates total, 53 tests at 100% branch coverage. Stateful goal tracker remains open as a small follow-up. |
+| 16.7 (authentic inner compass) | AIC pilot items | **Open (deferred to Phase B)** | Pilot decision |
+| 16.7 (state-level post-session) | Daily/session items | **Open** | Requires daily check-in integration in second-game repo |
+
+#### Section 17 output infrastructure
+
+| Section | Item | Status | Notes |
+|---------|------|--------|-------|
+| 17.1 | Two-layer architecture (inference vs expression) | **Done** | Enforced by banned-terms tests and readability CI |
+| 17.2 | Readability enforcement in CI | **Done** | `test_readability.py` uses `textstat`; caught three coach templates above Grade 10 during the session and surfaced them for rewrite |
+| 17.3 | Banned-term list as authoritative module | **Done** | `src/python_scoring/banned_terms.py` (117 lines); all narrative tests import from it |
+| 17.4 | Translation-table entries for new constructs | **Done** | Inline in each layer's narrative templates |
+| 17.5 | Evidence gates on every new construct | **Done** | Display + recommendation gates on passion, regulatory, overinvestment, circumplex, group-conscious |
+| 17.6 | Archetype output standard | **Unchanged** | Existing 8-archetype catalog still ships |
+| 17.7 | Recommendation output standard | **Done** | Overinvestment and erosion paths fire action-first recommendations |
+| 17.9 | SME review of new templates | **In progress** | Packet at `docs/sme-review-packet-2026-04-20.md`, 20 sections covering 72 rendered templates across all five layers plus gap narratives; engagement pending |
+
+#### Cross-cutting integration work
+
+| Integration | Status | Notes |
+|-------------|--------|-------|
+| Optional item registry (`optional_items.py`) | **Done** | Four layers registered with cadence + respondent metadata: passion, regulatory, coach circumplex, group-conscious |
+| TransitionTracker + regulation erosion | **Done** | `record()` accepts optional regulatory profile; erosion domains attached to each entry and surfaced in `get_summary()` |
+| EnhancedABCScorer accepts passion, regulatory, group-conscious, causality, daily signals | **Done** | Five optional kwargs backward-compatible; narratives attached to result |
+| Circumplex gap-direction narratives | **Done** | 10 coach-facing templates, all under Grade 10 |
+| Import-time uniqueness guard in `optional_items.py` | **Done** | Fails fast if any future layer introduces a colliding item code |
+| SME packet covers all measurement layers | **Done** | 23 sections, 102 rendered templates across ten template families (passion, overinvestment, regulatory, erosion, circumplex facet/approach/gap, group-conscious, causality, self-concordance leanings, self-concordance trajectory); byte-aligned with production |
+| `GoalTrajectoryTracker` stateful tracking | **Done** | Accumulates per-goal points across scorer calls; `get_trajectory()` and `get_all_trajectories()` surface per-goal GoalTrajectory objects |
+| `EnhancedABCScorer` records and surfaces per-goal trajectories | **Done** | `self_concordance_goal_id` kwarg, automatic tracking, trajectory and narrative on result dict after three computable cycles |
+| Coach circumplex entry point into scoring pipeline | **Done** | `CoachCircumplexScorer` class with `score_coach_self`, `record_athlete_rating`, `current_profile`, `current_gap_analysis`, `current_report`; handles coach-only, athletes-only, dual-aligned, dual-flagged, and empty states; 14 tests at 100% branch coverage; retro at `20260422-coach-circumplex-scorer-retrospective.md`. All six optional measurement layers now have end-to-end integration. |
+
+#### Items blocked on external inputs
+
+- SME engagement: review packet is ready and byte-aligned with production code. Waits for a paid sport psychologist or certified mental performance consultant.
+- SME adjudication on the ordinal ranking of `amotivated` versus `introjected` in the regulation-erosion detector (one-page memo in Section 11 of the SME packet).
+- Phase A empirical calibration across all four layers: passion and regulatory thresholds, circumplex composites, group-conscious cutpoints, dispersion bands.
+- Phase A multilevel validation of Chapter 53's central claim for the group-conscious layer.
+- Phase F decision on the Big Five 5x12 augmented weight matrix.
+- Recovery-slope and cognitive-load thresholds (upstream in the second-game cognitive signal engine).
+
+#### Final session metrics
+
+| Metric | Value |
+|--------|-------|
+| New production modules | 10 (`passion_quality`, `regulatory_style`, `regulation_erosion`, `coach_circumplex`, `group_conscious`, `overinvestment_trigger`, `banned_terms`, `optional_items`, `causality_orientations`, `self_concordance`, `self_concordance_trajectory`) |
+| New production lines (src/python_scoring) | ~2,200 |
+| Session retrospectives | 6 (passion, regulatory, coach-circumplex, group-conscious, causality, self-concordance, plus self-concordance-trajectory) |
+| New items-draft documents | 6 (passion, regulatory-style, coach-circumplex, group-conscious, causality-orientations, self-concordance) |
+| SME review packet | `sme-review-packet-2026-04-20.md`, 23 sections, 102 templates rendered across ten template families |
+| Full test suite | 741 passed, 4 pre-existing xfailed, 0 failed |
+| Branch coverage on new modules | 100% across all ten new production modules |
+| Lint status | `ruff check` clean across `src/` and `tests/` |
+| Readability enforcement | Grade 8 athlete / Grade 10 coach; CI-enforced on every narrative template across all six layers and two trajectories |
+| Banned-term enforcement | Single authoritative list with import-time uniqueness guard on the item-code namespace; every narrative test imports from the shared module
+
+### 16.0 Why this section exists
+
+The current ABC architecture operationalizes one SDT mini-theory well: Basic Psychological Needs Theory, via the satisfaction/frustration split across Ambition, Belonging, and Craft. The Oxford Handbook identifies five additional mini-theories and several allied constructs that predict independent variance in athlete outcomes. Ignoring them leaves predictive signal on the table and limits the coach-facing product surface.
+
+This section specifies six priority extensions and four smaller additions. Each cites its chapter, states what the research establishes, and describes the concrete change to the ABC codebase or item bank.
+
+### 16.1 Regulatory-style layer (Organismic Integration Theory)
+
+**Research basis:** Organismic Integration Theory distinguishes qualitatively different reasons for pursuing an activity along a continuum: amotivation, external regulation, introjection, identification, integration, and intrinsic motivation (Pelletier & Rocchi, Ch. 3). These regulatory styles predict persistence, well-being, and burnout independently of need satisfaction levels. Sport-specific work (Standage, Ch. 34) shows introjection is a specific burnout precursor, while identified and integrated regulation predict different long-term outcomes.
+
+**What this changes:** ABC currently treats all domain-level satisfaction as equivalent in quality. Two athletes both Thriving on Ambition can be running on integrated regulation or on introjection, with divergent trajectories. The 36-type system anchors on dominant domain and Big Five trait, not on regulatory quality.
+
+**Implementation:**
+
+- Add two items per domain capturing motivational reasons. Example for Ambition: "I pursue my goals because they genuinely reflect who I am" (identified/integrated) and "I pursue my goals because I would feel bad if I did not" (introjection). Six new items total.
+- Produce a per-domain Relative Autonomy Index (RAI) as a derived score alongside satisfaction and frustration.
+- Add a `regulatory_style.py` module that maps item responses to a dominant regulatory style per domain.
+- Treat RAI as an input to transition classification: a shift from introjected to identified regulation is growth even if subscale means are flat.
+
+### 16.2 Replace overinvestment warning with passion quality (Dualistic Model of Passion)
+
+**Research basis:** Vallerand and Paquette (Ch. 19) establish the Dualistic Model of Passion: harmonious passion (autonomous internalization of an activity into identity) and obsessive passion (controlled internalization). Harmonious passion predicts flow, well-being, and task-focused coping under adversity. Obsessive passion predicts rigid persistence, rumination, conflict with other life domains, and burnout. The distinction names the exact pattern the current overinvestment rule chases heuristically.
+
+**What this changes:** The current overinvestment warning (`A_sat >= 7.0 AND C_sat >= 7.0 AND recovery_slope < 40 AND cognitive_load > 70`) is a heuristic built on cross-signal correlation. The DMP gives the mechanism a name and a validated measurement model. A harmonious-passion athlete with declining recovery needs rest and protection of training load. An obsessive-passion athlete with declining recovery needs a conversation about identity and life balance. The coach-facing intervention is different in each case.
+
+**Implementation:**
+
+- Add a brief passion measure (4-6 items total) asked quarterly, not biweekly. Example: "This sport is in harmony with the other activities in my life" (harmonious) vs "I have difficulty imagining my life without this sport" + "I cannot live without this sport" (obsessive).
+- Retain the current cross-signal rule as a trigger. When it fires, use the passion score to select the narrative frame and coach recommendation.
+- Vallerand and Lalande (2017) show obsessive passion develops when need satisfaction is high in one domain but frustrated elsewhere. Cross-reference passion score with Belonging frustration and with the athlete's externally reported life context if available.
+
+### 16.3 Coach-facing circumplex instrument
+
+**Research basis:** Aelterman et al. (Ch. 11) establish a data-driven circumplex of eight coaching approaches arranged by autonomy-support, structure, and need-thwarting control. Need-supportive and need-thwarting are not simple opposites on a single axis. Chapter 25 (Soenens & Vansteenkiste) catalogs domain-specific autonomy-supportive behaviors, with rationales and solicited-vs-unsolicited feedback emerging as the highest-leverage levers. Chapter 45 (Slemp et al.) documents that autonomy-support scales routinely confound all three needs; competence and relatedness support should be measured separately.
+
+**What this changes:** ABC currently infers the coaching environment from the athlete's "team context gap" (team-rated subscale score minus personal subscale score). This is an inference from an outcome, not a measurement of a behavior. A companion coach instrument closes the indirect-inference loop and opens a second commercial surface (coach development) that fits the stated product mission.
+
+**Implementation:**
+
+- Build a separate instrument, `abc-coach-circumplex`, with approximately 24 items spanning: autonomy-support (choice, rationales, perspective-taking), structure (clear expectations, competence-supportive feedback), relatedness-support (warmth, interest in the athlete as a person), controlling (pressure, contingent regard), chaos (inconsistency).
+- Administer to the coach as a self-assessment and, separately, to athletes as a coach-behavior rating. Compute the gap between the two.
+- Store in a new table `abc_coach_ratings` with columns for each facet, rater type, and target coach.
+- Correlate the coach circumplex profile with team-level ABC frustration to identify which facets drive athlete need thwarting. This analysis replaces the current context-gap flag as the coach-side diagnostic.
+- Price the coach instrument as a standalone product for coach-certification and coach-development programs. It is monetizable independent of team deployment.
+
+### 16.4 Factor model re-examination: bifactor S-1 plus ESEM
+
+**Research basis:** Howard (Ch. 22) documents the bifactor-model validity crisis: unconstrained bifactor models routinely produce statistically superior fit with substantively meaningless general factors. The recommended remedy is the bifactor S-1 specification, which anchors the general factor on a single reference construct. ESEM with target rotation handles the cross-loadings that CFA forces to zero.
+
+**What this changes:** Section 12.6 already prioritizes ESEM based on Grugan et al. (2024) for the ABQ. The current ABC bifactor result (omega-h = 0.246) should be re-examined through the S-1 lens before concluding the six-factor structure is clean. A weak general factor is not automatically a win for the correlated-factors model; it may indicate the general factor was never theoretically specified.
+
+**Implementation:**
+
+- Add a bifactor S-1 specification to `factor_models.py` alongside the existing bifactor. Anchor the S-1 general factor on a single reference construct (candidate: overall satisfaction across the three domains as a proxy for autonomous functioning).
+- Report bifactor S-1 results alongside the current bifactor and the correlated six-factor model in the validity argument.
+- Promote ESEM from Section 12.6 into Phase A as a hard gate, not an exploratory comparison. If ESEM fits materially better than CFA, ESEM becomes the primary model.
+
+### 16.5 Group-conscious team measurement
+
+**Research basis:** Chapter 53 (Thomaes et al.) argues that basic psychological needs operate at the group level, not only the individual level. Collective need satisfaction (the athlete's perception that teammates' needs are met) predicts well-being independently of personal need satisfaction. Kachanoff's work on collective autonomy shows that perceived restriction of the group's autonomy produces individual frustration even among personally autonomous members. Team identification moderates these effects.
+
+**What this changes:** The current `team_a_sat`, `team_b_sat`, etc. items measure the athlete's own experience in the team context. They do not measure the athlete's perception of teammates' experience. The context gap (team minus personal) is therefore an intrapersonal comparison, not a group-conscious one.
+
+**Implementation:**
+
+- Add three items to the biweekly instrument capturing perceived collective need satisfaction. Example: "The athletes on this team generally feel their goals matter to them."
+- Add two items measuring team identification. Example: "I see this team's success as my own."
+- Introduce a dispersion metric. For each team, compute the standard deviation of subscale scores across athletes. High dispersion is a risk marker even when the mean is healthy, because perceived inequality thwarts autonomy.
+- Multilevel model team-level frustration as a function of personal need satisfaction plus perceived collective need satisfaction plus team identification. The interaction terms carry the group-conscious signal.
+
+### 16.6 Causality Orientations as a stable stratifier
+
+**Research basis:** Causality Orientations Theory (Koestner, Ch. 5) identifies three relatively stable individual differences in how a person interprets need support and need thwarting: autonomy orientation, controlled orientation, and impersonal orientation. Orientation predicts susceptibility to controlling contexts and receptivity to autonomy-supportive interventions. Orientations are modifiable over long time horizons, not biweekly cadence.
+
+**What this changes:** ABC currently interprets a given frustration trajectory identically across athletes. A controlled-oriented athlete and an autonomy-oriented athlete experiencing the same trajectory have different prognoses and different optimal interventions.
+
+**Implementation:**
+
+- Administer a brief causality-orientation screen (15-20 items, GCOS-style) at onboarding and at annual intervals only. Not biweekly.
+- Store the three orientation scores per athlete.
+- Stratify trajectory interpretation by orientation. An autonomy-oriented athlete with a frustration slope of +0.4/period warrants a different narrative than a controlled-oriented athlete with the same slope.
+- Use orientation scores to personalize coach intervention recommendations. Controlled-oriented athletes benefit more from intensive autonomy-support coaching; autonomy-oriented athletes tolerate coaching style variation.
+
+### 16.7 Smaller additions
+
+| Addition | Research basis | Implementation |
+|----------|---------------|----------------|
+| **Goal self-concordance prompt** | Sheldon & Goffredi, Ch. 17 | One-minute prompt per biweekly cycle asking why the athlete is pursuing their current goal, scored on the Perceived Locus of Causality continuum. Self-concordance slope predicts attainment-plus-well-being better than subscale means. |
+| **Authentic Inner Compass items** | Assor, Benita & Geifman, Ch. 18 | Pilot 4-6 items tapping the phenomenal experience of acting on authentic preferences. Strongest fit to the stated product mission of lifelong athlete self-leadership. Run as an experimental layer before committing. |
+| **State-level post-session items** | Gagné et al., via Standage, Ch. 34 | Add 2-3 daily or post-session state items capturing momentary competence and autonomy. Multilevel models can partition within-person state variance from between-person trait variance, increasing sensitivity to acute fluctuations that biweekly aggregation smooths away. |
+| **Separate autonomy, competence, and relatedness support in the coach module** | Slemp et al., Ch. 45 | Ensure the coach circumplex instrument (16.3) produces three distinct support scores, not a composite. The autonomy-support construct alone routinely confounds all three. |
+
+### 16.8 Sequencing
+
+| Priority | Extension | Effort | Depends on | Target phase |
+|---------|-----------|--------|------------|--------------|
+| 1 | Regulatory-style layer (16.1) | Medium | Item review | Phase Two v2 item expansion |
+| 2 | Passion quality replacing overinvestment rule (16.2) | Low | Quarterly item block | Phase Two v2 |
+| 3 | Coach-facing circumplex (16.3) | High | New instrument, new schema | Ships parallel to athlete v2, not after |
+| 4 | Bifactor S-1 plus ESEM promotion (16.4) | Low | Existing factor module | Phase A pilot analysis |
+| 5 | Group-conscious team measurement (16.5) | Medium | Multi-athlete per team | Phase A where team coverage allows |
+| 6 | Causality Orientations stratifier (16.6) | Medium | One-time onboarding screen | Phase A onboarding |
+| 7 | Self-concordance prompt (16.7) | Low | Single cycle-level item | Phase A |
+| 8 | Authentic Inner Compass pilot (16.7) | Medium | Items, narrative voice review | Phase B |
+| 9 | State-level session items (16.7) | Medium | Daily check-in integration | Phase A or second-game integration |
+
+Items 1 through 3 are the highest-leverage additions and should ship together as ABC v2. Items 4 through 6 are Phase A analytic and onboarding changes. Items 7 through 9 are pilots or phase-B features.
+
+### 16.9 What this section does not change
+
+- The six-subscale satisfaction/frustration structure remains the core measurement model.
+- The 36-item core bank is preserved. Additions in 16.1, 16.2, 16.5, and 16.7 extend the bank; they do not replace it.
+- The 8-pattern archetype system and frustration-signature detection remain unchanged.
+- The Bayesian architecture from Section 15 applies to every new layer. Regulatory style, passion quality, collective need satisfaction, and causality orientation all become priors and posteriors that update with evidence, not point estimates.
+
+---
+
+## 17. Inference Rigor with Plain-Language Output
+
+**Principle:** The inference layer stays academically rigorous. The expression layer requires no psychology vocabulary. These are two different layers with different quality gates, and no technical construct from Sections 12 or 16 ever appears in an athlete- or coach-facing surface.
+
+An athlete or coach should never need to know what introjected regulation, harmonious passion, causality orientation, bifactor omega, configural invariance, or Mahalanobis distance mean to get value from ABC. The math runs on those constructs. The outputs do not.
+
+### 17.1 Two-layer architecture
+
+**Inference layer (academically rigorous, never exposed):**
+
+- All SDT mini-theories named in Section 16: BPNT, OIT, DMP, COT, GCT, RMT.
+- All estimators named in Section 13.5: WLSMV CFA, ESEM, bifactor S-1, graded-response IRT, EAP theta, RI-CLPM, multilevel models, latent growth curves, Mahalanobis screening, CUSUM changepoint.
+- Bayesian posteriors across constructs, with conjugate updating across measurements.
+- Every item-level, subscale-level, and factor-level statistic.
+
+**Expression layer (plain-language, audit-gated):**
+
+- Archetype names and descriptions (8 patterns).
+- Domain states (Thriving / Vulnerable / Mild / Distressed).
+- Narrative outputs from `narrative_engine.py`: identity descriptions, reflection prompts, coaching conversation starters, growth narratives, transition stories.
+- Coach alerts, athlete notifications, on-screen copy.
+- Recommendations and suggested actions.
+
+The boundary between the two layers is `narrative_engine.py` plus the archetype catalog. Nothing else produces user-facing language.
+
+### 17.2 Readability gates enforced in CI
+
+Automated checks run on every build. The build fails if thresholds are breached.
+
+| Audience | Metric | Threshold |
+|----------|--------|-----------|
+| Athlete-facing | Flesch-Kincaid Grade Level | ≤ 8 |
+| Athlete-facing | Share of sentences under 20 words | ≥ 85% |
+| Athlete-facing | Passive-voice share | ≤ 15% |
+| Coach-facing | Flesch-Kincaid Grade Level | ≤ 10 |
+| Coach-facing | Share of sentences under 25 words | ≥ 85% |
+| All surfaces | Banned-term appearances | 0 |
+
+Implementation: `textstat` for readability, a regex lint rule over `src/narrative/` and `outputs/site/` for banned terms.
+
+### 17.3 Banned-term list
+
+The following terms never appear in athlete- or coach-facing output. They remain in validation documents, academic reports, and internal analysis.
+
+**Psychometric internals:** bifactor, omega, alpha, CFI, TLI, RMSEA, SRMR, WLSMV, ESEM, CFA, EAP, SEM, measurement invariance, configural, metric, scalar, ICC, DIF, RCI, conditional SEM, Cronbach, McDonald.
+
+**Statistical internals:** Mahalanobis, CUSUM, RI-CLPM, CLPM, polychoric, Monte Carlo, likelihood, posterior, prior, Bayes factor, p-value, confidence interval, credibility interval, effect size, regression to the mean.
+
+**SDT jargon:** introjection, introjected, identified regulation, integrated regulation, amotivation, intrinsic motivation, extrinsic motivation, harmonious passion, obsessive passion, causality orientation, autonomy support, need thwarting, need frustration (as technical construct), self-concordance, authentic inner compass, relative autonomy index, BPNSFS, ABQ, SDT.
+
+**Measure names:** BPNSFS, ABQ, GCOS, BFI-2, PNSE, ESS, RAI, PLOC. Referenced only in validity documents.
+
+### 17.4 Translation table
+
+Each technical construct has one athlete-facing phrasing and one coach-facing phrasing. The narrative engine templates draw from this table. No template invents new language for a construct without adding the entry here first.
+
+| Internal construct | Athlete-facing | Coach-facing |
+|---|---|---|
+| Ambition satisfaction high | "You are pulling toward something that matters to you" | "Goal pursuit is engaged and meaningful" |
+| Ambition frustration high | "Your goals feel stuck or not your own" | "Goal pursuit feels blocked or externally imposed" |
+| Vulnerable state | "Good on the surface, pressure underneath" | "Visible performance is healthy; pressure is building under it" |
+| Introjected regulation dominant | "You are driven more by should than by want" | "Drive is guilt- or obligation-based" |
+| Identified regulation dominant | "You see why this matters to you" | "Drive is values-based" |
+| Integrated regulation dominant | "This is part of who you are" | "Drive is identity-aligned" |
+| Intrinsic motivation dominant | "You do this because you enjoy it" | "Drive is inherent in the activity" |
+| Harmonious passion | "You can step away from this and come back to it" | "Passion is flexible; the athlete can disengage without loss of self" |
+| Obsessive passion | "You find it hard to step away even when you want to" | "Passion is compulsive; the athlete cannot disengage without distress" |
+| Autonomy orientation high | "You tend to act from your own sense of direction" | "Athlete reads situations as opportunities for choice" |
+| Controlled orientation high | "You tend to respond to outside pressure" | "Athlete reads situations as demands" |
+| Impersonal orientation high | "Events can feel like they just happen to you" | "Athlete reads situations as beyond personal influence" |
+| Collective need satisfaction | "How your team feels, not only you" | "How the team as a whole is doing, not only this athlete" |
+| Collective autonomy frustration | "The team feels like decisions are made without them" | "Team-level autonomy is restricted" |
+| Self-concordance high | "This goal fits who you are" | "Goal is well-aligned with the athlete's values" |
+| Authentic inner compass | "Your own sense of what is true for you" | "Athlete's internal value structure is coherent" |
+| Posterior widening | "Too early to say, more check-ins will sharpen this" | "Insufficient evidence to classify; hold for more data" |
+| Posterior tightening | "This pattern is getting clearer over time" | "Classification confidence is rising across measurements" |
+
+### 17.5 Evidence gate before any construct drives output
+
+A construct passes two gates. The first determines whether it is displayed at all. The second determines whether it drives a recommendation or coach alert.
+
+| Metric | Display gate | Recommendation gate |
+|--------|--------------|---------------------|
+| Subscale reliability | ≥ 0.70 | ≥ 0.80 |
+| Score precision on 0-10 scale | SEM ≤ 1.5 | SEM ≤ 1.0 |
+| Classification posterior | ≥ 0.60 | ≥ 0.75 |
+| Construct recovery in simulation | r ≥ 0.70 | r ≥ 0.85 |
+| Minimum measurements | 1 | 3 for trait-level, 6 for state-level |
+
+Below the display gate: the construct is computed but suppressed from user surfaces. Between the two gates: the construct is shown with hedged language from the translation table ("too early to say, more check-ins will sharpen this") and does not trigger alerts. Above the recommendation gate: the construct drives specific prose and coach actions.
+
+This maps directly onto Section 15's Bayesian architecture. Uncertainty is expressed in language, not as a number.
+
+### 17.6 Archetype output standard
+
+The 8-pattern archetype catalog (referenced in Section 16.9 and maintained in `abc-typology.ts`) is user-facing language by construction. It must meet three tests:
+
+1. **Name test.** A reader with no psychology background can guess what the archetype is about from the name alone. "Mentor," "Pioneer," and "Artisan" pass. "Integrated Autonomous" would fail.
+2. **Description test.** The description runs under Grade 8, uses no banned terms, and names at least one concrete behavior the athlete would recognize in themselves.
+3. **Growth-edge test.** The stated growth edge is an action the athlete can take this week, not a trait description. "Notice when you are pushing through fatigue that you could rest through" passes. "Develop harmonious passion" fails.
+
+Every archetype entry ships with a coach-facing counterpart that can carry slightly more precision but still clears the coach-facing readability gate.
+
+### 17.7 Recommendation output standard
+
+Every recommendation produced by the system states:
+
+1. **What to try.** A behavior, a conversation, a question, a rest day. Specific enough to act on this week.
+2. **Why, in one line.** The link to the athlete's current state, in translation-table language.
+3. **What would change the picture.** The signal the next measurement would look for.
+
+No recommendation references the inference that produced it in technical terms. A coach sees the suggested action and the observable signal. The internal construct that fired the recommendation (for example, passion score leaning obsessive plus recovery slope declining) is logged in the audit trail, not shown.
+
+### 17.8 End-to-end translation example
+
+**Inference layer computes:**
+
+```
+{
+  "passion_posterior_obsessive": 0.72,
+  "passion_gate_passed": true,
+  "ambition_state": "thriving",
+  "belonging_state": "vulnerable",
+  "belonging_delta_14d": +0.8,
+  "recovery_slope_trend": "declining",
+  "confidence_band": "medium"
+}
+```
+
+**Athlete surface:**
+
+> Your drive in training is strong right now. Something in how you are connecting with the team has shifted in the past two weeks. A rest day this week is part of the plan, not a setback.
+
+**Coach surface:**
+
+> Jordan is pushing hard and their recovery is trending down. In the same window, their sense of belonging has dipped. Consider a one-to-one that is not about performance. Check whether Jordan feels they can step back from training without losing standing on the team.
+
+**Audit log (internal only):**
+
+> passion_obsessive(p=0.72, gate=rec) AND belonging_delta(+0.8, gate=display) AND recovery_slope(declining, 3d) -> template coach.overinvestment.obsessive.v2.
+
+No technical term appears in either user surface. The inference is fully traceable in the audit log.
+
+### 17.9 Subject-matter expert review gate
+
+Consistent with Section 0.1, no new narrative template reaches production without review by a qualified sport psychologist or certified mental performance consultant. The reviewer signs off on two things: tone and clinical appropriateness (prose quality) and construct fidelity (the prose correctly represents the inference). Both signatures are recorded in the template metadata.
+
+### 17.10 What this section hardens, what it does not soften
+
+This section hardens the boundary between inference and expression. It does not soften the math. Every estimator, every invariance test, every cross-lagged analysis in Sections 12, 13, and 16 remains. Statistical rigor is not a presentation concern. Accessibility is not an inference concern. The two live on opposite sides of `narrative_engine.py`, and both get their own quality gates.
+
 The athlete's profile is never finished. It is always updating. This is what makes it a personalization engine rather than a test.
