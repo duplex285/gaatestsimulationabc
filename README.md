@@ -6,7 +6,7 @@ Psychometric validation and simulation of the ABC assessment, a 36-item instrume
 
 A purpose-built psychometric instrument developed through AI-assisted research and iterative simulation. The simulation validates the scoring infrastructure on synthetic data before empirical deployment with real athletes. Every threshold, weight, and classification is documented for auditor review.
 
-**Status:** All simulation phases complete. 493+ tests passing, 0 failures. Empirical validation pending.
+**Status:** All simulation phases complete. 1,138 tests passing, 0 failures. Empirical validation pending.
 
 **External audit package.** A GitHub Pages site at `docs/index.md` contains the full audit package for external review by psychometricians and sport psychologists. Browse [docs/index.md](docs/index.md), [docs/audit-checklist.md](docs/audit-checklist.md), [docs/external-review-package.md](docs/external-review-package.md), [docs/methods-audit.md](docs/methods-audit.md), [docs/howard-2024-implementation-plan.md](docs/howard-2024-implementation-plan.md). Once enabled, the site will be live at https://duplex285.github.io/gaatestsimulationabc/.
 
@@ -21,6 +21,7 @@ A purpose-built psychometric instrument developed through AI-assisted research a
 | Reverse-coded items | 12 (items 4 and 6 per subscale) |
 | Archetype types | 8 base patterns with continuous frustration |
 | Measurement tiers | 6 / 18 / 36 items |
+| Research tier | 93 items (36 core plus 57 Section 16 SDT items) |
 | Mean type stability | 90% (with 6 items per subscale) |
 
 ## Dashboard
@@ -37,6 +38,7 @@ Open `outputs/site/index.html` in a browser to run the interactive simulation. T
 - Stability analysis with boundary participant identification
 - Full methodology reference (14 sections, 27 numbered academic references)
 - Run computation log showing exact parameters and sample participants
+- Section 16 SDT mini-theory layers (Research tier): passion quality, regulatory style and erosion, goal self-concordance and trajectory, group-conscious team climate and dispersion, causality orientations, and coach circumplex with athlete-coach gap analysis
 
 ## Psychometric Engine
 
@@ -61,9 +63,9 @@ The `src/psychometric/` package (21 modules) provides gold standard methods:
 # Setup
 make setup
 
-# Run Python tests (493 tests)
-make test-python        # Original scoring pipeline (198 tests)
-make test-psychometric  # Psychometric engine (295 tests)
+# Run Python tests (1,138 tests)
+make test-python        # Scoring pipeline (755 tests)
+make test-psychometric  # Psychometric engine (383 tests)
 make validate-all       # Both
 
 # Run analysis scripts
@@ -79,8 +81,8 @@ python scripts/run_leading_indicator_analysis.py
 ```
 src/python_scoring/     # Production scoring engine (36-item pipeline)
 src/psychometric/       # Gold standard psychometric engine (21 modules)
-tests/python_tests/     # Scoring pipeline tests (198)
-tests/psychometric_tests/ # Psychometric engine tests (295)
+tests/python_tests/     # Scoring pipeline tests (755)
+tests/psychometric_tests/ # Psychometric engine tests (383)
 scripts/                # Analysis and validation scripts
 config/                 # IRT parameters, thresholds, correlation matrices, norms
 outputs/site/           # Interactive simulation dashboard
@@ -98,7 +100,8 @@ docs/                   # Specifications, plans, and validation documents
 | [abq-coach-integration-spec.md](docs/abq-coach-integration-spec.md) | ABQ and coach rating integration specification |
 | [prd-second-game-criterion-integration.md](docs/prd-second-game-criterion-integration.md) | PRD for platform integration |
 | [big-five-belbin-audit.md](docs/big-five-belbin-audit.md) | Big Five weight matrix and Belbin audit |
-| [abc-assessment-spec.md](docs/abc-assessment-spec.md) | Technical specification |
+| [abc-assessment-spec.md](docs/abc-assessment-spec.md) | Technical specification (includes Section 16 SDT mini-theory layers) |
+| [passion-items-draft.md](docs/passion-items-draft.md), [regulatory-style-items-draft.md](docs/regulatory-style-items-draft.md), [self-concordance-items-draft.md](docs/self-concordance-items-draft.md), [group-conscious-items-draft.md](docs/group-conscious-items-draft.md), [causality-orientations-items-draft.md](docs/causality-orientations-items-draft.md), [coach-circumplex-items-draft.md](docs/coach-circumplex-items-draft.md) | Section 16 item content for the six SDT mini-theory layers |
 | [white-paper-abc-simulator.md](docs/white-paper-abc-simulator.md) | Simulation methodology |
 
 ## Key Findings
