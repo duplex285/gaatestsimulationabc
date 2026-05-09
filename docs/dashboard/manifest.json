@@ -1,0 +1,23 @@
+{
+    "name": "ABC Assessment",
+    "short_name": "ABC",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#f8f9fa",
+    "theme_color": "#3A8FE8",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%233A8FE8'/%3E%3Cpolygon points='96,28 168,160 24,160' fill='none' stroke='white' stroke-width='8' stroke-linejoin='round'/%3E%3Ctext x='96' y='52' text-anchor='middle' fill='white' font-family='sans-serif' font-size='28' font-weight='bold'%3EA%3C/text%3E%3Ctext x='48' y='155' text-anchor='middle' fill='white' font-family='sans-serif' font-size='28' font-weight='bold'%3EB%3C/text%3E%3Ctext x='144' y='155' text-anchor='middle' fill='white' font-family='sans-serif' font-size='28' font-weight='bold'%3EC%3C/text%3E%3C/svg%3E",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='64' fill='%233A8FE8'/%3E%3Cpolygon points='256,72 448,428 64,428' fill='none' stroke='white' stroke-width='16' stroke-linejoin='round'/%3E%3Ctext x='256' y='140' text-anchor='middle' fill='white' font-family='sans-serif' font-size='72' font-weight='bold'%3EA%3C/text%3E%3Ctext x='128' y='416' text-anchor='middle' fill='white' font-family='sans-serif' font-size='72' font-weight='bold'%3EB%3C/text%3E%3Ctext x='384' y='416' text-anchor='middle' fill='white' font-family='sans-serif' font-size='72' font-weight='bold'%3EC%3C/text%3E%3C/svg%3E",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

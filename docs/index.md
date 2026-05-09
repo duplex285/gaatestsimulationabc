@@ -15,6 +15,8 @@ A 36-item self-report instrument grounded in Self-Determination Theory, designed
 
 **Last updated.** 2026-04-25 (Literature Review v2)
 
+**Interactive dashboard.** Try the [simulation dashboard](dashboard/) to take the assessment, review type results, and explore the six Section 16 SDT mini-theory layers (passion quality, regulatory style, self-concordance, group-conscious, causality orientations, coach circumplex).
+
 ---
 
 ## How to use this package
