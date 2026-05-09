@@ -3,12 +3,13 @@
  * Cache-first strategy for static assets; network fallback with dynamic caching.
  */
 
-var CACHE_NAME = 'abc-assessment-v2';
+var CACHE_NAME = 'abc-assessment-v3';
 
 var PRECACHE_URLS = [
     './',
     './index.html',
     './personalization.js',
+    './personalization-section-16.js',
     './submit-assessment-enhanced.js',
     './offline-storage.js',
     'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js',
