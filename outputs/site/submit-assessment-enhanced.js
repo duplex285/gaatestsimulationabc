@@ -269,6 +269,36 @@ function submitAssessmentEnhanced() {
         html += '</div></div>';
     }
 
+    // Section 16 optional layers (rendered when the research tier is taken
+    // or whenever the response set includes any layer's items).
+    if (window.ABCSection16) {
+        try {
+            var s16Scores = ABCSection16.scoreAllOptionalLayers(assessResponses, {
+                subscales: result.subscales,
+                goalText: window._currentGoalText || null,
+                goalId: window._currentGoalId || "current_goal",
+                regulatoryHistory: window._regulatoryHistory || [],
+                selfConcordanceHistory: window._selfConcordanceHistory || [],
+            });
+            var s16Html = ABCSection16.renderOptionalLayersHTML(s16Scores, audience);
+            if (s16Html) html += s16Html;
+            window._lastSection16Scores = s16Scores;
+            // Persist regulatory + self-concordance history for trajectory in future runs
+            if (s16Scores.regulatory) {
+                window._regulatoryHistory = (window._regulatoryHistory || []).concat([s16Scores.regulatory]);
+            }
+            if (s16Scores.selfConcordance && s16Scores.selfConcordance.display_gate_passed) {
+                window._selfConcordanceHistory = (window._selfConcordanceHistory || []).concat([{
+                    goal_id: window._currentGoalId || "current_goal",
+                    cycle_index: (window._selfConcordanceHistory || []).length,
+                    profile: s16Scores.selfConcordance,
+                }]);
+            }
+        } catch (s16Err) {
+            console.error("Section 16 render failed:", s16Err);
+        }
+    }
+
     // Measurement disclosure (always shown)
     html += `<div class="measurement-disclosure">${disclosure}</div>`;
 
