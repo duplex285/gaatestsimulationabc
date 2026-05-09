@@ -187,6 +187,15 @@ const ABCSection16 = (function () {
     return Math.sqrt(ss / (xs.length - 1));
   }
 
+  // Banker's rounding (round half to even), matching Python 3's built-in round().
+  function _roundHalfToEven(x) {
+    var floor = Math.floor(x);
+    var diff = x - floor;
+    if (diff < 0.5) return floor;
+    if (diff > 0.5) return floor + 1;
+    return floor % 2 === 0 ? floor : floor + 1;
+  }
+
   function _present(responses, codes) {
     var out = [];
     for (var i = 0; i < codes.length; i++) {
@@ -251,18 +260,16 @@ const ABCSection16 = (function () {
     else if (balance !== null && balance <= -PASSION.BALANCE_LEANING_THRESHOLD && opElev) leaning = "obsessive";
     else leaning = "insufficient_signal";
 
+    var allAnswered = itemsAnswered === PASSION.MIN_ITEMS_FOR_RECOMMENDATION;
+    var decisiveLeaning = ["harmonious","obsessive","mixed","uninvested"].indexOf(leaning) >= 0;
     var recPass = false;
     var gateReason = "";
-    if (itemsAnswered === PASSION.MIN_ITEMS_FOR_RECOMMENDATION &&
-        ["harmonious","obsessive","mixed","uninvested"].indexOf(leaning) >= 0) {
-      if (Math.abs(balance) < PASSION.BALANCE_AMBIGUOUS_THRESHOLD) {
-        recPass = false;
-        gateReason = "pattern still forming; balance close to zero";
-      } else {
-        recPass = true;
-        gateReason = "";
-      }
-    } else if (itemsAnswered < PASSION.MIN_ITEMS_FOR_RECOMMENDATION) {
+    if (allAnswered && decisiveLeaning) {
+      recPass = true;
+      gateReason = "recommendation gate passed";
+    } else if (allAnswered && balance !== null && Math.abs(balance) < PASSION.BALANCE_AMBIGUOUS_THRESHOLD) {
+      gateReason = "pattern still forming; balance close to zero";
+    } else if (!allAnswered) {
       gateReason = itemsAnswered + " of 6 items answered; recommendation gate requires all six";
     } else {
       gateReason = "leaning not strong enough to drive recommendation";
@@ -314,22 +321,24 @@ const ABCSection16 = (function () {
 
     if (!shouldEscalate) {
       triggered = false; path = "not_triggered"; recommendation = null;
-      rationale = abcPattern ? "thriving pattern present but daily signals do not concern" : "fewer than two thriving domains";
+      rationale = !abcPattern
+        ? "no overinvestment pattern; fewer than two domains thriving"
+        : "two or more domains thriving, recovery signals clear";
     } else if (!passion.recommendation_gate_passed) {
       triggered = true; path = "insufficient_evidence"; recommendation = "watch";
-      rationale = "thriving + concern present but passion data insufficient";
+      rationale = "overinvestment pattern present but passion leaning is unclear: " + passion.gate_reason;
     } else if (passion.leaning === "harmonious") {
       triggered = true; path = "harmonious"; recommendation = "protect_recovery";
-      rationale = "thriving + concern + harmonious passion: protect recovery, do not restrict engagement";
+      rationale = "thriving pattern with harmonious leaning; protect recovery without reducing engagement";
     } else if (passion.leaning === "obsessive") {
       triggered = true; path = "obsessive"; recommendation = "identity_conversation";
-      rationale = "thriving + concern + obsessive passion: identity-level conversation";
+      rationale = "thriving pattern with obsessive leaning; check for identity capture and conflict with other life domains";
     } else if (passion.leaning === "mixed") {
       triggered = true; path = "mixed"; recommendation = "check_conflict";
-      rationale = "thriving + concern + mixed passion: check underlying conflict";
+      rationale = "thriving pattern with both harmonious and obsessive elevated; intensity is real, check for underlying conflict";
     } else {
       triggered = true; path = "insufficient_evidence"; recommendation = "watch";
-      rationale = "thriving + concern but passion leaning unclear";
+      rationale = "thriving pattern present but passion leaning is " + passion.leaning;
     }
 
     return {
@@ -354,18 +363,21 @@ const ABCSection16 = (function () {
   };
 
   function _scoreDomainRegulation(responses, autoCode, ctrlCode) {
-    var autoR = responses[autoCode];
-    var ctrlR = responses[ctrlCode];
-    if (autoR === undefined || ctrlR === undefined) {
+    var autoPresent = responses[autoCode] !== undefined && responses[autoCode] !== null;
+    var ctrlPresent = responses[ctrlCode] !== undefined && responses[ctrlCode] !== null;
+    if (!autoPresent || !ctrlPresent) {
+      var missing = [];
+      if (!autoPresent) missing.push(autoCode);
+      if (!ctrlPresent) missing.push(ctrlCode);
       return {
         autonomous_score: null, controlled_score: null, rai: null,
         style: "not_computed",
         display_gate_passed: false, recommendation_gate_passed: false,
-        gate_reason: "missing item(s) for this domain",
+        gate_reason: "missing item(s): " + missing.join(", "),
       };
     }
-    var autoS = normalize10(autoR);
-    var ctrlS = normalize10(ctrlR);
+    var autoS = normalize10(responses[autoCode]);
+    var ctrlS = normalize10(responses[ctrlCode]);
     var rai = autoS - ctrlS;
 
     var autoElev = autoS >= REGULATORY.STYLE_ELEVATED_THRESHOLD;
@@ -379,7 +391,7 @@ const ABCSection16 = (function () {
     var autoMargin = Math.abs(autoS - REGULATORY.STYLE_ELEVATED_THRESHOLD);
     var ctrlMargin = Math.abs(ctrlS - REGULATORY.STYLE_ELEVATED_THRESHOLD);
     var recPass = (autoMargin >= REGULATORY.STYLE_AMBIGUOUS_MARGIN && ctrlMargin >= REGULATORY.STYLE_AMBIGUOUS_MARGIN);
-    var reason = recPass ? "" : "one or both scores too close to the style boundary";
+    var reason = recPass ? "recommendation gate passed" : "one or both scores too close to the style boundary";
 
     return {
       autonomous_score: autoS, controlled_score: ctrlS, rai: rai, style: style,
@@ -458,7 +470,9 @@ const ABCSection16 = (function () {
         self_concordance: null, leaning: "not_computed",
         items_answered: itemsAnswered,
         display_gate_passed: false, recommendation_gate_passed: false,
-        gate_reason: "need at least 3 of 4 items with one from each subscale",
+        gate_reason: "need at least " + SC.DISPLAY_MIN_TOTAL +
+          " items with both subscales represented; got " + itemsAnswered +
+          " total, autonomous=" + auto.length + ", controlled=" + ctrl.length,
         goal_text: goalText || null,
       };
     }
@@ -471,12 +485,13 @@ const ABCSection16 = (function () {
     else if (sc <= -SC.LEANING_THRESHOLD && ctrlS >= SC.ELEVATED_THRESHOLD) leaning = "controlled";
     else leaning = "mixed";
 
-    var recPass = (itemsAnswered === SC.ALL_ITEMS.length) && (leaning === "autonomous" || leaning === "controlled");
-    var reason = "";
-    if (!recPass) {
-      if (itemsAnswered < SC.ALL_ITEMS.length) reason = itemsAnswered + " of 4 items answered; recommendation gate requires all four";
-      else reason = "all items answered but no clear autonomous or controlled lean";
-    }
+    var allAnsweredSC = itemsAnswered === SC.ALL_ITEMS.length;
+    var clearLeaning = leaning === "autonomous" || leaning === "controlled";
+    var recPass = allAnsweredSC && clearLeaning;
+    var reason;
+    if (recPass) reason = "recommendation gate passed";
+    else if (!allAnsweredSC) reason = itemsAnswered + " of 4 items answered; recommendation gate requires all four";
+    else reason = "all items answered but no clear autonomous or controlled lean";
 
     return {
       autonomous_score: autoS, controlled_score: ctrlS,
@@ -578,14 +593,14 @@ const ABCSection16 = (function () {
       var dom = doms[i];
       var code = GC.COLLECTIVE[dom];
       var raw = responses[code];
-      if (raw === undefined) {
+      if (raw === undefined || raw === null) {
         collective[dom] = { domain: dom, score: null, level: "not_computed",
           display_gate_passed: false, recommendation_gate_passed: false,
-          gate_reason: code + " not answered" };
+          gate_reason: "missing item " + code };
       } else {
         var s = normalize10(raw);
         collective[dom] = { domain: dom, score: s, level: _level(s),
-          display_gate_passed: true, recommendation_gate_passed: true, gate_reason: "" };
+          display_gate_passed: true, recommendation_gate_passed: true, gate_reason: "ok" };
         answered++;
       }
     }
@@ -594,12 +609,13 @@ const ABCSection16 = (function () {
     if (tiPresent.length === 0) {
       ti = { score: null, level: "not_computed", items_answered: 0,
         display_gate_passed: false, recommendation_gate_passed: false,
-        gate_reason: "no team-identification items answered" };
+        gate_reason: "no team identification items answered" };
     } else {
       var tiScore = normalize10(_mean(tiPresent));
+      var tiRecPass = tiPresent.length === GC.TI_ITEMS.length;
       ti = { score: tiScore, level: _level(tiScore), items_answered: tiPresent.length,
-        display_gate_passed: true, recommendation_gate_passed: tiPresent.length === 2,
-        gate_reason: tiPresent.length === 2 ? "" : "only one of two team-identification items answered" };
+        display_gate_passed: true, recommendation_gate_passed: tiRecPass,
+        gate_reason: tiRecPass ? "recommendation gate passed" : "only one of two team-identification items answered" };
     }
     answered += tiPresent.length;
 
@@ -630,7 +646,7 @@ const ABCSection16 = (function () {
     if (n < GC.DISPERSION_MIN_ATHLETES) {
       return { team_size: n, subscale_sds: {}, subscale_bands: {},
         high_dispersion_subscales: [], computed: false,
-        reason: "fewer than 3 athletes; dispersion requires at least 3 to be informative" };
+        reason: "fewer than " + GC.DISPERSION_MIN_ATHLETES + " athletes; dispersion not computed" };
     }
     var keys = ["a_sat","a_frust","b_sat","b_frust","c_sat","c_frust"];
     var sds = {}, bands = {}, highDisp = [];
@@ -646,7 +662,7 @@ const ABCSection16 = (function () {
       }
     }
     return { team_size: n, subscale_sds: sds, subscale_bands: bands,
-      high_dispersion_subscales: highDisp, computed: true, reason: "" };
+      high_dispersion_subscales: highDisp, computed: true, reason: "dispersion computed" };
   }
 
   // ===========================================================================
@@ -692,17 +708,19 @@ const ABCSection16 = (function () {
         autonomy_score: null, controlled_score: null, impersonal_score: null,
         dominant: "not_computed", items_answered: totalAnswered,
         display_gate_passed: false, recommendation_gate_passed: false,
-        gate_reason: "need >=8 total and >=2 per subscale (got " + totalAnswered + " total, min " + minPer + " per subscale)",
+        gate_reason: "need at least " + CAUS.DISPLAY_MIN_TOTAL + " items total and " +
+          CAUS.DISPLAY_MIN_PER_SUBSCALE + " per subscale; got " + totalAnswered +
+          " total and min-per-subscale " + minPer,
       };
     }
     var dominant = _classifyDominantOrientation(subs.autonomy, subs.controlled, subs.impersonal);
-    var recPass = (totalAnswered === CAUS.TOTAL_ITEM_COUNT) &&
-                  (dominant === "autonomy" || dominant === "controlled" || dominant === "impersonal");
-    var reason = "";
-    if (!recPass) {
-      if (totalAnswered < CAUS.TOTAL_ITEM_COUNT) reason = totalAnswered + " of 12 items answered; recommendation gate requires all twelve";
-      else reason = "all items answered but no single orientation clearly dominant";
-    }
+    var allAnsweredCO = totalAnswered === CAUS.TOTAL_ITEM_COUNT;
+    var clearDominant = dominant === "autonomy" || dominant === "controlled" || dominant === "impersonal";
+    var recPass = allAnsweredCO && clearDominant;
+    var reason;
+    if (recPass) reason = "recommendation gate passed";
+    else if (!allAnsweredCO) reason = totalAnswered + " of " + CAUS.TOTAL_ITEM_COUNT + " items answered; recommendation gate requires all twelve";
+    else reason = "all items answered but no single orientation clearly dominant";
     return {
       autonomy_score: subs.autonomy, controlled_score: subs.controlled, impersonal_score: subs.impersonal,
       dominant: dominant, items_answered: totalAnswered,
@@ -750,13 +768,14 @@ const ABCSection16 = (function () {
     if (present.length < CIRCUMPLEX.DISPLAY_MIN_ITEMS_PER_FACET) {
       return { score: null, items_answered: present.length, level: "not_computed",
         display_gate_passed: false, recommendation_gate_passed: false,
-        gate_reason: present.length + " of " + codes.length + " items answered; need at least " + CIRCUMPLEX.DISPLAY_MIN_ITEMS_PER_FACET };
+        gate_reason: "fewer than " + CIRCUMPLEX.DISPLAY_MIN_ITEMS_PER_FACET + " items answered for facet '" + facetName + "'" };
     }
     var s = normalize10(_mean(present));
+    var recPass = present.length === codes.length;
     return { score: s, items_answered: present.length, level: _facetLevel(facetName, s),
       display_gate_passed: true,
-      recommendation_gate_passed: present.length === codes.length,
-      gate_reason: present.length === codes.length ? "" : present.length + " of " + codes.length + " items answered; full facet needed" };
+      recommendation_gate_passed: recPass,
+      gate_reason: recPass ? "recommendation gate passed" : present.length + " of " + codes.length + " items answered; full facet needed" };
   }
 
   function _classifyDominantApproach(supportive, thwarting) {
@@ -808,7 +827,7 @@ const ABCSection16 = (function () {
       var code = allCodes[c2];
       var values = [];
       for (var v = 0; v < valid.length; v++) if (valid[v][code] !== undefined) values.push(valid[v][code]);
-      if (values.length) aggregated[code] = Math.round(_mean(values));
+      if (values.length) aggregated[code] = _roundHalfToEven(_mean(values));
     }
     return scoreCircumplex(aggregated, "athlete_of_coach");
   }
@@ -969,15 +988,15 @@ const ABCSection16 = (function () {
       not_computed: { athlete: "Not enough check-in data on the team climate for this.", coach: "Insufficient data for this team climate signal." },
     },
     belonging: {
-      high: { athlete: "You see your teammates connected to each other. That reads as a healthy team climate for connection.", coach: "The athlete perceives their teammates as connected to each other. The team climate for connection is reading as healthy." },
-      moderate: { athlete: "Your teammates connect with each other some of the time. Mixed picture.", coach: "The athlete's read of teammate connection is mixed. Watch for which subgroups carry the signal." },
-      low: { athlete: "You are not seeing your teammates connecting with each other right now. That is worth noticing, even if your own bonds are strong.", coach: "The athlete perceives teammates as disconnected from each other. Team climate for connection is a concern." },
+      high: { athlete: "You notice your teammates feeling connected to each other. That is a strong team climate for belonging.", coach: "The athlete perceives teammates as connected to each other. The team climate for belonging reads as healthy." },
+      moderate: { athlete: "Your teammates seem connected to each other some of the time. Not a full picture yet.", coach: "The athlete's read of team connection is mixed. Could be fault lines inside the group." },
+      low: { athlete: "You are not seeing strong connection among your teammates right now. That matters even if your own relationships are fine.", coach: "The athlete perceives teammates as disconnected from each other. Team climate for belonging is a concern." },
       not_computed: { athlete: "Not enough check-in data on the team climate for this.", coach: "Insufficient data for this team climate signal." },
     },
     craft: {
-      high: { athlete: "You see your teammates growing in their skills. That reads as a healthy team climate for development.", coach: "The athlete perceives their teammates as growing in their skills. The team climate for development is reading as healthy." },
-      moderate: { athlete: "Your teammates grow in their skills some of the time. Mixed picture.", coach: "The athlete's read of teammate skill development is mixed. Watch for which positions carry the signal." },
-      low: { athlete: "You are not seeing your teammates growing in their skills right now. That is worth noticing, even if your own development is strong.", coach: "The athlete perceives teammates as stuck in their development. Team climate for craft is a concern." },
+      high: { athlete: "You see your teammates growing in their skills. That reads as a healthy team climate for craft.", coach: "The athlete perceives teammates as developing. The team climate for skill growth reads as healthy." },
+      moderate: { athlete: "Some of your teammates seem to be growing, others less so. Mixed picture on skill development.", coach: "The athlete's read of team skill development is mixed. Worth looking at which athletes feel stuck." },
+      low: { athlete: "You are not seeing your teammates growing right now. Team climate for skill development is worth naming.", coach: "The athlete perceives teammates as stuck on skill development. Team climate for craft is a concern." },
       not_computed: { athlete: "Not enough check-in data on the team climate for this.", coach: "Insufficient data for this team climate signal." },
     },
   };
@@ -1012,28 +1031,28 @@ const ABCSection16 = (function () {
       not_computed: "Not enough responses to read autonomy-support. Come back once the circumplex has more data.",
     },
     structure: {
-      high: "Your athletes see you setting up sessions with clear goals, giving specific feedback, and following through. Keep this. Watch for the day when a strong template starts to feel like a script.",
-      moderate: "Structure shows up some of the time: a clear plan, specific feedback, follow-through. Tighten one piece this week. Pick whichever is weakest.",
-      low: "Your athletes are not experiencing a clear structure around sessions. The skill is there; the framing is the gap. Start each session next week with one sentence on the goal of the drill.",
+      high: "Your athletes know what to expect from you. Expectations are clear, feedback is specific, and you follow through. The next edge is noticing when you push through a plan that is not working instead of adjusting it.",
+      moderate: "Your structure is present but not consistent. One lever that usually moves this: make the goal of each session explicit in the first two minutes, every session, for a month.",
+      low: "Your athletes are not getting clear expectations or specific feedback from you. Two habits usually fix this. State the goal of the session at the start. Name one specific thing in feedback, not a general judgment.",
       not_computed: "Not enough responses to read structure. Come back once the circumplex has more data.",
     },
     relatedness_support: {
-      high: "Your athletes feel known by you. They experience warmth and interest in them as people, not just as performers. Keep this. It is the foundation everything else rests on.",
-      moderate: "Warmth and personal interest show up some of the time. Pick one athlete this week and ask about something outside of sport you have not asked about before.",
-      low: "Your athletes do not feel particularly known by you outside of their performance. The action is small and direct: one non-performance conversation per athlete per week.",
+      high: "Your athletes feel you care about them as people, not just as performers. That matters more than most coaches think. Protect it by guarding against days when you cut short the non-sport conversations.",
+      moderate: "You show warmth sometimes and other times you stay on sport-only mode. Pick two athletes this week and ask each one something specific about their life outside sport.",
+      low: "Your athletes are not experiencing you as someone who notices them beyond their performance. The fix is small and concrete: one non-sport question per athlete, one time per week, consistently.",
       not_computed: "Not enough responses to read relatedness-support. Come back once the circumplex has more data.",
     },
     controlling: {
-      high: "Your athletes experience pressure tactics from you on a regular basis. This is the most actionable signal in the profile. Pick the single most frequent tactic and replace it with a question.",
-      moderate: "Pressure tactics show up some of the time. Notice the moments. They cluster around frustration or under time pressure. Catching one a week is the move.",
-      low: "Your athletes are not experiencing significant pressure tactics from you. Keep the standards high; the way you push is landing as challenge, not coercion.",
-      not_computed: "Not enough responses to read controlling. Come back once the circumplex has more data.",
+      high: "Your athletes report pressure tactics from you: guilt, warmth withdrawal after a bad performance, or unfavorable comparisons. These tactics often work short-term and cost trust long-term. Pick one to catch yourself on this week.",
+      moderate: "Controlling moments are showing up in your coaching. Not your whole style, more like episodes. Notice the trigger. Is it one athlete, one moment in the week, or one kind of pressure you are under?",
+      low: "You are not showing much controlling behavior. Keep it that way when the season gets harder; this is the place pressure tactics tend to show up first.",
+      not_computed: "Not enough responses to read controlling behavior. Come back once the circumplex has more data.",
     },
     chaos: {
-      high: "Your athletes experience inconsistency from you: plans that change without warning, follow-through that drops, different reactions to the same behavior on different days. Pick the most visible one and tighten it.",
-      moderate: "Some inconsistency shows up: plans, follow-through, or reactions. Notice when. It usually clusters around your own load. Naming the day rather than the athlete tends to help.",
-      low: "Your athletes experience you as consistent: plans hold, follow-through happens, your reactions are predictable. That predictability is doing real work for them.",
-      not_computed: "Not enough responses to read chaos. Come back once the circumplex has more data.",
+      high: "Your athletes report inconsistency: changing plans without warning, dropped commitments, or reactions that shift day to day. This wears trust down quickly. Write down the next three commitments you make to an athlete and check you kept them.",
+      moderate: "Chaos is showing up in patches. Often the source is one context: late-week practices, post-travel, high-stress weeks. Identify the pattern before trying to solve it.",
+      low: "Your athletes experience you as consistent. That is a real strength that many coaches underestimate. Keep it.",
+      not_computed: "Not enough responses to read consistency. Come back once the circumplex has more data.",
     },
   };
 
@@ -1044,20 +1063,20 @@ const ABCSection16 = (function () {
       athlete_higher: "Your athletes read more choice and explanation from you than you give yourself credit for. That is a hidden strength. Protect the habits that are producing it.",
     },
     structure: {
-      coach_higher: "You see your sessions as more structured than your athletes are reading. Often the structure is in your head but not in their experience. Name the goal of each drill out loud at the start.",
-      athlete_higher: "Your athletes experience more structure from you than you credit yourself with. Trust the system you have built; do not add layers reactively.",
+      coach_higher: "You see your expectations and feedback as clearer than they are landing for athletes. The fix is usually repetition: state the goal at the start, name one specific piece of feedback each time.",
+      athlete_higher: "Your athletes experience more clarity and follow-through from you than you are giving yourself credit for. Keep it.",
     },
     relatedness_support: {
-      coach_higher: "You see yourself as warmer and more interested in athletes as people than they read. The work is to make warmth visible: name what you appreciate, ask about something specific they told you before.",
-      athlete_higher: "Your athletes experience more warmth and personal interest from you than you credit yourself with. The relational base is solid. Keep small.",
+      coach_higher: "You believe you are showing more care and interest in your athletes as people than they are feeling from you. This often closes with small signals: one non-sport question per athlete per week, consistently.",
+      athlete_higher: "Your athletes feel you care about them as people more than you realize. That is real trust. Keep investing in the small signals that are building it.",
     },
     controlling: {
-      coach_higher: "You read yourself as more controlling than your athletes do. They are not experiencing the pressure you are worried about. Loosen the worry, not the standards.",
-      athlete_higher: "Your athletes experience more pressure tactics from you than you see yourself using. This is the most common gap and the most actionable. Pick one specific behavior and a one-week trial of replacing it.",
+      coach_higher: "You report using more pressure than athletes report feeling. That is unusual. Either you are self-critical, or athletes are not naming what they experience. Worth a conversation that makes it safer for them to say so.",
+      athlete_higher: "Your athletes experience more pressure from you than you realize. That is the most common blind spot in coaching. Pick one of the items your athletes rated high and watch yourself around it this week.",
     },
     chaos: {
-      coach_higher: "You see yourself as more chaotic than your athletes do. Some of what feels disorganized to you reads as flexibility to them. Lower your own standard; do not tighten the system.",
-      athlete_higher: "Your athletes experience more inconsistency from you than you notice. This usually shows up at the seams: handoffs, returns from travel, transitions between drills. Tighten one seam a week.",
+      coach_higher: "You report more inconsistency in your coaching than your athletes experience. Unusual. Possibly they do not feel safe reporting, or you hold yourself to an exacting standard. Worth naming in a team conversation.",
+      athlete_higher: "Your athletes experience more inconsistency from you than you are aware of. This is often context-specific: late-week, post-travel, or high-stress moments. Identify the trigger before you try to solve it.",
     },
   };
 
