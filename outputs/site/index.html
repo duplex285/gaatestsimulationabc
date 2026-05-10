@@ -112,9 +112,29 @@
         .detail-wrap .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .detail-section { min-width: 0; overflow-wrap: break-word; word-wrap: break-word; }
         .detail-section h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.4rem; }
+        .detail-section h4:not(:first-child) { margin-top: 1.2rem; }
         .detail-section .items-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.25rem 0.5rem; font-size: 0.82rem; }
         .detail-section .items-grid .item-val { font-variant-numeric: tabular-nums; }
         .detail-section .items-grid .item-label { color: var(--muted); }
+        .profile-summary-header { background: #fff; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; border-left: 4px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .profile-summary-header .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.3rem; }
+        .profile-summary-header .tagline { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.4rem; }
+        .profile-summary-header p { font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.4rem; }
+        .profile-summary-header .growth { font-style: italic; color: var(--muted); margin-top: 0.3rem; font-size: 0.88rem; }
+        .detail-top { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.2rem; align-items: start; }
+        .detail-top h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.4rem; }
+        .detail-top .domain-narrative h4 { margin-top: 0; }
+        @media (max-width: 900px) { .detail-top { grid-template-columns: 1fr; } }
+        .detail-belbin { margin-top: 1.5rem; }
+        .detail-belbin > h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.6rem; }
+        .belbin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
+        @media (max-width: 900px) { .belbin-grid { grid-template-columns: 1fr; } }
+        .belbin-card { padding: 0.7rem 0.9rem; background: #f8f9fa; border-radius: 6px; border-left: 3px solid var(--accent); }
+        .belbin-card-head { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+        .belbin-card-head strong { font-size: 0.92rem; }
+        .belbin-qual { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+        .belbin-def { font-size: 0.82rem; line-height: 1.5; margin-bottom: 0.4rem; }
+        .belbin-why { font-size: 0.78rem; color: var(--muted); line-height: 1.45; }
 
         .score-bar-wrap { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; font-size: 0.82rem; }
         .score-bar-label { width: 80px; text-align: right; color: var(--muted); flex-shrink: 0; }
@@ -1258,7 +1278,72 @@
     /* ═══════════════════════════════════════════════════
        DATA CONSTANTS
        ═══════════════════════════════════════════════════ */
-    const TYPE_DESCS = {"Integrator": {"tagline": "All three needs activated", "description": "All three needs are engaged. Ambition, belonging, and craft each contribute to a balanced motivational profile. Frustration levels determine whether this balance is sustainable or under strain.", "strengths": ["Versatility", "Balanced judgement", "Cross-domain insight", "Broad competence"], "watch_for": "May spread attention too thin. If frustration is high across domains, burnout risk is real despite high satisfaction.", "growth_edge": "Choose one domain to push from strong to exceptional.", "pattern": {"ambition": "strong", "belonging": "strong", "craft": "strong"}}, "Captain": {"tagline": "Leading through people", "description": "Ambition and belonging are both activated. This person leads through connection, influencing others while maintaining relationships. Craft is the developing frontier.", "strengths": ["People leadership", "Coalition-building", "Relational intelligence", "Results focus"], "watch_for": "Craft skills may plateau without deliberate investment.", "growth_edge": "Invest in one technical skill that deepens your leadership credibility.", "pattern": {"ambition": "strong", "belonging": "strong", "craft": "developing"}}, "Architect": {"tagline": "Building with ambition and skill", "description": "Ambition and craft are both activated. This person builds strategically, combining drive with technical depth. Belonging is the developing frontier.", "strengths": ["Strategic execution", "Technical vision", "Quality output", "High standards"], "watch_for": "May undervalue relationships or move too fast for consensus.", "growth_edge": "Bring one collaborator into your next project early.", "pattern": {"ambition": "strong", "belonging": "developing", "craft": "strong"}}, "Mentor": {"tagline": "Growing others through expertise", "description": "Belonging and craft are both activated. This person shares knowledge generously and builds others up through competence. Ambition is the developing frontier.", "strengths": ["Teaching", "Knowledge sharing", "Patient guidance", "Trust-building"], "watch_for": "May avoid competitive settings that feel personally exposing.", "growth_edge": "Share your work with a wider audience. Expertise scales when visible.", "pattern": {"ambition": "developing", "belonging": "strong", "craft": "strong"}}, "Pioneer": {"tagline": "Ambition leading the way", "description": "Ambition is the primary activated need. Drive and goal pursuit are strong; belonging and craft are developing.", "strengths": ["Goal clarity", "Initiative", "Competitive edge", "Decisive action"], "watch_for": "Two developing domains leave a narrow motivational base.", "growth_edge": "Invest in one relationship or skill that supports your ambition.", "pattern": {"ambition": "strong", "belonging": "developing", "craft": "developing"}}, "Anchor": {"tagline": "Belonging grounding everything", "description": "Belonging is the primary activated need. Connection and relationships are strong; ambition and craft are developing.", "strengths": ["Relational stability", "Trust", "Empathy", "Team cohesion"], "watch_for": "Two developing domains mean personal growth may stall without intentional effort.", "growth_edge": "Use your relational strength to learn from someone you admire.", "pattern": {"ambition": "developing", "belonging": "strong", "craft": "developing"}}, "Artisan": {"tagline": "Craft leading quietly", "description": "Craft is the primary activated need. Technical depth and quality drive this person; ambition and belonging are developing.", "strengths": ["Deep expertise", "Quality focus", "Independent mastery", "Patience with complexity"], "watch_for": "Two developing domains may lead to isolation or missed opportunities.", "growth_edge": "Share one thing you have mastered. Teaching builds belonging from craft.", "pattern": {"ambition": "developing", "belonging": "developing", "craft": "strong"}}, "Seeker": {"tagline": "All three needs developing", "description": "No domain is fully activated. Frustration levels determine whether this is peaceful exploration or distressed searching.", "strengths": ["Openness", "Fresh perspective", "Willingness to change", "Capacity for transformation"], "watch_for": "Prolonged seeking without activation leads to drift. High frustration requires immediate support.", "growth_edge": "Pick one domain and invest deliberately. Commitment creates momentum.", "pattern": {"ambition": "developing", "belonging": "developing", "craft": "developing"}}};
+    const TYPE_DESCS = {
+        "Integrator": {
+            "tagline": "All three needs activated",
+            "description": "Ambition pushes toward the goal, belonging holds the squad together, craft sharpens the technical edge. All three engines are running. The danger is dilution, not deficit. When all three needs demand attention, depth in any one of them slips quietly while the others stay strong.",
+            "strengths": ["Reads situations across competition, team, and skill", "Sustains energy across long seasons", "Bridges differences between teammates", "Adapts to changing demands without losing footing"],
+            "watch_for": "Spread thin and no domain gets the deliberate hours it needs. The pattern to watch is high satisfaction with creeping frustration across two or three domains at once. That is strain dressed up as balance.",
+            "growth_edge": "Pick one domain this month and push it from strong to elite. Block specific time, track a specific metric. Versatility is your floor; depth is your ceiling.",
+            "pattern": {"ambition": "strong", "belonging": "strong", "craft": "strong"}
+        },
+        "Captain": {
+            "tagline": "Leading through people",
+            "description": "Drive and connection power the engine. This athlete sets tempo, holds standards, brings teammates with them. Craft is the developing edge. The technical floor is solid; the ceiling is bounded by the skill investment they have not yet made.",
+            "strengths": ["Influences teammates without coercion", "Reads the room and adjusts the message", "Carries the team through hard moments", "Makes hard calls without breaking trust"],
+            "watch_for": "The skill plateau is the silent risk. Captains often outsource technical depth to specialists and lead instead. That works until the technical ceiling matters. Pressure to keep morale high also masks their own fatigue.",
+            "growth_edge": "Put 90 minutes a week into one technical skill that compounds your leadership. Watch how teammates respond when the leader keeps learning out loud.",
+            "pattern": {"ambition": "strong", "belonging": "strong", "craft": "developing"}
+        },
+        "Architect": {
+            "tagline": "Building with ambition and skill",
+            "description": "Goal pursuit and craft work in tandem. This athlete builds systems, raises technical standards, ships work others build on. Belonging is the developing frontier. They have teammates, but the relational base may run thinner than performance suggests.",
+            "strengths": ["Translates a goal into specific work others can execute", "Holds high standards under deadline", "Sees technical risks before they surface", "Independent judgment in technical matters"],
+            "watch_for": "Move too fast for consensus and you carry the build alone. Quality also tips into perfectionism when the relational anchors that buffer it are thin. The team you have not invested in is the team that will not catch you.",
+            "growth_edge": "Bring one teammate into your next project early, before the design is locked. Their friction probably saves you a rebuild later.",
+            "pattern": {"ambition": "strong", "belonging": "developing", "craft": "strong"}
+        },
+        "Mentor": {
+            "tagline": "Growing others through expertise",
+            "description": "Belonging and craft drive the work. Mentors share what they know, build teammates up, raise the room's level through patient guidance. Ambition is the developing frontier. Personal goals often take a back seat to team development.",
+            "strengths": ["Develops others without making it about themselves", "Patient when learning is slow", "Trusted with hard feedback because the relationship is real", "Sees potential before performance shows it"],
+            "watch_for": "Avoiding competitive settings keeps growth invisible. Mentors who never put their own work forward end up with influence that does not scale beyond their immediate circle. Service is not a substitute for ambition.",
+            "growth_edge": "Put your own work forward in one venue this quarter. Compete, present, post the result. Expertise that stays private bounds your reach.",
+            "pattern": {"ambition": "developing", "belonging": "strong", "craft": "strong"}
+        },
+        "Pioneer": {
+            "tagline": "Ambition leading the way",
+            "description": "Ambition is the activated need. Pioneers know where they are going and move toward it. Belonging and craft are developing, which means the foundation under the drive is narrower than the drive itself suggests. The goal is clear; the support and skills under it need investment.",
+            "strengths": ["Decides fast, recovers from setbacks fast", "Comfortable making the first move", "Reads opportunity others miss", "High pain tolerance for the long pursuit"],
+            "watch_for": "Two developing domains create a narrow base. Pioneers who outrun their skills hit walls. Those who outrun their relationships find no one waiting at the top. Both happen quietly until they hit at once.",
+            "growth_edge": "Pick one: deepen one technical skill, or invest in one relationship that supports your ambition. Whichever feels harder is probably the answer.",
+            "pattern": {"ambition": "strong", "belonging": "developing", "craft": "developing"}
+        },
+        "Anchor": {
+            "tagline": "Belonging grounding everything",
+            "description": "Belonging is the activated need. Anchors hold the team together. Their presence stabilizes others under pressure. Ambition and craft are developing, which means personal pursuit and technical depth take a back seat to the relational role they play.",
+            "strengths": ["Steadies teammates under pressure", "Earns trust without working for it", "Reads emotional currents in the team", "Holds memory of who needs what when"],
+            "watch_for": "Personal growth stalls when service to others becomes the identity. Watch for low ambition that masquerades as humility, and low craft that hides behind being helpful. The team needs you whole, not only available.",
+            "growth_edge": "Use the trust you have already built. Ask one person you respect to teach you something specific. Anchors who keep learning multiply their influence.",
+            "pattern": {"ambition": "developing", "belonging": "strong", "craft": "developing"}
+        },
+        "Artisan": {
+            "tagline": "Craft leading quietly",
+            "description": "Craft is the activated need. Artisans go deep on the work, value quality, build mastery in solitude or with a small group. Ambition and belonging are developing. The work speaks for them. Whether the work gets heard depends on what they do beyond it.",
+            "strengths": ["Patience with complexity others abandon", "Standards higher than what is asked of them", "Independent learning without external pressure", "Quality output that does not need supervision"],
+            "watch_for": "Two developing domains can isolate. Artisans whose work never reaches an audience and whose ambition stays internal drift into expertise without context. The work is real. The connection to it has to be made.",
+            "growth_edge": "Show one piece of your work to one person this week. Not for feedback. For the practice of letting it leave the workshop.",
+            "pattern": {"ambition": "developing", "belonging": "developing", "craft": "strong"}
+        },
+        "Seeker": {
+            "tagline": "All three needs developing",
+            "description": "No domain is fully activated. This is the open canvas profile. Whether it is peaceful exploration or distressed searching depends on frustration, not satisfaction. The state can flip from one to the other quickly when conditions change.",
+            "strengths": ["Open to direction the activated would resist", "Free of the assumptions that come with activated needs", "Capacity for transformation that activated profiles cannot match", "Ready to commit when the right opening surfaces"],
+            "watch_for": "Prolonged seeking without commitment becomes drift. High frustration across all three domains in this profile is the signal for immediate support, not a coaching adjustment. The risk of disengagement is highest here.",
+            "growth_edge": "Pick one domain this week, even arbitrarily, and invest one hour. Commitment creates momentum. Direction comes from movement, not from waiting for clarity to arrive.",
+            "pattern": {"ambition": "developing", "belonging": "developing", "craft": "developing"}
+        }
+    };
     // Legacy compatibility: map old 24-type names to base patterns
     const _legacyTypeMap = {};
     for (const base of Object.keys(TYPE_DESCS)) {
@@ -1380,6 +1465,46 @@
         {key:"A",label:"Agreeableness",colour:"#3498DB"},
         {key:"N",label:"Neuroticism",colour:"#E74C3C"}
     ];
+
+    // Band-aware Big Five copy. Bands: low (<35), moderate (35-64), high (>=65) on the 0-99 percentile scale.
+    const BIG_FIVE_DESCS = {
+        O: {
+            label: "Openness",
+            high: "Curious, comfortable with ambiguity, drawn to new methods and ideas. Likely to experiment with training and tactics.",
+            moderate: "Open to new approaches but anchored by routine. Adopts changes once they prove out.",
+            low: "Prefers proven methods and clear structure. Resists change unless the case is concrete."
+        },
+        C: {
+            label: "Conscientiousness",
+            high: "Disciplined, thorough, follow-through on plans. The reliability backbone of any squad.",
+            moderate: "Reliable in steady contexts, can drift when systems are loose. Benefits from explicit routines.",
+            low: "Flexible and improvisational, but inconsistent execution. Pair with structure rather than try to fix it."
+        },
+        E: {
+            label: "Extraversion",
+            high: "Energy from people and action, vocal in groups, comfortable taking the floor. Sets tempo for those around them.",
+            moderate: "Engaged in groups but recharges alone. Picks moments rather than dominating space.",
+            low: "Quiet presence, conserves energy in groups, expresses commitment through action not words."
+        },
+        A: {
+            label: "Agreeableness",
+            high: "Cooperative, harmony-seeking, quick to support teammates. Sometimes defers when their judgement should be heard.",
+            moderate: "Cooperative when stakes are aligned, will push back when convictions are clear.",
+            low: "Direct, willing to challenge, comfortable with friction. Trust the candour, watch the delivery."
+        },
+        N: {
+            label: "Neuroticism",
+            high: "Reactive to setbacks and pressure, vigilant for what could go wrong. The signal is real; it is also a load to carry.",
+            moderate: "Feels pressure but recovers with rest and reset. Standard variability under load.",
+            low: "Steady under pressure, slow to rattle. Useful in chaos; can underread early warning signs."
+        }
+    };
+
+    function bigFiveBand(percentile) {
+        if (percentile >= 65) return "high";
+        if (percentile >= 35) return "moderate";
+        return "low";
+    }
 
     const BELBIN_COLOURS = {
         "Plant (Creative)":"#27AE60","Plant (Conceptual)":"#27AE60",
@@ -2389,12 +2514,30 @@
 
         let b5HTML = '';
         BIG_FIVE_KEYS.forEach(t => {
-            b5HTML += `<div class="score-bar-wrap" title="${t.label}"><span class="score-bar-label" style="width:1.5rem; text-align:left; font-weight:700; font-size:0.95rem; color:${t.colour}; cursor:help;">${t.key}</span><div class="score-bar-track"><div class="score-bar-fill" style="width:${(p[t.key]/99*100).toFixed(1)}%;background:${t.colour}"></div></div><span class="score-bar-val">${p[t.key]}</span></div>`;
+            const pct = p[t.key];
+            const band = bigFiveBand(pct);
+            const desc = BIG_FIVE_DESCS[t.key];
+            const bandLabel = band.charAt(0).toUpperCase() + band.slice(1);
+            b5HTML += `<div style="margin-bottom:0.7rem;">`;
+            b5HTML += `<div class="score-bar-wrap" title="${t.label}" style="margin-bottom:0.2rem;"><span class="score-bar-label" style="width:auto; min-width:8.5rem; text-align:left; font-weight:600; font-size:0.85rem; color:${t.colour};">${t.label}</span><div class="score-bar-track"><div class="score-bar-fill" style="width:${(pct/99*100).toFixed(1)}%;background:${t.colour}"></div></div><span class="score-bar-val">${pct}</span></div>`;
+            b5HTML += `<div style="font-size:0.78rem;line-height:1.45;color:var(--muted);padding-left:0.2rem;"><strong style="color:${t.colour};text-transform:uppercase;font-size:0.7rem;letter-spacing:0.05em;">${bandLabel}.</strong> ${desc[band]}</div>`;
+            b5HTML += `</div>`;
         });
 
         let belbinHTML = '';
         if (p.belbin_roles && p.belbin_roles.length > 0) {
-            p.belbin_roles.forEach(br => { belbinHTML += `<span class="belbin-badge">${br.role} (${br.qualifier})</span> `; });
+            belbinHTML = '<div class="belbin-grid">';
+            p.belbin_roles.forEach(br => {
+                const bd = BELBIN_DESCS[br.role];
+                belbinHTML += `<div class="belbin-card">`;
+                belbinHTML += `<div class="belbin-card-head"><strong>${br.role}</strong><span class="belbin-qual">${br.qualifier}</span></div>`;
+                if (bd) {
+                    belbinHTML += `<div class="belbin-def">${bd.definition}</div>`;
+                    belbinHTML += `<div class="belbin-why"><em>Why this role:</em> ${bd.abc}</div>`;
+                }
+                belbinHTML += `</div>`;
+            });
+            belbinHTML += '</div>';
         } else { belbinHTML = '<span style="color:var(--muted)">None</span>'; }
 
         let sigHTML = '';
@@ -2408,7 +2551,8 @@
         let typeDescHTML = '';
         const td = TYPE_DESCS[p.type];
         if (td) {
-            typeDescHTML = `<div class="type-desc-block"><div class="tagline">${p.type}: ${td.tagline}</div><p>${td.description}</p><p class="growth"><strong>Growth edge:</strong> ${td.growth_edge}</p></div>`;
+            const primaryColour = p.domDomain === 'ambition' ? '#E8563A' : p.domDomain === 'belonging' ? '#3A8FE8' : '#3ABF5E';
+            typeDescHTML = `<div class="profile-summary-header" style="border-left-color:${primaryColour}"><div class="label">Profile Summary</div><div class="tagline">${p.type}: ${td.tagline}</div><p>${td.description}</p><p class="growth"><strong>Growth edge:</strong> ${td.growth_edge}</p></div>`;
         }
 
         // Full domain narrative — all three domains, not just the primary
@@ -2442,10 +2586,11 @@
 
         const uncertaintyHTML = getUncertaintyHTML(p);
 
-        return `<div class="detail-grid">
-            <div class="detail-section"><h4>Raw Responses (1-7 Likert) &mdash; (R) = reverse-scored</h4>${responsesHTML}</div>
-            <div class="detail-section"><h4>Subscale Scores (0-10)</h4>${scoresHTML}${domNarrativeHTML}${uncertaintyHTML}<div style="margin-top:0.8rem"><h4>Big Five Percentiles</h4>${b5HTML}</div><div style="margin-top:0.8rem"><h4>Belbin Roles</h4>${belbinHTML}</div><div style="margin-top:0.8rem"><h4>Frustration Signatures</h4>${sigHTML}</div>${typeDescHTML}</div>
-        </div>`;
+        const topSectionHTML = `${typeDescHTML}<div class="detail-top">${domNarrativeHTML}<div class="detail-top-sigs"><h4>Frustration Signatures</h4>${sigHTML}</div></div>`;
+        return `${topSectionHTML}<div class="detail-grid">
+            <div class="detail-section"><h4>Subscale Scores (0-10)</h4>${scoresHTML}<h4>Big Five Percentiles</h4>${b5HTML}</div>
+            <div class="detail-section"><h4>Raw Responses (1-7 Likert) &mdash; (R) = reverse-scored</h4>${responsesHTML}<h4>Classification Confidence</h4>${uncertaintyHTML}</div>
+        </div><div class="detail-belbin"><h4>Belbin Roles</h4>${belbinHTML}</div>`;
     }
 
     function getFiltered() {
@@ -3334,9 +3479,64 @@
     /* ═══════════════════════════════════════════════════
        PARTICIPANT UNCERTAINTY DISPLAY
        ═══════════════════════════════════════════════════ */
+    function computeParticipantStability(p, nTrials) {
+        nTrials = nTrials || 50;
+        let typeMatch = 0, stateMatch = 0, sigMatch = 0;
+        for (let t = 0; t < nTrials; t++) {
+            const noisySubscales = {};
+            for (let si = 0; si < 6; si++) {
+                const items = [];
+                for (let j = 0; j < 6; j++) {
+                    const raw = p.responses[PREFIXES[si] + (j + 1)];
+                    const noise = Math.floor(Math.random() * 3) - 1;
+                    items.push(Math.max(1, Math.min(7, raw + noise)));
+                }
+                const rev4 = 8 - items[3];
+                const rev6 = 8 - items[5];
+                const mean = (items[0] + items[1] + items[2] + rev4 + items[4] + rev6) / 6;
+                noisySubscales[SUB_KEYS[si]] = Math.max(0, Math.min(10, (mean - 1) * 10 / 6));
+            }
+            const aS2 = noisySubscales.a_sat >= TYPE_SAT_THRESHOLD ? 1 : 0;
+            const bS2 = noisySubscales.b_sat >= TYPE_SAT_THRESHOLD ? 1 : 0;
+            const cS2 = noisySubscales.c_sat >= TYPE_SAT_THRESHOLD ? 1 : 0;
+            const code2 = '' + aS2 + bS2 + cS2;
+            const typeMap = { '111': 'Strategist', '110': 'Diplomat', '101': 'Innovator', '100': 'Explorer',
+                              '011': 'Connector', '010': 'Mentor', '001': 'Artisan', '000': 'Seeker' };
+            if (typeMap[code2] === p.type) typeMatch++;
+
+            const domainPairs2 = [['ambition','a_sat','a_frust'], ['belonging','b_sat','b_frust'], ['craft','c_sat','c_frust']];
+            let allStatesMatch = true;
+            for (const [dom, satK, frustK] of domainPairs2) {
+                const sat = noisySubscales[satK], frust = noisySubscales[frustK];
+                let st;
+                if (sat >= DOM_SAT_THRESHOLD && frust < DOM_FRUST_THRESHOLD) st = 'Thriving';
+                else if (sat >= DOM_SAT_THRESHOLD && frust >= DOM_FRUST_THRESHOLD) st = 'Vulnerable';
+                else if (sat < DOM_SAT_THRESHOLD && frust < DOM_FRUST_THRESHOLD) st = 'Mild';
+                else st = 'Distressed';
+                if (st !== p.domainStates[dom]) allStatesMatch = false;
+            }
+            if (allStatesMatch) stateMatch++;
+
+            let sigCount2 = 0;
+            for (const [dom, satK, frustK] of domainPairs2) {
+                if (noisySubscales[frustK] >= FRUST_SIG_FRUST_THRESHOLD) sigCount2++;
+            }
+            if (sigCount2 === p.frustration_signatures.length) sigMatch++;
+        }
+        return {
+            typeStability: typeMatch / nTrials,
+            stateStability: stateMatch / nTrials,
+            sigStability: sigMatch / nTrials,
+        };
+    }
+
     function getUncertaintyHTML(p) {
-        const stab = window._stabilityMap && window._stabilityMap[p.id];
-        if (!stab) return '<div style="font-size:0.82rem;color:var(--muted);margin-top:0.5rem;">Stability data not computed for this participant. Run simulation to generate.</div>';
+        window._stabilityMap = window._stabilityMap || {};
+        let stab = window._stabilityMap[p.id];
+        if (!stab) {
+            stab = computeParticipantStability(p, 50);
+            window._stabilityMap[p.id] = stab;
+        }
 
         const tsCol = stab.typeStability < 0.5 ? '#E8563A' : stab.typeStability < 0.7 ? '#F5A623' : '#3ABF5E';
         const ssCol = stab.stateStability < 0.5 ? '#E8563A' : stab.stateStability < 0.7 ? '#F5A623' : '#3ABF5E';
@@ -3368,8 +3568,7 @@
             bars += '</div>';
         }
 
-        return `<div style="margin-top:0.8rem;padding:0.8rem;background:#f0f4ff;border-radius:6px;border-left:3px solid var(--accent);">
-            <h4 style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:0.4rem;">Classification Confidence</h4>
+        return `<div style="margin-top:0.4rem;padding:0.8rem;background:#f0f4ff;border-radius:6px;border-left:3px solid var(--accent);">
             <div style="display:flex;gap:1.5rem;flex-wrap:wrap;font-size:0.85rem;">
                 <div>Type stability: <strong style="color:${tsCol}">${(stab.typeStability*100).toFixed(0)}%</strong></div>
                 <div>State stability: <strong style="color:${ssCol}">${(stab.stateStability*100).toFixed(0)}%</strong></div>
